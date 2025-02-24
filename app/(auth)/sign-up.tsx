@@ -1,19 +1,29 @@
 import { Image, ScrollView, View, Text } from "react-native";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
+import CustomButton from "@/components/CustomButton";
 import { useState } from "react";
+import { Link } from "expo-router";
+import OAuth from "@/components/OAuth";
 const Sign_Up = () => {
   const [form, setForm] = useState({
     name: "",
     email: "",
     password: "",
   });
+
+  const onSignUpPress = async () => {};
+
   return (
     <ScrollView className={"flex-1 bg-primary-200"}>
       <View className="flex-1 bg-[#F5F7FA]">
         <View className="relative w-full h-[250px]">
-          <Image source={images.onboarding1} className="z-0 w-full h-[250px]" />
-          <Text className="text-2xl text-black font-PoppinsBold absolute bottom-5 left-5">
+          <Image
+            source={images.icon}
+            className="self-center mt-[90px]"
+            style={{ width: 280, height: 70, resizeMode: "contain" }}
+          />
+          <Text className="text-2xl text-black font-PoppinsBold absolute bottom-0 left-5">
             Create Your Account
           </Text>
         </View>
@@ -40,7 +50,21 @@ const Sign_Up = () => {
             value={form.password}
             onChangeText={(value) => setForm({ ...form, password: value })}
           />
+          <CustomButton
+            title="Sign Up"
+            onPress={onSignUpPress}
+            className="mt-6"
+          />
+          <OAuth />
+          <Link
+            href="/sign-in"
+            className="text-bsae text-center text-general-200 mt-10"
+          >
+            <Text>Already have an account? </Text>
+            <Text className="text-primary-500">Sign In</Text>
+          </Link>
         </View>
+        {/*Verification Model*/}
       </View>
     </ScrollView>
   );
