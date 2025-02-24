@@ -26,7 +26,7 @@ module.exports = {
       colors: {
         primary: {
           100: "#F5F8FF",
-          200: "#EBF4FF",
+          200: "#F5F7FA",
           300: "#C3D9FF",
           400: "#9BBFFF",
           500: "#5b55f7",
