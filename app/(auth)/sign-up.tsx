@@ -10,6 +10,7 @@ import { ReactNativeModal } from "react-native-modal";
 
 const Sign_Up = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -62,12 +63,11 @@ const Sign_Up = () => {
       if (signUpAttempt.status === "complete") {
         await setActive({ session: signUpAttempt.createdSessionId });
         setVerification({ ...verification, state: "success" });
-        router.replace("/");
       } else {
         setVerification({
           ...verification,
           error: "Verification Failed",
-          state: "success",
+          state: "failed",
         });
       }
     } catch (err: any) {
@@ -76,6 +76,7 @@ const Sign_Up = () => {
         error: err.errors[0].longMessage,
         state: "failed",
       });
+      Alert.alert("Error", err.errors[0].longMessage);
       console.error(JSON.stringify(err, null, 2));
     }
   };
@@ -129,11 +130,12 @@ const Sign_Up = () => {
             <Text className="text-primary-500">Sign In</Text>
           </Link>
         </View>
+
         <ReactNativeModal
           isVisible={verification.state === "pending"}
-          onModalHide={() =>
-            setVerification({ ...verification, state: "success" })
-          }
+          onModalHide={() => {
+            if (verification.state === "success") setShowSuccessModal(true);
+          }}
         >
           <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h[300px]">
             <Text className="text-2xl font-PoppinsSemiBold mb-2">
@@ -165,7 +167,7 @@ const Sign_Up = () => {
           </View>
         </ReactNativeModal>
 
-        <ReactNativeModal isVisible={verification.state === "success"}>
+        <ReactNativeModal isVisible={showSuccessModal}>
           <View className="bg-[#E2E8F0] px-7 py-9 rounded-2xl min-h-[300px]">
             <Image
               source={images.check}
@@ -179,7 +181,10 @@ const Sign_Up = () => {
             </Text>
             <CustomButton
               title="Browse Home"
-              onPress={() => router.replace("/(root)/(tabs)/home")}
+              onPress={() => {
+                setShowSuccessModal(false);
+                router.push("/(root)/(tabs)/home");
+              }}
               className="mt-5"
             />
           </View>
