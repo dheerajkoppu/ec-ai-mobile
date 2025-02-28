@@ -21,7 +21,7 @@ const Home = () => {
         }}
         className="w-full flex justify-end items-end p-5"
       >
-        <Text className="text-black text-md font-JakartaBold">Skip</Text>
+        <Text className="text-black text-md font-PoppinsBold">Skip</Text>
       </TouchableOpacity>
 
       <Swiper
@@ -48,7 +48,7 @@ const Home = () => {
                 {item.title}
               </Text>
             </View>
-            <Text className="text-md font-JakartaSemiBold text-center text-[#858585] mx-10 mt-3">
+            <Text className="text-md font-PoppinsRegular text-center text-[#858585] mx-10 mt-3">
               {item.description}
             </Text>
           </View>
