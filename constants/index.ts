@@ -86,6 +86,11 @@ export const icons = {
   track_activities2,
   home1,
   home2,
+  dollar,
+  email,
+  eyecross,
+  home,
+  profile,
 };
 
 export const onboarding = [
