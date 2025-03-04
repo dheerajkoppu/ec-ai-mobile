@@ -32,6 +32,16 @@ import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import icon from "@/assets/images/icon.png";
 import signUpCar from "@/assets/images/signup-car.png";
+import add_activity1 from "@/assets/icons/add_activity1.png";
+import add_activity2 from "@/assets/icons/add_activity2.png";
+import new_opportunities1 from "@/assets/icons/new_opportunities1.png";
+import new_opportunities2 from "@/assets/icons/new_opportunities2.png";
+import profile1 from "@/assets/images/profile1.png";
+import profile2 from "@/assets/images/profile2.png";
+import track_activities1 from "@/assets/images/track_activities1.png";
+import track_activities2 from "@/assets/images/track_activities2.png";
+import home1 from "@/assets/images/home1.png";
+import home2 from "@/assets/images/home2.png";
 
 export const images = {
   onboarding1,
@@ -71,6 +81,16 @@ export const icons = {
   star,
   target,
   to,
+  add_activity1,
+  add_activity2,
+  new_opportunities1,
+  new_opportunities2,
+  profile1,
+  profile2,
+  track_activities1,
+  track_activities2,
+  home1,
+  home2,
 };
 
 export const onboarding = [
