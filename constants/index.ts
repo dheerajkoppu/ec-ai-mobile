@@ -36,12 +36,12 @@ import add_activity1 from "@/assets/icons/add_activity1.png";
 import add_activity2 from "@/assets/icons/add_activity2.png";
 import new_opportunities1 from "@/assets/icons/new_opportunities1.png";
 import new_opportunities2 from "@/assets/icons/new_opportunities2.png";
-import profile1 from "@/assets/images/profile1.png";
-import profile2 from "@/assets/images/profile2.png";
-import track_activities1 from "@/assets/images/track_activities1.png";
-import track_activities2 from "@/assets/images/track_activities2.png";
-import home1 from "@/assets/images/home1.png";
-import home2 from "@/assets/images/home2.png";
+import profile1 from "@/assets/icons/profile1.png";
+import profile2 from "@/assets/icons/profile2.png";
+import track_activities1 from "@/assets/icons/track_activities1.png";
+import track_activities2 from "@/assets/icons/track_activities2.png";
+import home1 from "@/assets/icons/home1.png";
+import home2 from "@/assets/icons/home2.png";
 
 export const images = {
   onboarding1,
@@ -62,11 +62,7 @@ export const icons = {
   chat,
   checkmark,
   close,
-  dollar,
-  email,
-  eyecross,
   google,
-  home,
   list,
   lock,
   map,
@@ -75,7 +71,6 @@ export const icons = {
   person,
   pin,
   point,
-  profile,
   search,
   selectedMarker,
   star,
