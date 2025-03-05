@@ -17,7 +17,7 @@ const TabIcon = ({
     >
       <Image
         source={source}
-        tintColor="bg-general-300"
+        tintColor="white"
         resizeMode="contain"
         className="w-7 h-7"
       />
