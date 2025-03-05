@@ -23,7 +23,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "expo-router",
+      [ "expo-router" , { "origin": "https://ec.ai/" } ],
       [
         "expo-splash-screen",
         {
