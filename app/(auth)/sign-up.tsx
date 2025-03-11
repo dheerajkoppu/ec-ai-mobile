@@ -6,6 +6,8 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  Keyboard,
+  TouchableWithoutFeedback,
 } from "react-native";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
@@ -102,116 +104,118 @@ const Sign_Up = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <View className={"flex-1 bg-primary-200"}>
-        <View className="flex-1 bg-[#F5F7FA]">
-          <View className="relative w-full h-[200px]">
-            <Image
-              source={images.icon}
-              className="self-center mt-[90px]"
-              style={{ width: 240, height: 60, resizeMode: "contain" }}
-            />
-            <Text className="text-2xl text-black font-PoppinsBold absolute bottom-0 left-5">
-              Create Your Account
-            </Text>
-          </View>
-          <View className="p-5">
-            <InputField
-              label="Name"
-              placeholder="Enter your name"
-              icon={icons.person}
-              value={form.name}
-              onChangeText={(value) => setForm({ ...form, name: value })}
-            />
-            <InputField
-              label="Email"
-              placeholder="Enter your email"
-              icon={icons.email}
-              value={form.email}
-              onChangeText={(value) => setForm({ ...form, email: value })}
-            />
-            <InputField
-              label="Password"
-              placeholder="Enter your password"
-              icon={icons.lock}
-              secureTextEntry={true}
-              value={form.password}
-              onChangeText={(value) => setForm({ ...form, password: value })}
-            />
-            <CustomButton
-              title="Sign Up"
-              onPress={onSignUpPress}
-              className="mt-6"
-            />
-            <OAuth />
-            <Link
-              href="/sign-in"
-              className="text-bsae text-center text-general-200 mt-10"
-            >
-              <Text>Already have an account? </Text>
-              <Text className="text-primary-500">Sign In</Text>
-            </Link>
-          </View>
-
-          <ReactNativeModal
-            isVisible={verification.state === "pending"}
-            onModalHide={() => {
-              if (verification.state === "success") setShowSuccessModal(true);
-            }}
-          >
-            <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h[300px]">
-              <Text className="text-2xl font-PoppinsSemiBold mb-2">
-                Verification
-              </Text>
-              <Text className="font-PoppinsRegular mb-5">
-                We've sent a verification code to {form.email}
-              </Text>
-              <InputField
-                label="Code"
-                icon={icons.lock}
-                placeholder="12345"
-                value={verification.code}
-                keyboardType="numeric"
-                onChangeText={(code) =>
-                  setVerification({ ...verification, code })
-                }
-              />
-              {verification.error && (
-                <Text className="text-red-500 text-sm mt-1">
-                  {verification.error}
-                </Text>
-              )}
-              <CustomButton
-                title="Verify Email"
-                onPress={onPressVerify}
-                className="mt-5 bg-primary-500"
-              />
-            </View>
-          </ReactNativeModal>
-
-          <ReactNativeModal isVisible={showSuccessModal}>
-            <View className="bg-[#E2E8F0] px-7 py-9 rounded-2xl min-h-[300px]">
+      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+        <View className={"flex-1 bg-primary-200"}>
+          <View className="flex-1 bg-[#F5F7FA]">
+            <View className="relative w-full h-[200px]">
               <Image
-                source={images.check}
-                className={"w-[110px] h-[110px] mx-auto my-5"}
+                source={images.icon}
+                className="self-center mt-[90px]"
+                style={{ width: 240, height: 60, resizeMode: "contain" }}
               />
-              <Text className="text-3xl font-PoppinsSemiBold text-center">
-                Verified
+              <Text className="text-2xl text-black font-PoppinsBold absolute bottom-0 left-5">
+                Create Your Account
               </Text>
-              <Text className="text-sm text-gray-400 font-PoppinsRegular text-center mt-e">
-                You have successfully verified your account.
-              </Text>
-              <CustomButton
-                title="Browse Home"
-                onPress={() => {
-                  setShowSuccessModal(false);
-                  router.push("/(root)/(tabs)/home");
-                }}
-                className="mt-5"
-              />
             </View>
-          </ReactNativeModal>
+            <View className="p-5">
+              <InputField
+                label="Name"
+                placeholder="Enter your name"
+                icon={icons.person}
+                value={form.name}
+                onChangeText={(value) => setForm({ ...form, name: value })}
+              />
+              <InputField
+                label="Email"
+                placeholder="Enter your email"
+                icon={icons.email}
+                value={form.email}
+                onChangeText={(value) => setForm({ ...form, email: value })}
+              />
+              <InputField
+                label="Password"
+                placeholder="Enter your password"
+                icon={icons.lock}
+                secureTextEntry={true}
+                value={form.password}
+                onChangeText={(value) => setForm({ ...form, password: value })}
+              />
+              <CustomButton
+                title="Sign Up"
+                onPress={onSignUpPress}
+                className="mt-6"
+              />
+              <OAuth />
+              <Link
+                href="/sign-in"
+                className="text-bsae text-center text-general-200 mt-10"
+              >
+                <Text>Already have an account? </Text>
+                <Text className="text-primary-500">Sign In</Text>
+              </Link>
+            </View>
+
+            <ReactNativeModal
+              isVisible={verification.state === "pending"}
+              onModalHide={() => {
+                if (verification.state === "success") setShowSuccessModal(true);
+              }}
+            >
+              <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h[300px]">
+                <Text className="text-2xl font-PoppinsSemiBold mb-2">
+                  Verification
+                </Text>
+                <Text className="font-PoppinsRegular mb-5">
+                  We've sent a verification code to {form.email}
+                </Text>
+                <InputField
+                  label="Code"
+                  icon={icons.lock}
+                  placeholder="12345"
+                  value={verification.code}
+                  keyboardType="numeric"
+                  onChangeText={(code) =>
+                    setVerification({ ...verification, code })
+                  }
+                />
+                {verification.error && (
+                  <Text className="text-red-500 text-sm mt-1">
+                    {verification.error}
+                  </Text>
+                )}
+                <CustomButton
+                  title="Verify Email"
+                  onPress={onPressVerify}
+                  className="mt-5 bg-primary-500"
+                />
+              </View>
+            </ReactNativeModal>
+
+            <ReactNativeModal isVisible={showSuccessModal}>
+              <View className="bg-[#E2E8F0] px-7 py-9 rounded-2xl min-h-[300px]">
+                <Image
+                  source={images.check}
+                  className={"w-[110px] h-[110px] mx-auto my-5"}
+                />
+                <Text className="text-3xl font-PoppinsSemiBold text-center">
+                  Verified
+                </Text>
+                <Text className="text-sm text-gray-400 font-PoppinsRegular text-center mt-e">
+                  You have successfully verified your account.
+                </Text>
+                <CustomButton
+                  title="Browse Home"
+                  onPress={() => {
+                    setShowSuccessModal(false);
+                    router.push("/(root)/(tabs)/home");
+                  }}
+                  className="mt-5"
+                />
+              </View>
+            </ReactNativeModal>
+          </View>
         </View>
-      </View>
+      </TouchableWithoutFeedback>
     </KeyboardAvoidingView>
   );
 };

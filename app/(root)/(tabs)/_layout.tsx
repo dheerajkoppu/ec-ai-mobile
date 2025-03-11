@@ -10,10 +10,10 @@ const TabIcon = ({
   focused: boolean;
 }) => (
   <View
-    className={`flex flex-row justify-center items-center rounded-full ${focused ? "bg-general-400" : ""}`}
+    className={`flex flex-row justify-center items-center rounded-full ${focused ? "#F5F7FA" : ""}`}
   >
     <View
-      className={`rounded-full w-12 h-12 items-center justify-center ${focused ? "bg-general-400" : ""}`}
+      className={`rounded-full w-14 h-14 items-center justify-center ${focused ? "bg-primary-900" : ""}`}
     >
       <Image source={source} resizeMode="contain" className="w-7 h-7" />
     </View>
@@ -25,10 +25,10 @@ const Layout = () => (
     initialRouteName="home"
     screenOptions={{
       tabBarActiveTintColor: "white",
-      tabBarInactiveTintColor: "white",
+      tabBarInactiveTintColor: "#F5F7FA",
       tabBarShowLabel: false,
       tabBarStyle: {
-        backgroundColor: "#f5f7fa",
+        backgroundColor: "#5b55f6",
         paddingBottom: 50,
         overflow: "hidden",
         height: 100,
