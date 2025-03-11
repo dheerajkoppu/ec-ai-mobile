@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Image, View, ImageSourcePropType } from "react-native";
+import { Image, View, ImageSourcePropType, Pressable } from "react-native";
 import { icons } from "@/constants";
 
 const TabIcon = ({
@@ -46,7 +46,9 @@ const Layout = () => (
         title: "Home",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <TabIcon focused={focused} source={icons.home1} />
+          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <TabIcon focused={focused} source={icons.home1} />
+          </Pressable>
         ),
       }}
     />
@@ -56,7 +58,9 @@ const Layout = () => (
         title: "Track Activities",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <TabIcon focused={focused} source={icons.track_activities1} />
+          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <TabIcon focused={focused} source={icons.track_activities1} />
+          </Pressable>
         ),
       }}
     />
@@ -66,7 +70,9 @@ const Layout = () => (
         title: "Add Activity",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <TabIcon focused={focused} source={icons.add_activity1} />
+          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <TabIcon focused={focused} source={icons.add_activity1} />
+          </Pressable>
         ),
       }}
     />
@@ -76,7 +82,9 @@ const Layout = () => (
         title: "New Opportunities",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <TabIcon focused={focused} source={icons.new_opportunities1} />
+          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <TabIcon focused={focused} source={icons.new_opportunities1} />
+          </Pressable>
         ),
       }}
     />
@@ -86,7 +94,9 @@ const Layout = () => (
         title: "Profile",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <TabIcon focused={focused} source={icons.profile1} />
+          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
+            <TabIcon focused={focused} source={icons.profile1} />
+          </Pressable>
         ),
       }}
     />
