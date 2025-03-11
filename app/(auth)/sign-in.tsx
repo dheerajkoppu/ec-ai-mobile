@@ -39,7 +39,7 @@ const Sign_In = () => {
   }, [isLoaded, signIn, form.email, form.password, setActive]);
 
   return (
-    <ScrollView className={"flex-1 bg-primary-200"}>
+    <View className={"flex-1 bg-primary-200"}>
       <View className="flex-1 bg-[#F5F7FA]">
         <View className="relative w-full h-[250px]">
           <Image
@@ -83,7 +83,7 @@ const Sign_In = () => {
         </View>
         {/*Verification Model*/}
       </View>
-    </ScrollView>
+    </View>
   );
 };
 

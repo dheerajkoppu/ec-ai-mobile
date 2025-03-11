@@ -112,7 +112,7 @@ export const onboarding = [
     id: 3,
     title: "Unlock your full extracurricular potential",
     description:
-      "Maximize your extracurricular portfolio with matching, tracking, and analyzing.",
+      "Maximize your extracurricular portfolio with seamless matching, tracking, and analyzing.",
     image: images.onboarding3,
   },
 ];

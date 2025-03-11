@@ -27,9 +27,7 @@ const Home = () => {
       <Swiper
         ref={swiperRef}
         loop={false}
-        dot={
-          <View className="w-[32px] h-[4px] mx-1 bg-[#E2E8F0] rounded-full" />
-        }
+        dot={<View className="w-[32px] h-[4px] mx-1 bg-white rounded-full" />}
         activeDot={
           <View className="w-[32px] h-[4px] mx-1 bg-primary-500 rounded-full" />
         }
@@ -43,7 +41,7 @@ const Home = () => {
               resizeMode="contain"
             />
 
-            <View className="flex flex-row items-center justify-center w-full mt-10">
+            <View className="flex flex-row items-center justify-center w-full mt-100">
               <Text className="text-black text-3xl font-bold mx-10 text-center">
                 {item.title}
               </Text>
