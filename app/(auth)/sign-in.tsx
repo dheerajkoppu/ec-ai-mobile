@@ -6,6 +6,7 @@ import {
   Alert,
   Keyboard,
   TextInput,
+  TouchableOpacity,
 } from "react-native";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
@@ -15,8 +16,16 @@ import { Link, router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
 import { InputFieldProps } from "@/types/type";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const Sign_In = () => {
+  // State variable to track password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Function to toggle the password visibility state
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
   const { signIn, setActive, isLoaded } = useSignIn();
   const passwordRef = useRef<TextInput>(null);
   const [form, setForm] = useState({
@@ -71,20 +80,39 @@ const Sign_In = () => {
             onSubmitEditing={() => passwordRef.current?.focus()}
             onChangeText={(value) => setForm({ ...form, email: value })}
           />
-          <InputField
-            label="Password"
-            placeholder="Enter your password"
-            icon={icons.lock}
-            secureTextEntry={true}
-            ref={passwordRef}
-            onSubmitEditing={() => {
-              Keyboard.dismiss();
-              onSignInPress();
-            }}
-            value={form.password}
-            returnKeyType="go"
-            onChangeText={(value) => setForm({ ...form, password: value })}
-          />
+          <View style={{ position: "relative" }}>
+            <InputField
+              label="Password"
+              keyboardShouldPersistTaps="handled"
+              placeholder="Enter your password"
+              icon={icons.lock}
+              secureTextEntry={!showPassword}
+              value={form.password}
+              onChangeText={(value) => setForm({ ...form, password: value })}
+              ref={passwordRef}
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                onSignInPress();
+              }}
+              returnKeyType="go"
+              // Add extra padding to the right to prevent text from overlapping the icon
+              style={{ paddingRight: 40 }}
+            />
+            <TouchableOpacity
+              onPress={toggleShowPassword}
+              style={{
+                position: "absolute",
+                right: 15, // adjust as needed
+                top: 62, // (48 - 24) / 2
+              }}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? "eye-off" : "eye"}
+                size={24}
+                color="#aaa"
+              />
+            </TouchableOpacity>
+          </View>
           <CustomButton
             title="Sign In"
             onPress={onSignInPress}

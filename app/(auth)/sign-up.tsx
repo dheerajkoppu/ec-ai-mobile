@@ -5,12 +5,13 @@ import {
   Alert,
   Platform,
   Keyboard,
-  TouchableWithoutFeedback,
   TextInput,
+  TouchableOpacity,
 } from "react-native";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
 import { Link, router } from "expo-router";
 import OAuth from "@/components/OAuth";
@@ -18,7 +19,6 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { fetchAPI } from "@/lib/fetch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { Email } from "@clerk/clerk-js/dist/types/ui/icons";
 
 const Sign_Up = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -30,6 +30,13 @@ const Sign_Up = () => {
     email: "",
     password: "",
   });
+  // State variable to track password visibility
+  const [showPassword, setShowPassword] = useState(false);
+
+  // Function to toggle the password visibility state
+  const toggleShowPassword = () => {
+    setShowPassword(!showPassword);
+  };
 
   const [verification, setVerification] = useState({
     state: "default",
@@ -40,8 +47,8 @@ const Sign_Up = () => {
   const onSignUpPress = async () => {
     if (!isLoaded) return;
 
-    // Start sign-up process using email and password provided
     try {
+      // Start sign-up process using email and password provided
       await signUp.create({
         emailAddress: form.email,
         password: form.password,
@@ -50,14 +57,15 @@ const Sign_Up = () => {
       // Send user an email with verification code
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
-      // Set 'pendingVerification' to true to display second form
-      // and capture OTP code
+      // Set to 'pending' to display the verification modal
       setVerification({
         ...verification,
         state: "pending",
+        error: "",
+        code: "",
       });
     } catch (err: any) {
-      console.error(JSON.stringify(err, null, 2));
+      console.log(JSON.stringify(err, null, 2));
       Alert.alert("Error", err.errors[0].longMessage);
     }
   };
@@ -67,14 +75,13 @@ const Sign_Up = () => {
     if (!isLoaded) return;
 
     try {
-      // Use the code the user provided to attempt verification
+      // Attempt to verify the code entered by the user
       const signUpAttempt = await signUp.attemptEmailAddressVerification({
         code: verification.code,
       });
 
-      // If verification was completed, set the session to active
-      // and redirect the user
       if (signUpAttempt.status === "complete") {
+        // If verification is complete, create user and set the session to active
         await fetchAPI("/(api)/user", {
           method: "POST",
           body: JSON.stringify({
@@ -86,29 +93,49 @@ const Sign_Up = () => {
         await setActive({ session: signUpAttempt.createdSessionId });
         setVerification({ ...verification, state: "success" });
       } else {
+        // For an incorrect code, keep the modal open and update the error message.
         setVerification({
           ...verification,
-          error: "Verification Failed",
-          state: "failed",
+          error: "Verification Failed. Please try again.",
+          state: "pending",
         });
       }
     } catch (err: any) {
+      // Keep the modal open by staying in 'pending' state on error
       setVerification({
         ...verification,
         error: err.errors[0].longMessage,
-        state: "failed",
+        state: "pending",
       });
       Alert.alert("Error", err.errors[0].longMessage);
-      console.error(JSON.stringify(err, null, 2));
+      console.log(JSON.stringify(err, null, 2));
     }
   };
+
+  // Function to resend the verification code
+  const onResendCode = async () => {
+    if (!isLoaded) return;
+    try {
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+      // Clear any previous error and optionally notify the user
+      setVerification({ ...verification, error: "" });
+      Alert.alert(
+        "Success",
+        "A new verification code has been sent to your email.",
+      );
+    } catch (err: any) {
+      setVerification({ ...verification, error: err.errors[0].longMessage });
+      console.log(JSON.stringify(err, null, 2));
+    }
+  };
+
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1 }}
       contentContainerStyle={{ flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
-      extraScrollHeight={20} // adjust as needed
-      scrollEnabled={false} // disables manual scrolling
+      extraScrollHeight={20}
+      scrollEnabled={false}
     >
       <View className={"flex-1 bg-primary-200"}>
         <View className="flex-1 bg-[#F5F7FA]">
@@ -138,6 +165,7 @@ const Sign_Up = () => {
               label="Email"
               placeholder="Enter your email"
               returnKeyType="next"
+              textContentType="emailAddress"
               keyboardShouldPersistTaps="handled"
               icon={icons.email}
               value={form.email}
@@ -146,21 +174,39 @@ const Sign_Up = () => {
               onSubmitEditing={() => passwordRef.current?.focus()}
             />
 
-            <InputField
-              label="Password"
-              keyboardShouldPersistTaps="handled"
-              placeholder="Enter your password"
-              icon={icons.lock}
-              secureTextEntry={true}
-              value={form.password}
-              onChangeText={(value) => setForm({ ...form, password: value })}
-              ref={passwordRef}
-              onSubmitEditing={() => {
-                Keyboard.dismiss();
-                onSignUpPress();
-              }}
-              returnKeyType="go"
-            />
+            <View style={{ position: "relative" }}>
+              <InputField
+                label="Password"
+                keyboardShouldPersistTaps="handled"
+                textContentType="newPassword"
+                placeholder="Enter your password"
+                icon={icons.lock}
+                secureTextEntry={!showPassword}
+                value={form.password}
+                onChangeText={(value) => setForm({ ...form, password: value })}
+                ref={passwordRef}
+                onSubmitEditing={() => {
+                  Keyboard.dismiss();
+                  onSignUpPress();
+                }}
+                returnKeyType="go"
+                style={{ paddingRight: 40 }}
+              />
+              <TouchableOpacity
+                onPress={toggleShowPassword}
+                style={{
+                  position: "absolute",
+                  right: 15,
+                  top: 62,
+                }}
+              >
+                <MaterialCommunityIcons
+                  name={showPassword ? "eye-off" : "eye"}
+                  size={24}
+                  color="#aaa"
+                />
+              </TouchableOpacity>
+            </View>
 
             <CustomButton
               title="Sign Up"
@@ -170,7 +216,7 @@ const Sign_Up = () => {
             <OAuth />
             <Link
               href="/sign-in"
-              className="text-bsae text-center text-general-200 mt-10"
+              className="text-base text-center text-general-200 mt-10"
             >
               <Text>Already have an account? </Text>
               <Text className="text-primary-500">Sign In</Text>
@@ -178,22 +224,28 @@ const Sign_Up = () => {
           </View>
           <ReactNativeModal
             isVisible={verification.state === "pending"}
+            style={{ justifyContent: "flex-start", marginTop: 130 }} // adjust marginTop as needed
             onModalHide={() => {
               if (verification.state === "success") setShowSuccessModal(true);
             }}
           >
-            <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h[300px]">
+            <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h-[300px]">
               <Text className="text-2xl font-PoppinsSemiBold mb-2">
                 Verification
               </Text>
               <Text className="font-PoppinsRegular mb-5">
-                We've sent a verification code to {form.email}
+                We've sent a verification code to
+                <Text className="text-primary-900"> {form.email}</Text>
               </Text>
               <InputField
                 label="Code"
+                textContentType="oneTimeCode"
                 icon={icons.lock}
+                keyboardShouldPersistTaps="false"
                 placeholder="12345"
+                autoFocus={true}
                 value={verification.code}
+                maxLength={6}
                 keyboardType="numeric"
                 onChangeText={(code) =>
                   setVerification({ ...verification, code })
@@ -209,6 +261,9 @@ const Sign_Up = () => {
                 onPress={onPressVerify}
                 className="mt-5 bg-primary-500"
               />
+              <TouchableOpacity onPress={onResendCode} className="mt-3">
+                <Text className="text-blue-500 text-center">Resend Code</Text>
+              </TouchableOpacity>
             </View>
           </ReactNativeModal>
 
@@ -221,7 +276,7 @@ const Sign_Up = () => {
               <Text className="text-3xl font-PoppinsSemiBold text-center">
                 Verified
               </Text>
-              <Text className="text-sm text-gray-400 font-PoppinsRegular text-center mt-e">
+              <Text className="text-sm text-general-200 font-PoppinsRegular text-center mt-2">
                 You have successfully verified your account.
               </Text>
               <CustomButton

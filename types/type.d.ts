@@ -84,6 +84,7 @@ declare interface InputFieldProps extends TextInputProps {
   secureTextEntry?: boolean;
   labelStyle?: string;
   containerStyle?: string;
+  maxLength?: number;
   inputStyle?: string;
   iconStyle?: string;
   className?: string;
