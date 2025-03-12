@@ -12,7 +12,7 @@ export default function Home() {
   const recentActivities = [
     { name: "Volunteered at shelter", timestamp: "2 days ago" },
     { name: "Hackathon Participation", timestamp: "4 days ago" },
-    { name: "CS Club Meeting", timestamp: "6 days ago" },
+    { name: "Comp Sci Club Meeting", timestamp: "6 days ago" },
   ];
 
   return (
