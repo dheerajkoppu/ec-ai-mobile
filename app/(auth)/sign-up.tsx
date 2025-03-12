@@ -126,6 +126,7 @@ const Sign_Up = () => {
             <InputField
               label="Name"
               placeholder="Enter your name"
+              keyboardShouldPersistTaps="handled"
               returnKeyType="next"
               icon={icons.person}
               value={form.name}
@@ -137,6 +138,7 @@ const Sign_Up = () => {
               label="Email"
               placeholder="Enter your email"
               returnKeyType="next"
+              keyboardShouldPersistTaps="handled"
               icon={icons.email}
               value={form.email}
               onChangeText={(value) => setForm({ ...form, email: value })}
@@ -146,6 +148,7 @@ const Sign_Up = () => {
 
             <InputField
               label="Password"
+              keyboardShouldPersistTaps="handled"
               placeholder="Enter your password"
               icon={icons.lock}
               secureTextEntry={true}

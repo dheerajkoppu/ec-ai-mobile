@@ -66,6 +66,7 @@ const Sign_In = () => {
             returnKeyType="next"
             placeholder="Enter your email"
             icon={icons.email}
+            keyboardShouldPersistTaps="handled"
             value={form.email}
             onSubmitEditing={() => passwordRef.current?.focus()}
             onChangeText={(value) => setForm({ ...form, email: value })}
