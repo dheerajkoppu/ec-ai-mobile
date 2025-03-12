@@ -1,24 +1,42 @@
 import { Tabs } from "expo-router";
-import { Image, View, ImageSourcePropType, Pressable } from "react-native";
+import {
+  Image,
+  View,
+  ImageSourcePropType,
+  TouchableOpacity,
+} from "react-native";
 import { icons } from "@/constants";
+import { useNavigation } from "@react-navigation/native"; // Import navigation hook
 
 const TabIcon = ({
   source,
   focused,
+  screenName,
 }: {
   source: ImageSourcePropType;
   focused: boolean;
-}) => (
-  <View
-    className={`flex flex-row justify-center items-center rounded-full ${focused ? "#F5F7FA" : ""}`}
-  >
-    <View
-      className={`rounded-full w-14 h-14 items-center justify-center ${focused ? "bg-primary-600" : ""}`}
+  screenName: string;
+}) => {
+  const navigation = useNavigation(); // Get navigation instance
+
+  return (
+    <TouchableOpacity
+      onPress={() => navigation.navigate(screenName as never)} // Navigate correctly
+      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Expands tap area
+      activeOpacity={1} // Prevents flickering effect
     >
-      <Image source={source} resizeMode="contain" className="w-7 h-7" />
-    </View>
-  </View>
-);
+      <View
+        className={`flex flex-row justify-center items-center rounded-full ${focused ? "#F5F7FA" : ""}`}
+      >
+        <View
+          className={`rounded-full w-14 h-14 items-center justify-center ${focused ? "bg-primary-900" : ""}`}
+        >
+          <Image source={source} resizeMode="contain" className="w-7 h-7" />
+        </View>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const Layout = () => (
   <Tabs
@@ -30,13 +48,15 @@ const Layout = () => (
       tabBarStyle: {
         backgroundColor: "#5b55f6",
         paddingBottom: 50,
-        overflow: "hidden",
         height: 100,
         display: "flex",
         justifyContent: "space-between",
         alignItems: "center",
         flexDirection: "row",
         position: "absolute",
+      },
+      tabBarItemStyle: {
+        paddingVertical: 20, // Expands the touch area vertically
       },
     }}
   >
@@ -46,9 +66,7 @@ const Layout = () => (
         title: "Home",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <TabIcon focused={focused} source={icons.home1} />
-          </Pressable>
+          <TabIcon focused={focused} source={icons.home1} screenName="home" />
         ),
       }}
     />
@@ -58,9 +76,11 @@ const Layout = () => (
         title: "Track Activities",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <TabIcon focused={focused} source={icons.track_activities1} />
-          </Pressable>
+          <TabIcon
+            focused={focused}
+            source={icons.track_activities1}
+            screenName="track_activities"
+          />
         ),
       }}
     />
@@ -70,9 +90,11 @@ const Layout = () => (
         title: "Add Activity",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <TabIcon focused={focused} source={icons.add_activity1} />
-          </Pressable>
+          <TabIcon
+            focused={focused}
+            source={icons.add_activity1}
+            screenName="add_activity"
+          />
         ),
       }}
     />
@@ -82,9 +104,11 @@ const Layout = () => (
         title: "New Opportunities",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <TabIcon focused={focused} source={icons.new_opportunities1} />
-          </Pressable>
+          <TabIcon
+            focused={focused}
+            source={icons.new_opportunities1}
+            screenName="new_opportunities"
+          />
         ),
       }}
     />
@@ -94,9 +118,11 @@ const Layout = () => (
         title: "Profile",
         headerShown: false,
         tabBarIcon: ({ focused }) => (
-          <Pressable hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}>
-            <TabIcon focused={focused} source={icons.profile1} />
-          </Pressable>
+          <TabIcon
+            focused={focused}
+            source={icons.profile1}
+            screenName="profile"
+          />
         ),
       }}
     />
