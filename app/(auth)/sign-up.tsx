@@ -230,6 +230,20 @@ const Sign_Up = () => {
             }}
           >
             <View className="bg-primary-200 px-7 py-9 rounded-2xl min-h-[300px]">
+              {/* Exit icon at top left */}
+              <TouchableOpacity
+                onPress={() =>
+                  setVerification({
+                    ...verification,
+                    state: "default",
+                    code: "",
+                    error: "",
+                  })
+                }
+                style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+              >
+                <MaterialCommunityIcons name="close" size={24} color="#000" />
+              </TouchableOpacity>
               <Text className="text-2xl font-PoppinsSemiBold mb-2">
                 Verification
               </Text>

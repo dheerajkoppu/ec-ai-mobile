@@ -75,7 +75,7 @@ const Sign_In = () => {
             returnKeyType="next"
             placeholder="Enter your email"
             icon={icons.email}
-            keyboardShouldPersistTaps="handled"
+            keyboardShouldPersistTaps="never"
             value={form.email}
             onSubmitEditing={() => passwordRef.current?.focus()}
             onChangeText={(value) => setForm({ ...form, email: value })}
@@ -83,7 +83,7 @@ const Sign_In = () => {
           <View style={{ position: "relative" }}>
             <InputField
               label="Password"
-              keyboardShouldPersistTaps="handled"
+              keyboardShouldPersistTaps="never"
               placeholder="Enter your password"
               icon={icons.lock}
               secureTextEntry={!showPassword}
