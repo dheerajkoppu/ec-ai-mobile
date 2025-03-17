@@ -7,12 +7,16 @@ import {
   FlatList,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { FontAwesome } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 
 interface Activity {
   id: number;
   name: string;
   category: string;
   hours: number;
+  weeksPerYear: number;
+  description: string;
 }
 
 const activitiesData: Activity[] = [
@@ -21,9 +25,25 @@ const activitiesData: Activity[] = [
     name: "Volunteering at Shelter",
     category: "Volunteering",
     hours: 20,
+    weeksPerYear: 40,
+    description: "Helping at a local animal shelter.",
   },
-  { id: 2, name: "Basketball Training", category: "Sports", hours: 15 },
-  { id: 3, name: "Math Club", category: "Academic Clubs", hours: 10 },
+  {
+    id: 2,
+    name: "Basketball Training",
+    category: "Sports",
+    hours: 15,
+    weeksPerYear: 35,
+    description: "Weekly basketball practice and games.",
+  },
+  {
+    id: 3,
+    name: "Math Club",
+    category: "Academic Clubs",
+    hours: 10,
+    weeksPerYear: 30,
+    description: "Problem-solving and competition prep.",
+  },
 ];
 
 const TrackActivities = () => {
@@ -56,47 +76,53 @@ const TrackActivities = () => {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4 py-6">
-      <Text className="text-lg font-bold mb-4">📋 Activities List</Text>
+    <SafeAreaView className="flex-1 bg-[#f5f7fa] px-4 py-6">
+      <Text className="text-2xl font-black text-black mb-4 font-poppins">
+        Track Activities
+      </Text>
 
       {/* Search Bar */}
       <TextInput
-        className="bg-gray-100 p-2 rounded-lg mb-4"
+        className="bg-gray-100 p-2 rounded-lg mb-4 font-poppins"
         placeholder="Search activities..."
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
 
-      {/* Sorting Options */}
-      <View className="flex-row justify-between mb-4">
-        <TouchableOpacity onPress={() => sortActivities("hours")}>
-          <Text
-            className={`text-blue-500 ${sortOption === "hours" ? "font-bold" : ""}`}
-          >
-            Sort by Hours
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => sortActivities("category")}>
-          <Text
-            className={`text-blue-500 ${sortOption === "category" ? "font-bold" : ""}`}
-          >
-            Sort by Category
-          </Text>
-        </TouchableOpacity>
-      </View>
+      {/* Filter Dropdown */}
+      <Picker
+        selectedValue={sortOption}
+        onValueChange={(itemValue: string) => sortActivities(itemValue)}
+        className="bg-gray-200 p-2 rounded-lg mb-4 font-poppins"
+      >
+        <Picker.Item label="Sort by Hours" value="hours" />
+        <Picker.Item label="Sort by Category" value="category" />
+      </Picker>
 
       {/* Activities List */}
       <FlatList
         data={filteredActivities}
         keyExtractor={(item) => item.id.toString()}
         renderItem={({ item }) => (
-          <View className="bg-gray-100 p-3 rounded-lg mb-2 flex-row justify-between">
-            <Text>
-              {item.name} - {item.category} ({item.hours} hrs)
+          <View className="bg-[#5b55f6] p-4 rounded-lg mb-3">
+            <Text className="text-white font-poppins text-lg font-bold">
+              {item.name}
             </Text>
-            <TouchableOpacity onPress={() => deleteActivity(item.id)}>
-              <Text className="text-red-500">Delete</Text>
-            </TouchableOpacity>
+            <Text className="text-white font-poppins">
+              {item.category} ({item.hours} hrs per week, {item.weeksPerYear}{" "}
+              weeks per year)
+            </Text>
+            <Text className="text-white font-poppins text-sm">
+              {item.description}
+            </Text>
+            <View className="flex-row justify-end mt-2">
+              <TouchableOpacity className="mr-4">
+                <FontAwesome name="pencil" size={20} color="white" />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => deleteActivity(item.id)}>
+                <FontAwesome name="trash" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />
