@@ -5,9 +5,9 @@ import { useState } from "react";
 interface Opportunity {
   id: string;
   title: string;
-  category: string;
+  careerField: string;
   location: string;
-  difficulty: string;
+  duration?: string;
   deadline?: string;
 }
 
@@ -15,25 +15,25 @@ const opportunitiesData: Opportunity[] = [
   {
     id: "1",
     title: "Robotics Club",
-    category: "Clubs",
+    careerField: "Clubs",
     location: "In-Person",
-    difficulty: "Medium",
+    duration: "3 months",
     deadline: "March 20",
   },
   {
     id: "2",
     title: "Summer Internship at Tech Co.",
-    category: "Internships",
+    careerField: "Internships",
     location: "Remote",
-    difficulty: "Hard",
+    duration: "2 months",
     deadline: "April 10",
   },
   {
     id: "3",
     title: "Math Competition",
-    category: "Competitions",
+    careerField: "Competitions",
     location: "In-Person",
-    difficulty: "Hard",
+    duration: "1 day",
     deadline: "March 25",
   },
 ];
@@ -50,8 +50,15 @@ const New_Opportunities = () => {
   };
 
   return (
-    <SafeAreaView style={{ padding: 20 }}>
-      <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 10 }}>
+    <SafeAreaView style={{ padding: 20, backgroundColor: "#f5f7fa" }}>
+      <Text
+        style={{
+          fontSize: 30,
+          fontWeight: "bold",
+          marginBottom: 10,
+          fontFamily: "Poppins",
+        }}
+      >
         New Opportunities
       </Text>
       <FlatList
@@ -61,29 +68,53 @@ const New_Opportunities = () => {
           <View
             style={{
               padding: 10,
-              backgroundColor: "#EEE",
+              backgroundColor: "white",
               marginBottom: 10,
               borderRadius: 8,
             }}
           >
-            <Text style={{ fontSize: 16, fontWeight: "bold" }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontWeight: "bold",
+                fontFamily: "Poppins",
+              }}
+            >
               {item.title}
             </Text>
-            <Text>Category: {item.category}</Text>
-            <Text>Location: {item.location}</Text>
-            <Text>Difficulty: {item.difficulty}</Text>
-            {item.deadline && <Text>Deadline: {item.deadline}</Text>}
+            <Text style={{ fontFamily: "Poppins" }}>
+              Career Field: {item.careerField}
+            </Text>
+            <Text style={{ fontFamily: "Poppins" }}>
+              Location: {item.location}
+            </Text>
+            {item.duration && (
+              <Text style={{ fontFamily: "Poppins" }}>
+                Duration: {item.duration}
+              </Text>
+            )}
+            {item.deadline && (
+              <Text style={{ fontFamily: "Poppins" }}>
+                Deadline: {item.deadline}
+              </Text>
+            )}
             <TouchableOpacity
               onPress={() => handleSave(item.id)}
               style={{
                 marginTop: 5,
-                backgroundColor: "purple",
+                backgroundColor: "#5b55f6",
                 padding: 5,
                 borderRadius: 5,
               }}
             >
-              <Text style={{ color: "white", textAlign: "center" }}>
-                {savedOpportunities.has(item.id) ? "Saved" : "Save for Later"}
+              <Text
+                style={{
+                  color: "white",
+                  textAlign: "center",
+                  fontFamily: "Poppins",
+                }}
+              >
+                {savedOpportunities.has(item.id) ? "Saved" : "Apply Now"}
               </Text>
             </TouchableOpacity>
           </View>
