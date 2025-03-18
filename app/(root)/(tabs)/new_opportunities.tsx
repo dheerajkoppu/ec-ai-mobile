@@ -50,7 +50,7 @@ const New_Opportunities = () => {
   };
 
   return (
-    <SafeAreaView style={{ padding: 20, backgroundColor: "#f5f7fa" }}>
+    <SafeAreaView style={{ padding: 20 }}>
       <Text
         style={{
           fontSize: 30,
@@ -67,7 +67,7 @@ const New_Opportunities = () => {
         renderItem={({ item }) => (
           <View
             style={{
-              padding: 10,
+              padding: 15, // Increased padding for better spacing
               backgroundColor: "white",
               marginBottom: 10,
               borderRadius: 8,

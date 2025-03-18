@@ -218,6 +218,7 @@ const TrackActivities = () => {
       <FlatList
         data={filteredActivities}
         keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={{ paddingBottom: 50 }} // Add padding to the bottom
         renderItem={({ item }) => (
           <View className="bg-white p-4 mb-4 rounded-lg shadow z-0">
             {/* Category in bold */}

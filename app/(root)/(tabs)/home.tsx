@@ -27,10 +27,10 @@ export default function Home() {
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4">
-              <Text className="text-lg font-semibold">
+              <Text className="text-lg font-PoppinsSemiBold">
                 Hello, {user?.fullName}!
               </Text>
-              <Text className="text-gray-500">
+              <Text className="text-gray-500 font-PoppinsRegular">
                 Total Hours Logged: {totalHoursLogged}
               </Text>
             </View>
@@ -38,14 +38,14 @@ export default function Home() {
 
           {/* Quick Stats */}
           <View className="bg-general-400 p-6 rounded-lg mb-4 space-y-2">
-            <Text className="text-xl text-white font-semibold">
+            <Text className="text-xl text-white font-PoppinsSemiBold">
               Quick Stats
             </Text>
-            <Text className="text-white text-base font-bold">
+            <Text className="text-white text-base font-PoppinsSemiBold ">
               Activities this week:{" "}
               <Text className="font-normal">{activitiesThisWeek}</Text>
             </Text>
-            <Text className="text-white text-base font-bold">
+            <Text className="text-white text-base font-PoppinsSemiBold font-bold">
               Streak: <Text className="font-normal">{streak} days</Text>
             </Text>
           </View>
@@ -54,13 +54,13 @@ export default function Home() {
 
           {/* Recent Activities */}
           <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
-            <Text className="text-xl font-bold text-gray-900 mb-4">
+            <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
               Recent Activities
             </Text>
             {recentActivities.map((activity, index) => (
               <View
                 key={index}
-                className="flex-row justify-between items-center py-3 border-b border-gray-200 last:border-b-0"
+                className="flex-row justify-between font-PoppinsRegular items-center py-3 border-b border-gray-200 last:border-b-0"
               >
                 <Text className="text-base text-gray-800">{activity.name}</Text>
                 <Text className="text-sm text-gray-500">
