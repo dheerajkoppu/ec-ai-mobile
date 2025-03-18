@@ -10,6 +10,16 @@ declare interface Driver {
   rating: number;
 }
 
+declare interface Activity {
+  id: number;
+  name: string;
+  category: string;
+  hours: number;
+  hoursPerWeek: number;
+  weeksPerYear: number;
+  description: string;
+  grade: string; // e.g., "11, 12"
+}
 declare interface MarkerData {
   latitude: number;
   longitude: number;

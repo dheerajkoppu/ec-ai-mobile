@@ -1,6 +1,7 @@
 import { SignedIn, useUser } from "@clerk/clerk-expo";
 import { View, Text, Image, ScrollView, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 
 export default function Home() {
   const { user } = useUser();
@@ -16,7 +17,7 @@ export default function Home() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4 py-6">
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6 font-PoppinsBlack">
       <SignedIn>
         <ScrollView>
           {/* User Snapshot */}
@@ -36,24 +37,33 @@ export default function Home() {
           </View>
 
           {/* Quick Stats */}
-          <View className="bg-gray-100 p-4 rounded-lg mb-4">
-            <Text className="text-md font-semibold">Quick Stats</Text>
-            <Text>Activities this week: {activitiesThisWeek}</Text>
-            <Text>Streak: {streak} days</Text>
+          <View className="bg-general-400 p-6 rounded-lg mb-4 space-y-2">
+            <Text className="text-xl text-white font-semibold">
+              Quick Stats
+            </Text>
+            <Text className="text-white text-base font-bold">
+              Activities this week:{" "}
+              <Text className="font-normal">{activitiesThisWeek}</Text>
+            </Text>
+            <Text className="text-white text-base font-bold">
+              Streak: <Text className="font-normal">{streak} days</Text>
+            </Text>
           </View>
 
+          {/* Quick Stats */}
+
           {/* Recent Activities */}
-          <View className="mb-4">
-            <Text className="text-md font-semibold mb-2">
+          <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
+            <Text className="text-xl font-bold text-gray-900 mb-4">
               Recent Activities
             </Text>
             {recentActivities.map((activity, index) => (
               <View
                 key={index}
-                className="flex-row justify-between py-2 border-b border-gray-200"
+                className="flex-row justify-between items-center py-3 border-b border-gray-200 last:border-b-0"
               >
-                <Text>{activity.name}</Text>
-                <Text className="text-gray-500 text-sm">
+                <Text className="text-base text-gray-800">{activity.name}</Text>
+                <Text className="text-sm text-gray-500">
                   {activity.timestamp}
                 </Text>
               </View>
@@ -62,12 +72,23 @@ export default function Home() {
 
           {/* Shortcuts */}
           <View className="mb-4">
-            <Text className="text-md font-semibold mb-2">Quick Actions</Text>
-            <TouchableOpacity className="bg-blue-500 p-3 rounded-lg mb-2">
-              <Text className="text-white text-center">Track Activities</Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/track_activities");
+              }}
+              className="bg-general-400  p-3 rounded-lg mb-2"
+            >
+              <Text className="text-white font-PoppinsSemiBold text-base text-center">
+                Track Activities
+              </Text>
             </TouchableOpacity>
-            <TouchableOpacity className="bg-green-500 p-3 rounded-lg">
-              <Text className="text-white text-center">
+            <TouchableOpacity
+              onPress={() => {
+                router.push("/new_opportunities");
+              }}
+              className="bg-general-400  p-3 rounded-lg"
+            >
+              <Text className="text-white font-PoppinsSemiBold text-base text-center">
                 Discover New Opportunities
               </Text>
             </TouchableOpacity>
