@@ -70,7 +70,7 @@ const New_Opportunities = () => {
   };
 
   return (
-    <SafeAreaView style={{ padding: 20 }}>
+    <SafeAreaView style={{ padding: 20, flex: 1 }}>
       <Text
         style={{
           fontSize: 30,
@@ -97,6 +97,7 @@ const New_Opportunities = () => {
       <FlatList
         data={opportunities}
         keyExtractor={(item) => item.id}
+        contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => (
           <View
             style={{
@@ -152,9 +153,7 @@ const New_Opportunities = () => {
                 }}
               >
                 <Text style={{ color: "white", fontFamily: "Poppins" }}>
-                  {addedOpportunities.has(item.id)
-                    ? "Added"
-                    : "Auto-add Activity"}
+                  {addedOpportunities.has(item.id) ? "Added" : "Add Activity"}
                 </Text>
               </TouchableOpacity>
 
