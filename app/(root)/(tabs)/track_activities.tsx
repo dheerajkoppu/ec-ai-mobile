@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { IMAGE_TYPES } from "expo-asset/plugin/build/utils";
 import { icons } from "@/constants";
 import track_activities2 from "@/assets/icons/track_activities2.png";
+import { Picker } from "@react-native-picker/picker";
 
 const activitiesData: Activity[] = [
   {
