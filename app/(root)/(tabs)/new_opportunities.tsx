@@ -1,6 +1,7 @@
 import { Text, View, FlatList, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
+import { Picker } from "@react-native-picker/picker";
 
 interface Opportunity {
   id: string;
@@ -44,9 +45,21 @@ const New_Opportunities = () => {
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
     new Set(),
   );
+  const [sortOption, setSortOption] = useState<string>("default");
 
   const handleSave = (id: string) => {
     setSavedOpportunities((prev) => new Set(prev).add(id));
+  };
+
+  const sortOpportunities = (option: string) => {
+    let sortedOpportunities = [...opportunities];
+    if (option === "careerField") {
+      sortedOpportunities.sort((a, b) =>
+        a.careerField.localeCompare(b.careerField),
+      );
+    }
+    setSortOption(option);
+    setOpportunities(sortedOpportunities);
   };
 
   return (
@@ -61,13 +74,26 @@ const New_Opportunities = () => {
       >
         New Opportunities
       </Text>
+
+      {/* Sorting Dropdown */}
+      <View style={{ marginBottom: 15 }}>
+        <Picker
+          selectedValue={sortOption}
+          onValueChange={(itemValue) => sortOpportunities(itemValue)}
+          style={{ height: 50, backgroundColor: "white", borderRadius: 8 }}
+        >
+          <Picker.Item label="Sort by Career Field" value="default" />
+          <Picker.Item label="Career Field" value="careerField" />
+        </Picker>
+      </View>
+
       <FlatList
         data={opportunities}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <View
             style={{
-              padding: 15, // Increased padding for better spacing
+              padding: 15,
               backgroundColor: "white",
               marginBottom: 10,
               borderRadius: 8,
@@ -98,25 +124,54 @@ const New_Opportunities = () => {
                 Deadline: {item.deadline}
               </Text>
             )}
-            <TouchableOpacity
-              onPress={() => handleSave(item.id)}
+            <View
               style={{
-                marginTop: 5,
-                backgroundColor: "#5b55f6",
-                padding: 5,
-                borderRadius: 5,
+                flexDirection: "row",
+                justifyContent: "space-between",
+                marginTop: 10,
               }}
             >
-              <Text
+              <TouchableOpacity
+                onPress={() => handleSave(item.id)}
                 style={{
-                  color: "white",
-                  textAlign: "center",
-                  fontFamily: "Poppins",
+                  backgroundColor: "#5b55f6",
+                  paddingVertical: 8,
+                  paddingHorizontal: 15,
+                  borderRadius: 5,
                 }}
               >
-                {savedOpportunities.has(item.id) ? "Saved" : "Apply Now"}
-              </Text>
-            </TouchableOpacity>
+                <Text
+                  style={{
+                    color: "white",
+                    textAlign: "center",
+                    fontFamily: "Poppins",
+                  }}
+                >
+                  {savedOpportunities.has(item.id)
+                    ? "Saved"
+                    : "Auto-add Activity"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => handleSave(item.id)}
+                style={{
+                  backgroundColor: "#5b55f6",
+                  paddingVertical: 8,
+                  paddingHorizontal: 15,
+                  borderRadius: 5,
+                }}
+              >
+                <Text
+                  style={{
+                    color: "white",
+                    textAlign: "center",
+                    fontFamily: "Poppins",
+                  }}
+                >
+                  {savedOpportunities.has(item.id) ? "Saved" : "Save"}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
         )}
       />
