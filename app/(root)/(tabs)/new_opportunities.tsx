@@ -45,10 +45,17 @@ const New_Opportunities = () => {
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
     new Set(),
   );
+  const [addedOpportunities, setAddedOpportunities] = useState<Set<string>>(
+    new Set(),
+  );
   const [sortOption, setSortOption] = useState<string>("default");
 
   const handleSave = (id: string) => {
-    setSavedOpportunities((prev) => new Set(prev).add(id));
+    setSavedOpportunities((prev) => new Set([...prev, id]));
+  };
+
+  const handleAutoAdd = (id: string) => {
+    setAddedOpportunities((prev) => new Set([...prev, id]));
   };
 
   const sortOpportunities = (option: string) => {
@@ -124,6 +131,7 @@ const New_Opportunities = () => {
                 Deadline: {item.deadline}
               </Text>
             )}
+
             <View
               style={{
                 flexDirection: "row",
@@ -132,26 +140,24 @@ const New_Opportunities = () => {
               }}
             >
               <TouchableOpacity
-                onPress={() => handleSave(item.id)}
+                onPress={() => handleAutoAdd(item.id)}
                 style={{
                   backgroundColor: "#5b55f6",
                   paddingVertical: 8,
                   paddingHorizontal: 15,
                   borderRadius: 5,
+                  flex: 1,
+                  marginRight: 10,
+                  alignItems: "center",
                 }}
               >
-                <Text
-                  style={{
-                    color: "white",
-                    textAlign: "center",
-                    fontFamily: "Poppins",
-                  }}
-                >
-                  {savedOpportunities.has(item.id)
-                    ? "Saved"
+                <Text style={{ color: "white", fontFamily: "Poppins" }}>
+                  {addedOpportunities.has(item.id)
+                    ? "Added"
                     : "Auto-add Activity"}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => handleSave(item.id)}
                 style={{
@@ -159,15 +165,11 @@ const New_Opportunities = () => {
                   paddingVertical: 8,
                   paddingHorizontal: 15,
                   borderRadius: 5,
+                  flex: 1,
+                  alignItems: "center",
                 }}
               >
-                <Text
-                  style={{
-                    color: "white",
-                    textAlign: "center",
-                    fontFamily: "Poppins",
-                  }}
-                >
+                <Text style={{ color: "white", fontFamily: "Poppins" }}>
                   {savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 </Text>
               </TouchableOpacity>
