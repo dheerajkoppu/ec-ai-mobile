@@ -1,13 +1,11 @@
-import React, { useState } from "react";
-import {
-  Text,
-  TextInput,
-  TouchableOpacity,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import React, { useState, useRef } from "react";
+import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import InputField from "@/components/InputField";
+import CustomButton from "@/components/CustomButton";
+
+const gradeOptions = ["9", "10", "11", "12", "Post-12", "Pre-9"];
 
 const AddActivity = () => {
   const [activityName, setActivityName] = useState("");
@@ -16,97 +14,127 @@ const AddActivity = () => {
   const [weeksPerYear, setWeeksPerYear] = useState("");
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+
+  // Creating refs for each input field
+  const careerFieldRef = useRef<TextInput>(null);
+  const timeSpentRef = useRef<TextInput>(null);
+  const weeksPerYearRef = useRef<TextInput>(null);
+  const rolesRef = useRef<TextInput>(null);
+  const descriptionRef = useRef<TextInput>(null);
+
+  const toggleGradeSelection = (grade: string) => {
+    if (selectedGrades.includes(grade)) {
+      setSelectedGrades(selectedGrades.filter((g) => g !== grade));
+    } else {
+      setSelectedGrades([...selectedGrades, grade]);
+    }
+  };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100 p-6">
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        className="flex-1"
+    <SafeAreaView className="flex-1 bg-gray-100 p-3">
+      <View>
+        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+          Add New Activity
+        </Text>
+      </View>
+      <KeyboardAwareScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        extraScrollHeight={90}
       >
-        <ScrollView
-          className="space-y-6"
-          contentContainerStyle={{ paddingBottom: 100 }}
-        >
-          <Text className="text-3xl font-bold text-gray-800 font-poppins">
-            Add New Activity
-          </Text>
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Name of Activity <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
+        <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
+          <InputField
+            label="Name of Activity"
             placeholder="Enter activity name"
-            placeholderTextColor="#4B5563"
             value={activityName}
             onChangeText={setActivityName}
+            returnKeyType="next"
+            onSubmitEditing={() => careerFieldRef.current?.focus()}
           />
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Career Field <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
+          <InputField
+            ref={careerFieldRef}
+            label="Career Field"
             placeholder="e.g., Engineering, Medicine"
-            placeholderTextColor="#4B5563"
             value={careerField}
             onChangeText={setCareerField}
+            returnKeyType="next"
+            onSubmitEditing={() => timeSpentRef.current?.focus()}
           />
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Hours per Week <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
+          <InputField
+            ref={timeSpentRef}
+            label="Hours per Week"
             placeholder="Enter hours"
-            placeholderTextColor="#4B5563"
-            keyboardType="numeric"
+            keyboardType="number-pad"
             value={timeSpent}
             onChangeText={setTimeSpent}
+            returnKeyType="next"
+            onSubmitEditing={() => weeksPerYearRef.current?.focus()}
           />
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Weeks Per Year <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
+          <InputField
+            ref={weeksPerYearRef}
+            label="Weeks Per Year"
             placeholder="Enter weeks"
-            placeholderTextColor="#4B5563"
-            keyboardType="numeric"
+            keyboardType="number-pad"
             value={weeksPerYear}
             onChangeText={setWeeksPerYear}
+            returnKeyType="next"
+            onSubmitEditing={() => rolesRef.current?.focus()}
           />
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Roles <Text className="text-red-500">*</Text>
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
+          <InputField
+            ref={rolesRef}
+            label="Roles"
             placeholder="Enter roles"
-            placeholderTextColor="#4B5563"
             value={roles}
             onChangeText={setRoles}
+            returnKeyType="next"
+            onSubmitEditing={() => descriptionRef.current?.focus()}
           />
-
-          <Text className="text-gray-700 font-medium font-poppins">
-            Description / Notes (Optional)
-          </Text>
-          <TextInput
-            className="border border-gray-300 rounded-lg p-4 bg-white shadow-sm font-poppins"
-            placeholder="Optional"
-            placeholderTextColor="#4B5563"
-            multiline
+          <InputField
+            ref={descriptionRef}
+            label="Description / Notes (Optional)"
+            placeholder="Enter Description"
             value={description}
             onChangeText={setDescription}
+            multiline
           />
 
-          <TouchableOpacity className="bg-[#5b55f6] p-4 rounded-lg items-center shadow-md mt-4">
-            <Text className="text-white font-bold font-poppins">
-              Add Activity
+          <View>
+            <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
+              Grades <Text className="text-red-500">*</Text>
             </Text>
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <View className="flex-row flex-wrap gap-3">
+              {gradeOptions.map((grade) => (
+                <TouchableOpacity
+                  key={grade}
+                  onPress={() => toggleGradeSelection(grade)}
+                  className={`px-2 py-2 border rounded-lg ${
+                    selectedGrades.includes(grade)
+                      ? "bg-[#5b55f6] border-[#5b55f6]"
+                      : "border-gray-300 bg-white"
+                  }`}
+                >
+                  <Text
+                    className={`font-PoppinsRegular ${
+                      selectedGrades.includes(grade)
+                        ? "text-white"
+                        : "text-gray-700"
+                    }`}
+                  >
+                    {grade}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          <CustomButton
+            title="Add Activity"
+            onPress={() => {}}
+            disabled
+            className="mt-5"
+          />
+        </View>
+      </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };
