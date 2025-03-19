@@ -1,6 +1,6 @@
-import { Text, View, FlatList, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Picker } from "@react-native-picker/picker";
 
 interface Opportunity {
@@ -39,7 +39,7 @@ const opportunitiesData: Opportunity[] = [
   },
 ];
 
-const New_Opportunities = () => {
+const Opportunities = () => {
   const [opportunities, setOpportunities] =
     useState<Opportunity[]>(opportunitiesData);
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
@@ -58,117 +58,58 @@ const New_Opportunities = () => {
     setAddedOpportunities((prev) => new Set([...prev, id]));
   };
 
-  const sortOpportunities = (option: string) => {
-    let sortedOpportunities = [...opportunities];
-    if (option === "careerField") {
-      sortedOpportunities.sort((a, b) =>
-        a.careerField.localeCompare(b.careerField),
-      );
-    }
-    setSortOption(option);
-    setOpportunities(sortedOpportunities);
-  };
-
   return (
-    <SafeAreaView style={{ padding: 20, flex: 1 }}>
-      <Text
-        style={{
-          fontSize: 30,
-          fontWeight: "bold",
-          marginBottom: 10,
-          fontFamily: "Poppins",
-        }}
-      >
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6 ">
+      <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
         New Opportunities
       </Text>
 
-      {/* Sorting Dropdown */}
-      <View style={{ marginBottom: 15 }}>
-        <Picker
-          selectedValue={sortOption}
-          onValueChange={(itemValue) => sortOpportunities(itemValue)}
-          style={{ height: 50, backgroundColor: "white", borderRadius: 8 }}
-        >
-          <Picker.Item label="Sort by Career Field" value="default" />
-          <Picker.Item label="Career Field" value="careerField" />
-        </Picker>
-      </View>
-
+      {/* List of Opportunities */}
       <FlatList
         data={opportunities}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 80 }}
         renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 15,
-              backgroundColor: "white",
-              marginBottom: 10,
-              borderRadius: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "bold",
-                fontFamily: "Poppins",
-              }}
-            >
+          <View className="bg-white p-4 mb-4 rounded-lg shadow">
+            <Text className="font-PoppinsSemiBold text-base mb-2">
               {item.title}
             </Text>
-            <Text style={{ fontFamily: "Poppins" }}>
-              Career Field: {item.careerField}
+            <Text className="font-PoppinsRegular text-xs mb-1">
+              <Text className="font-PoppinsSemiBold">Field:</Text>{" "}
+              {item.careerField}
             </Text>
-            <Text style={{ fontFamily: "Poppins" }}>
-              Location: {item.location}
+            <Text className="font-PoppinsRegular text-xs mb-1">
+              <Text className="font-PoppinsSemiBold">Location: </Text>{" "}
+              {item.location}
             </Text>
             {item.duration && (
-              <Text style={{ fontFamily: "Poppins" }}>
-                Duration: {item.duration}
+              <Text className="font-PoppinsRegular text-xs mb-1">
+                <Text className="font-PoppinsSemiBold">Duration: </Text>{" "}
+                {item.duration}
               </Text>
             )}
             {item.deadline && (
-              <Text style={{ fontFamily: "Poppins" }}>
-                Deadline: {item.deadline}
+              <Text className="font-PoppinsRegular text-xs mb-1">
+                <Text className="font-PoppinsSemiBold">Deadline: </Text>{" "}
+                {item.deadline}
               </Text>
             )}
 
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 10,
-              }}
-            >
+            {/* Buttons */}
+            <View className="flex-row justify-between mt-4">
               <TouchableOpacity
                 onPress={() => handleAutoAdd(item.id)}
-                style={{
-                  backgroundColor: "#5b55f6",
-                  paddingVertical: 8,
-                  paddingHorizontal: 15,
-                  borderRadius: 5,
-                  flex: 1,
-                  marginRight: 10,
-                  alignItems: "center",
-                }}
+                className="bg-primary-500 px-4 py-2 rounded-lg flex-1 mr-2 items-center"
               >
-                <Text style={{ color: "white", fontFamily: "Poppins" }}>
+                <Text className="text-white font-PoppinsRegular">
                   {addedOpportunities.has(item.id) ? "Added" : "Add Activity"}
                 </Text>
               </TouchableOpacity>
-
               <TouchableOpacity
                 onPress={() => handleSave(item.id)}
-                style={{
-                  backgroundColor: "#5b55f6",
-                  paddingVertical: 8,
-                  paddingHorizontal: 15,
-                  borderRadius: 5,
-                  flex: 1,
-                  alignItems: "center",
-                }}
+                className="bg-primary-500 px-4 py-2 rounded-lg flex-1 items-center"
               >
-                <Text style={{ color: "white", fontFamily: "Poppins" }}>
+                <Text className="text-white font-PoppinsRegular">
                   {savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 </Text>
               </TouchableOpacity>
@@ -180,4 +121,4 @@ const New_Opportunities = () => {
   );
 };
 
-export default New_Opportunities;
+export default Opportunities;
