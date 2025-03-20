@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
@@ -52,6 +58,7 @@ const Opportunities = () => {
   );
   const [sortOption, setSortOption] = useState<string>("default");
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
+  const [refreshing, setRefreshing] = useState<boolean>(false);
 
   const handleSave = (id: string) => {
     setSavedOpportunities((prev) => new Set([...prev, id]));
@@ -72,6 +79,15 @@ const Opportunities = () => {
     setSortOption(option);
     setOpportunities(sortedOpportunities);
     setShowSortDropdown(false);
+  };
+
+  // Refresh function
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setOpportunities([...opportunitiesData]); // Reset to original data or fetch new data
+      setRefreshing(false);
+    }, 1000); // Simulate fetching data
   };
 
   // Filter activities based on search query
@@ -104,12 +120,13 @@ const Opportunities = () => {
           <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
         </TouchableOpacity>
         {showSortDropdown && (
-          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6  py-3 z-20">
+          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-3 z-20">
             <TouchableOpacity onPress={() => sortOpportunities("careerField")}>
               <Text className="text-general-400 font-PoppinsSemiBold">
                 Career Field
               </Text>
             </TouchableOpacity>
+            <View className="border-b border-gray-300 my-2" />
           </View>
         )}
       </View>
@@ -119,6 +136,9 @@ const Opportunities = () => {
         data={filteredOpportunities}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 80 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         renderItem={({ item }) => (
           <View className="bg-white p-4 mb-4 rounded-lg shadow">
             <Text className="font-PoppinsSemiBold text-base mb-2">
