@@ -32,7 +32,7 @@ const AddActivity = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100 p-3">
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View>
         <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Add New Activity

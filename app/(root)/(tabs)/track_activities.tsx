@@ -14,6 +14,7 @@ import { IMAGE_TYPES } from "expo-asset/plugin/build/utils";
 import { icons } from "@/constants";
 import track_activities2 from "@/assets/icons/track_activities2.png";
 import { Picker } from "@react-native-picker/picker";
+import InputField from "@/components/InputField";
 
 const activitiesData: Activity[] = [
   {
@@ -174,46 +175,46 @@ const TrackActivities = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View className="flex-row">
-        <Image
-          style={{ width: 30, height: 30, resizeMode: "contain" }}
-          source={icons.track_activities2}
-        />
-        <Text className="ml-3 text-xl font-PoppinsSemiBold mb-4">
+        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Track Activities
         </Text>
       </View>
+
       {/* Search Bar */}
-      <TextInput
-        className="bg-white text-black p-2 rounded-lg font-PoppinsRegular mb-4"
-        placeholder="Search Activities"
-        placeholderTextColor="black"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
+      <View className="mb-4">
+        <InputField
+          label=""
+          placeholder="Search Activities"
+          keyboardShouldPersistTaps="never"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+      </View>
+
       {/* Sorting Options */}
       <View className="flex-row mb-4 relative z-10">
         <TouchableOpacity
           onPress={() => setShowSortDropdown(!showSortDropdown)}
         >
-          <Text className="text-general-400 font-PoppinsSemiBold">
-            Sort By ▾
-          </Text>
+          <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
         </TouchableOpacity>
         {showSortDropdown && (
-          <View className="absolute bg-primary-200 p-2 rounded-lg shadow-lg mt-6 z-20">
+          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-3 z-20">
             <TouchableOpacity onPress={() => sortActivities("hours")}>
-              <Text className="text-general-400 font-PoppinsRegular mb-2">
+              <Text className="text-general-400 font-PoppinsSemiBold mb-2">
                 Hours
               </Text>
             </TouchableOpacity>
+            <View className="border-b border-gray-300 mb-2" />
             <TouchableOpacity onPress={() => sortActivities("category")}>
-              <Text className="text-general-400 font-PoppinsRegular">
+              <Text className="text-general-400 font-PoppinsSemiBold">
                 Career Field
               </Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
+
       {/* Activities List */}
       <FlatList
         data={filteredActivities}
