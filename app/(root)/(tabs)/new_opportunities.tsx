@@ -1,7 +1,14 @@
-import { Text, View, FlatList, TouchableOpacity } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
-import { Picker } from "@react-native-picker/picker";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  RefreshControl,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import InputField from "@/components/InputField";
+import CustomButton from "@/components/CustomButton";
 
 interface Opportunity {
   id: string;
@@ -39,16 +46,20 @@ const opportunitiesData: Opportunity[] = [
   },
 ];
 
-const New_Opportunities = () => {
+const Opportunities = () => {
   const [opportunities, setOpportunities] =
     useState<Opportunity[]>(opportunitiesData);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
     new Set(),
   );
   const [addedOpportunities, setAddedOpportunities] = useState<Set<string>>(
     new Set(),
   );
-  const [sortOption, setSortOption] = useState<string>("default");
+  const [removedOpportunities, setRemovedOpportunities] = useState<Set<string>>(
+    new Set(),
+  );
 
   const handleSave = (id: string) => {
     setSavedOpportunities((prev) => new Set([...prev, id]));
@@ -58,120 +69,102 @@ const New_Opportunities = () => {
     setAddedOpportunities((prev) => new Set([...prev, id]));
   };
 
-  const sortOpportunities = (option: string) => {
-    let sortedOpportunities = [...opportunities];
-    if (option === "careerField") {
-      sortedOpportunities.sort((a, b) =>
-        a.careerField.localeCompare(b.careerField),
+  // Refresh function - removes saved or added opportunities on refresh
+  const onRefresh = () => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRemovedOpportunities(
+        new Set([...savedOpportunities, ...addedOpportunities]),
       );
-    }
-    setSortOption(option);
-    setOpportunities(sortedOpportunities);
+      setSavedOpportunities(new Set()); // Reset saved state
+      setAddedOpportunities(new Set()); // Reset added state
+      setRefreshing(false);
+    }, 1000);
   };
 
+  // Filter out removed opportunities only after refresh
+  const filteredOpportunities = opportunities.filter(
+    (opportunity) => !removedOpportunities.has(opportunity.id),
+  );
+
   return (
-    <SafeAreaView style={{ padding: 20, flex: 1 }}>
-      <Text
-        style={{
-          fontSize: 30,
-          fontWeight: "bold",
-          marginBottom: 10,
-          fontFamily: "Poppins",
-        }}
-      >
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+      <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
         New Opportunities
       </Text>
 
-      {/* Sorting Dropdown */}
-      <View style={{ marginBottom: 15 }}>
-        <Picker
-          selectedValue={sortOption}
-          onValueChange={(itemValue) => sortOpportunities(itemValue)}
-          style={{ height: 50, backgroundColor: "white", borderRadius: 8 }}
-        >
-          <Picker.Item label="Sort by Career Field" value="default" />
-          <Picker.Item label="Career Field" value="careerField" />
-        </Picker>
+      {/* Search Bar */}
+      <View className="mb-4">
+        <InputField
+          label=""
+          keyboardShouldPersistTaps="never"
+          placeholder="Search Opportunities"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
       </View>
 
+      {/* List of Opportunities */}
       <FlatList
-        data={opportunities}
+        data={filteredOpportunities}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ paddingBottom: 80 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
         renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 15,
-              backgroundColor: "white",
-              marginBottom: 10,
-              borderRadius: 8,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 16,
-                fontWeight: "bold",
-                fontFamily: "Poppins",
-              }}
-            >
+          <View className="bg-white p-4 mb-4 rounded-lg shadow">
+            <Text className="font-PoppinsSemiBold text-base mb-2">
               {item.title}
             </Text>
-            <Text style={{ fontFamily: "Poppins" }}>
-              Career Field: {item.careerField}
+            <Text className="font-PoppinsRegular text-xs mb-1">
+              <Text className="font-PoppinsSemiBold">Field:</Text>{" "}
+              {item.careerField}
             </Text>
-            <Text style={{ fontFamily: "Poppins" }}>
-              Location: {item.location}
+            <Text className="font-PoppinsRegular text-xs mb-1">
+              <Text className="font-PoppinsSemiBold">Location: </Text>{" "}
+              {item.location}
             </Text>
             {item.duration && (
-              <Text style={{ fontFamily: "Poppins" }}>
-                Duration: {item.duration}
+              <Text className="font-PoppinsRegular text-xs mb-1">
+                <Text className="font-PoppinsSemiBold">Duration: </Text>{" "}
+                {item.duration}
               </Text>
             )}
             {item.deadline && (
-              <Text style={{ fontFamily: "Poppins" }}>
-                Deadline: {item.deadline}
+              <Text className="font-PoppinsRegular text-xs mb-1">
+                <Text className="font-PoppinsSemiBold">Deadline: </Text>{" "}
+                {item.deadline}
               </Text>
             )}
 
-            <View
-              style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
-                marginTop: 10,
-              }}
-            >
-              <TouchableOpacity
+            {/* Buttons */}
+            <View className="flex-row justify-between mt-4">
+              <CustomButton
+                title={
+                  addedOpportunities.has(item.id) ? "Added" : "Add Activity"
+                }
                 onPress={() => handleAutoAdd(item.id)}
-                style={{
-                  backgroundColor: "#5b55f6",
-                  paddingVertical: 8,
-                  paddingHorizontal: 15,
-                  borderRadius: 5,
-                  flex: 1,
-                  marginRight: 10,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "white", fontFamily: "Poppins" }}>
-                  {addedOpportunities.has(item.id) ? "Added" : "Add Activity"}
-                </Text>
-              </TouchableOpacity>
+                bgVariant="primary" // Keep valid value
+                textVariant="default"
+                className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
+                  addedOpportunities.has(item.id)
+                    ? "bg-primary-900"
+                    : "bg-primary"
+                }`}
+              />
 
-              <TouchableOpacity
+              <CustomButton
+                title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 onPress={() => handleSave(item.id)}
-                style={{
-                  backgroundColor: "#5b55f6",
-                  paddingVertical: 8,
-                  paddingHorizontal: 15,
-                  borderRadius: 5,
-                  flex: 1,
-                  alignItems: "center",
-                }}
-              >
-                <Text style={{ color: "white", fontFamily: "Poppins" }}>
-                  {savedOpportunities.has(item.id) ? "Saved" : "Save"}
-                </Text>
-              </TouchableOpacity>
+                bgVariant="primary" // Keep valid value
+                textVariant="default"
+                className={`px-4 py-2 rounded-lg flex-1 items-center ${
+                  savedOpportunities.has(item.id)
+                    ? "bg-primary-900"
+                    : "bg-primary"
+                }`}
+              />
             </View>
           </View>
         )}
@@ -180,4 +173,4 @@ const New_Opportunities = () => {
   );
 };
 
-export default New_Opportunities;
+export default Opportunities;
