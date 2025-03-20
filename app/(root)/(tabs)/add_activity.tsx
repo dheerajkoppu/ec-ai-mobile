@@ -40,7 +40,7 @@ const AddActivity = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-100 p-3">
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View>
         <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Add New Activity
@@ -53,7 +53,11 @@ const AddActivity = () => {
       >
         <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
           <InputField
-            label="Name of Activity"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Name of Activity <Text className="text-red-500">*</Text>
+              </Text>
+            }
             placeholder="Enter activity name"
             value={activityName}
             onChangeText={setActivityName}
@@ -63,7 +67,11 @@ const AddActivity = () => {
 
           {/* Dropdown for Career Field */}
           <DropdownField
-            label="Career Field"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Career Field <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={careerFields}
             value={careerField}
             onChange={(item) => setCareerField(item.value)}
@@ -72,7 +80,11 @@ const AddActivity = () => {
 
           <InputField
             ref={timeSpentRef}
-            label="Hours per Week"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Hours Per Week <Text className="text-red-500">*</Text>
+              </Text>
+            }
             placeholder="Enter hours"
             keyboardType="number-pad"
             value={timeSpent}
@@ -82,7 +94,11 @@ const AddActivity = () => {
           />
           <InputField
             ref={weeksPerYearRef}
-            label="Weeks Per Year"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Weeks per Year <Text className="text-red-500">*</Text>
+              </Text>
+            }
             placeholder="Enter weeks"
             keyboardType="number-pad"
             value={weeksPerYear}
@@ -92,7 +108,11 @@ const AddActivity = () => {
           />
           <InputField
             ref={rolesRef}
-            label="Roles"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Roles <Text className="text-red-500">*</Text>
+              </Text>
+            }
             placeholder="Enter roles"
             value={roles}
             onChangeText={setRoles}

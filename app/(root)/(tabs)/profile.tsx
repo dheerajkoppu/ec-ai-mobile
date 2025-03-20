@@ -18,7 +18,7 @@ const Profile = () => {
   const [notifications, setNotifications] = useState(true);
 
   return (
-    <SafeAreaView className="flex-1 bg-white px-4 py-6">
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <ScrollView contentContainerStyle={{ paddingBottom: 20 }}>
         {/* Profile Information */}
         <View className="items-center mb-6">
@@ -26,8 +26,10 @@ const Profile = () => {
             source={{ uri: user?.imageUrl }}
             className="w-24 h-24 rounded-full"
           />
-          <Text className="text-lg font-semibold mt-2">{user?.fullName}</Text>
-          <Text className="text-gray-500">
+          <Text className="text-lg font-PoppinsSemiBold mt-2">
+            {user?.fullName}
+          </Text>
+          <Text className="text-primary-900 font-PoppinsRegular">
             {user?.primaryEmailAddress?.emailAddress}
           </Text>
         </View>

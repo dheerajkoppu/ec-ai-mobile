@@ -4,7 +4,7 @@ import { Dropdown } from "react-native-element-dropdown";
 
 // Define TypeScript types for the props
 interface DropdownFieldProps {
-  label: string;
+  label: any;
   data: { label: string; value: string }[]; // Expecting an array of objects
   value: string;
   onChange: (item: { label: string; value: string }) => void;

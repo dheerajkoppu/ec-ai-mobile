@@ -152,10 +152,7 @@ const TrackActivities = () => {
     let sortedActivities = [...activities];
 
     if (option === "hours") {
-      sortedActivities.sort(
-        (a, b) =>
-          b.hoursPerWeek * b.weeksPerYear - a.hoursPerWeek * a.weeksPerYear,
-      );
+      sortedActivities.sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
     } else if (option === "category") {
       sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
     }

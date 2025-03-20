@@ -83,10 +83,15 @@ const Opportunities = () => {
     }, 1000);
   };
 
-  // Filter out removed opportunities only after refresh
-  const filteredOpportunities = opportunities.filter(
-    (opportunity) => !removedOpportunities.has(opportunity.id),
-  );
+  const filteredOpportunities = opportunities
+    .filter((opportunity) => !removedOpportunities.has(opportunity.id))
+    .filter(
+      (opportunity) =>
+        opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        opportunity.careerField
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
+    );
 
   // Sorting function
   const sortOpportunities = () => {
