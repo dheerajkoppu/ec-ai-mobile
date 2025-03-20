@@ -49,16 +49,17 @@ const opportunitiesData: Opportunity[] = [
 const Opportunities = () => {
   const [opportunities, setOpportunities] =
     useState<Opportunity[]>(opportunitiesData);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
     new Set(),
   );
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [addedOpportunities, setAddedOpportunities] = useState<Set<string>>(
     new Set(),
   );
-  const [sortOption, setSortOption] = useState<string>("default");
-  const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
-  const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [removedOpportunities, setRemovedOpportunities] = useState<Set<string>>(
+    new Set(),
+  );
 
   const handleSave = (id: string) => {
     setSavedOpportunities((prev) => new Set([...prev, id]));
@@ -68,31 +69,22 @@ const Opportunities = () => {
     setAddedOpportunities((prev) => new Set([...prev, id]));
   };
 
-  // Sorting function
-  const sortOpportunities = (option: string) => {
-    let sortedOpportunities = [...opportunities];
-    if (option === "careerField") {
-      sortedOpportunities.sort((a, b) =>
-        a.careerField.localeCompare(b.careerField),
-      );
-    }
-    setSortOption(option);
-    setOpportunities(sortedOpportunities);
-    setShowSortDropdown(false);
-  };
-
-  // Refresh function
+  // Refresh function - removes saved or added opportunities on refresh
   const onRefresh = () => {
     setRefreshing(true);
     setTimeout(() => {
-      setOpportunities([...opportunitiesData]); // Reset to original data or fetch new data
+      setRemovedOpportunities(
+        new Set([...savedOpportunities, ...addedOpportunities]),
+      );
+      setSavedOpportunities(new Set()); // Reset saved state
+      setAddedOpportunities(new Set()); // Reset added state
       setRefreshing(false);
-    }, 1000); // Simulate fetching data
+    }, 1000);
   };
 
-  // Filter activities based on search query
-  const filteredOpportunities = opportunities.filter((opportunity) =>
-    opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()),
+  // Filter out removed opportunities only after refresh
+  const filteredOpportunities = opportunities.filter(
+    (opportunity) => !removedOpportunities.has(opportunity.id),
   );
 
   return (
@@ -110,25 +102,6 @@ const Opportunities = () => {
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
-      </View>
-
-      {/* Sorting Options */}
-      <View className="flex-row mb-4 relative z-10">
-        <TouchableOpacity
-          onPress={() => setShowSortDropdown(!showSortDropdown)}
-        >
-          <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
-        </TouchableOpacity>
-        {showSortDropdown && (
-          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-3 z-20">
-            <TouchableOpacity onPress={() => sortOpportunities("careerField")}>
-              <Text className="text-general-400 font-PoppinsSemiBold">
-                Career Field
-              </Text>
-            </TouchableOpacity>
-            <View className="border-b border-gray-300 my-2" />
-          </View>
-        )}
       </View>
 
       {/* List of Opportunities */}
@@ -172,16 +145,25 @@ const Opportunities = () => {
                   addedOpportunities.has(item.id) ? "Added" : "Add Activity"
                 }
                 onPress={() => handleAutoAdd(item.id)}
-                bgVariant="primary"
+                bgVariant="primary" // Keep valid value
                 textVariant="default"
-                className="px-4 py-2 rounded-lg flex-1 mr-2 items-center"
+                className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
+                  addedOpportunities.has(item.id)
+                    ? "bg-primary-900"
+                    : "bg-primary"
+                }`}
               />
+
               <CustomButton
                 title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 onPress={() => handleSave(item.id)}
-                bgVariant="primary"
+                bgVariant="primary" // Keep valid value
                 textVariant="default"
-                className="px-4 py-0 rounded-lg flex-1 items-center"
+                className={`px-4 py-2 rounded-lg flex-1 items-center ${
+                  savedOpportunities.has(item.id)
+                    ? "bg-primary-900"
+                    : "bg-primary"
+                }`}
               />
             </View>
           </View>
