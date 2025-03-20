@@ -3,9 +3,18 @@ import { Text, TextInput, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
+import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 
 const gradeOptions = ["9", "10", "11", "12", "Post-12", "Pre-9"];
+const careerFields = [
+  { label: "Engineering", value: "engineering" },
+  { label: "Medicine", value: "medicine" },
+  { label: "Business", value: "business" },
+  { label: "Law", value: "law" },
+  { label: "Arts", value: "arts" },
+  { label: "Technology", value: "technology" },
+];
 
 const AddActivity = () => {
   const [activityName, setActivityName] = useState("");
@@ -17,7 +26,6 @@ const AddActivity = () => {
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
 
   // Creating refs for each input field
-  const careerFieldRef = useRef<TextInput>(null);
   const timeSpentRef = useRef<TextInput>(null);
   const weeksPerYearRef = useRef<TextInput>(null);
   const rolesRef = useRef<TextInput>(null);
@@ -32,7 +40,7 @@ const AddActivity = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+    <SafeAreaView className="flex-1 bg-gray-100 p-3">
       <View>
         <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Add New Activity
@@ -50,17 +58,18 @@ const AddActivity = () => {
             value={activityName}
             onChangeText={setActivityName}
             returnKeyType="next"
-            onSubmitEditing={() => careerFieldRef.current?.focus()}
-          />
-          <InputField
-            ref={careerFieldRef}
-            label="Career Field"
-            placeholder="e.g., Engineering, Medicine"
-            value={careerField}
-            onChangeText={setCareerField}
-            returnKeyType="next"
             onSubmitEditing={() => timeSpentRef.current?.focus()}
           />
+
+          {/* Dropdown for Career Field */}
+          <DropdownField
+            label="Career Field"
+            data={careerFields}
+            value={careerField}
+            onChange={(item) => setCareerField(item.value)}
+            placeholder="Select a career field"
+          />
+
           <InputField
             ref={timeSpentRef}
             label="Hours per Week"
@@ -99,6 +108,7 @@ const AddActivity = () => {
             multiline
           />
 
+          {/* Grade Selection Buttons */}
           <View>
             <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
               Grades <Text className="text-red-500">*</Text>
