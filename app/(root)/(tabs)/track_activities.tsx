@@ -152,13 +152,15 @@ const TrackActivities = () => {
     let sortedActivities = [...activities];
 
     if (option === "hours") {
-      sortedActivities.sort((a, b) => b.hours - a.hours);
+      sortedActivities.sort(
+        (a, b) =>
+          b.hoursPerWeek * b.weeksPerYear - a.hoursPerWeek * a.weeksPerYear,
+      );
     } else if (option === "category") {
       sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
     }
-
     setSortOption(option);
-    setActivities(sortedActivities);
+    setActivities([...sortedActivities]); // Ensures a new reference
     setShowSortDropdown(false);
   };
 
