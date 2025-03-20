@@ -9,6 +9,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useState } from "react";
+import { SignOutButton } from "@/components/SignOutButton";
 
 const Profile = () => {
   const { user } = useUser();
@@ -84,12 +85,7 @@ const Profile = () => {
         </View>
 
         {/* Logout Button */}
-        <TouchableOpacity
-          onPress={() => signOut()}
-          className="bg-red-500 p-3 rounded-lg mt-4 mb-6"
-        >
-          <Text className="text-white text-center">Log Out</Text>
-        </TouchableOpacity>
+        <SignOutButton />
       </ScrollView>
     </SafeAreaView>
   );
