@@ -6,7 +6,7 @@ import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 
-const gradeOptions = ["9", "10", "11", "12", "Post-12", "Pre-9"];
+const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 const careerFields = [
   { label: "Engineering", value: "engineering" },
   { label: "Medicine", value: "medicine" },
