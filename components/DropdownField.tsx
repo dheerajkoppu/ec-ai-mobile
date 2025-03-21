@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: 15,
     fontFamily: "Poppins-Regular",
-    color: "#555",
   },
   selectedText: {
     fontSize: 15,

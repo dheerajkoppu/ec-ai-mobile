@@ -20,7 +20,6 @@ export const SignOutButton = () => {
       title="Log Out"
       onPress={handleSignOut}
       bgVariant="danger"
-      textVariant="danger"
       className="mt-4"
     />
   );
