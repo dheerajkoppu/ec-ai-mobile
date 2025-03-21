@@ -1,20 +1,17 @@
-import { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Image,
-  TouchableOpacity,
-  FlatList,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, TouchableOpacity, FlatList } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Activity } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { IMAGE_TYPES } from "expo-asset/plugin/build/utils";
 import { icons } from "@/constants";
 import track_activities2 from "@/assets/icons/track_activities2.png";
 import { Picker } from "@react-native-picker/picker";
 import InputField from "@/components/InputField";
+import { ReactNativeModal } from "react-native-modal";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import CustomButton from "@/components/CustomButton";
+
+const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
 const activitiesData: Activity[] = [
   {
@@ -27,6 +24,7 @@ const activitiesData: Activity[] = [
     description:
       "Grew club 7x, managed & raised finances, mentored peers for comp, organized study resources, & secured the CA Outstanding Local Chapter Advisor Award.",
     grade: "9, 10, 11, 12",
+    roles: "Competition VP (12)",
   },
   {
     id: 2,
@@ -37,6 +35,7 @@ const activitiesData: Activity[] = [
     weeksPerYear: 43,
     description: "I LOVE MATH SO MUCH!",
     grade: "9, 10, 11, 12",
+    roles: "Treasurer (11)",
   },
   {
     id: 3,
@@ -48,6 +47,7 @@ const activitiesData: Activity[] = [
     description:
       "Point guard and team captain; led team to regional playoffs, organized drills, and mentored younger players.",
     grade: "10, 11, 12",
+    roles: "Member (9-10)",
   },
   {
     id: 4,
@@ -59,6 +59,7 @@ const activitiesData: Activity[] = [
     description:
       "Taught underprivileged kids Python & JavaScript basics; developed interactive coding challenges & ran hackathons.",
     grade: "11, 12",
+    roles: "Future Business Leaders of America (FBLA)",
   },
   {
     id: 5,
@@ -70,6 +71,7 @@ const activitiesData: Activity[] = [
     description:
       "Specialized in policy debate; won 3 regional tournaments; coached younger debaters in argument construction & rebuttals.",
     grade: "9, 10, 11, 12",
+    roles: "",
   },
   {
     id: 6,
@@ -81,6 +83,7 @@ const activitiesData: Activity[] = [
     description:
       "Editor-in-chief; managed a team of 15 writers; wrote investigative pieces on school policies & student achievements.",
     grade: "11, 12",
+    roles: "",
   },
   {
     id: 7,
@@ -92,6 +95,7 @@ const activitiesData: Activity[] = [
     description:
       "Competed in Physics and Chemistry events; developed lab experiments and won 2nd place at state competition.",
     grade: "9, 10, 11",
+    roles: "",
   },
   {
     id: 8,
@@ -103,6 +107,7 @@ const activitiesData: Activity[] = [
     description:
       "Cared for rescue dogs & cats, assisted in adoption events, and managed social media for shelter outreach.",
     grade: "10, 11, 12",
+    roles: "",
   },
   {
     id: 9,
@@ -114,6 +119,7 @@ const activitiesData: Activity[] = [
     description:
       "Produced and edited videos on Python & AI topics; gained 5,000+ subscribers and collaborated with ed-tech companies.",
     grade: "11, 12",
+    roles: "",
   },
   {
     id: 10,
@@ -125,6 +131,7 @@ const activitiesData: Activity[] = [
     description:
       "Senior class president; planned school-wide events, led fundraising campaigns, and represented students in policy discussions.",
     grade: "12",
+    roles: "",
   },
 ];
 
@@ -133,40 +140,62 @@ const TrackActivities = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
+
+  // State for editing
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
+  const [editingGrades, setEditingGrades] = useState<string[]>([]);
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
 
   // Update function
   const updateActivity = () => {
     if (editingActivity) {
+      const updatedActivity = {
+        ...editingActivity,
+        grade: editingGrades.join(", "),
+      };
       setActivities((prevActivities) =>
         prevActivities.map((activity) =>
-          activity.id === editingActivity.id ? editingActivity : activity,
+          activity.id === editingActivity.id ? updatedActivity : activity,
         ),
       );
       setEditingActivity(null);
+      setShowEditModal(false);
     }
   };
 
-  // Sorting function
+  // Handler for edit button
+  const handleEditPress = (item: Activity) => {
+    setEditingActivity(item);
+    setEditingGrades(item.grade.split(",").map((g) => g.trim()));
+    setShowEditModal(true);
+  };
+
+  // Toggle function for grade selection in edit mode
+  const toggleEditingGrade = (grade: string) => {
+    if (editingGrades.includes(grade)) {
+      setEditingGrades(editingGrades.filter((g) => g !== grade));
+    } else {
+      setEditingGrades([...editingGrades, grade]);
+    }
+  };
+
+  // Sorting and delete functions remain unchanged...
   const sortActivities = (option: string) => {
     let sortedActivities = [...activities];
-
     if (option === "hours") {
       sortedActivities.sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
     } else if (option === "category") {
       sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
     }
     setSortOption(option);
-    setActivities([...sortedActivities]); // Ensures a new reference
+    setActivities([...sortedActivities]);
     setShowSortDropdown(false);
   };
 
-  // Delete function
   const deleteActivity = (id: number) => {
     setActivities(activities.filter((activity) => activity.id !== id));
   };
 
-  // Filter activities based on search query
   const filteredActivities = activities.filter((activity) =>
     activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -184,7 +213,6 @@ const TrackActivities = () => {
         <InputField
           label=""
           placeholder="Search Activities"
-          keyboardShouldPersistTaps="never"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -218,15 +246,12 @@ const TrackActivities = () => {
       <FlatList
         data={filteredActivities}
         keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 100 }} // Add padding to the bottom
+        contentContainerStyle={{ paddingBottom: 100 }}
         renderItem={({ item }) => (
-          <View className="bg-white p-4 mb-4 rounded-lg shadow z-0">
-            {/* Category in bold */}
+          <View className="bg-white p-4 mb-4 rounded-lg shadow">
             <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
               {item.category}
             </Text>
-
-            {/* Two-column layout */}
             <View className="flex-row">
               <View className="w-24">
                 <Text className="font-PoppinsRegular mb-1 text-xs">
@@ -241,16 +266,20 @@ const TrackActivities = () => {
               </View>
               <View className="flex-1">
                 <Text className="font-PoppinsSemiBold mb-1">{item.name}</Text>
+                {/* New Roles Field Display */}
+                {item.roles ? (
+                  <Text className="font-PoppinsRegular text-xs text-gray-600 mb-1">
+                    Roles: {item.roles}
+                  </Text>
+                ) : null}
                 <Text className="font-PoppinsRegular text-xs text-gray-800">
                   {item.description}
                 </Text>
               </View>
             </View>
-
-            {/* Edit & Delete buttons */}
             <View className="flex-row justify-end mt-2">
               <TouchableOpacity
-                onPress={() => setEditingActivity(item)}
+                onPress={() => handleEditPress(item)}
                 className="mr-4"
               >
                 <MaterialCommunityIcons
@@ -270,6 +299,144 @@ const TrackActivities = () => {
           </View>
         )}
       />
+
+      {/* React Native Modal for Editing */}
+      <ReactNativeModal
+        isVisible={showEditModal}
+        style={{
+          justifyContent: "flex-start",
+          marginTop: 60,
+          marginHorizontal: 10,
+        }}
+        onBackdropPress={() => {
+          setEditingActivity(null);
+          setShowEditModal(false);
+        }}
+        onBackButtonPress={() => {
+          setEditingActivity(null);
+          setShowEditModal(false);
+        }}
+      >
+        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16">
+          <TouchableOpacity
+            onPress={() => {
+              setEditingActivity(null);
+              setShowEditModal(false);
+            }}
+            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+          >
+            <MaterialCommunityIcons name="close" size={24} color="#000" />
+          </TouchableOpacity>
+          {/* Static header section */}
+          <Text className="text-2xl font-PoppinsSemiBold mb-2">
+            Edit Activity
+          </Text>
+          {/* Only the form fields below will be scrollable */}
+          <KeyboardAwareScrollView
+            keyboardShouldPersistTaps="handled"
+            extraScrollHeight={90}
+            showsVerticalScrollIndicator={false}
+          >
+            {editingActivity && (
+              <>
+                <InputField
+                  label="Activity Name"
+                  placeholder="Enter Activity Name"
+                  value={editingActivity.name}
+                  onChangeText={(value) =>
+                    setEditingActivity({ ...editingActivity, name: value })
+                  }
+                />
+
+                {/* New Roles Field in Edit Modal */}
+                <InputField
+                  label="Roles"
+                  placeholder="Enter Roles"
+                  value={editingActivity.roles || ""}
+                  onChangeText={(value) =>
+                    setEditingActivity({ ...editingActivity, roles: value })
+                  }
+                />
+
+                <View className="mb-4">
+                  <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
+                    Grades <Text className="text-red-500">*</Text>
+                  </Text>
+                  <View className="flex-row flex-wrap gap-3">
+                    {gradeOptions.map((grade) => (
+                      <TouchableOpacity
+                        key={grade}
+                        onPress={() => toggleEditingGrade(grade)}
+                        className={`px-2 py-2 border rounded-lg ${
+                          editingGrades.includes(grade)
+                            ? "bg-[#5b55f6] border-[#5b55f6]"
+                            : "border-gray-300 bg-white"
+                        }`}
+                      >
+                        <Text
+                          className={`font-PoppinsRegular ${
+                            editingGrades.includes(grade)
+                              ? "text-white"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {grade}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+
+                <InputField
+                  label="Hours/Week"
+                  placeholder="e.g. 5.5"
+                  keyboardType="numeric"
+                  value={String(editingActivity.hoursPerWeek)}
+                  onChangeText={(value) =>
+                    setEditingActivity({
+                      ...editingActivity,
+                      hoursPerWeek: parseFloat(value) || 0,
+                    })
+                  }
+                />
+
+                <InputField
+                  label="Weeks/Year"
+                  placeholder="e.g. 43"
+                  keyboardType="numeric"
+                  value={String(editingActivity.weeksPerYear)}
+                  onChangeText={(value) =>
+                    setEditingActivity({
+                      ...editingActivity,
+                      weeksPerYear: parseInt(value) || 0,
+                    })
+                  }
+                />
+
+                <InputField
+                  label="Description"
+                  scrollEnabled={false}
+                  placeholder="Describe your role..."
+                  value={editingActivity.description}
+                  onChangeText={(value) =>
+                    setEditingActivity({
+                      ...editingActivity,
+                      description: value,
+                    })
+                  }
+                  multiline
+                />
+
+                <CustomButton
+                  title="Update Activity"
+                  onPress={updateActivity}
+                  className="mt-5"
+                />
+              </>
+            )}
+          </KeyboardAwareScrollView>
+        </View>
+      </ReactNativeModal>
     </SafeAreaView>
   );
 };

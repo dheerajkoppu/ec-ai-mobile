@@ -13,6 +13,7 @@ declare interface Driver {
 declare interface Activity {
   id: number;
   name: string;
+  roles: string;
   category: string;
   hours: number;
   hoursPerWeek: number;

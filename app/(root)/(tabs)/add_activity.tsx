@@ -123,6 +123,7 @@ const AddActivity = () => {
             ref={descriptionRef}
             label="Description / Notes (Optional)"
             placeholder="Enter Description"
+            scrollEnabled={false}
             value={description}
             onChangeText={setDescription}
             multiline
