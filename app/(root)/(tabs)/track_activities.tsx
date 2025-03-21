@@ -328,7 +328,7 @@ const TrackActivities = () => {
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
           {/* Static header section */}
-          <Text className="text-2xl font-PoppinsSemiBold mb-2">
+          <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
             Edit Activity
           </Text>
           {/* Only the form fields below will be scrollable */}
