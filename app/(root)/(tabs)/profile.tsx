@@ -64,7 +64,7 @@ const Profile = () => {
         <View className="mb-4">
           <Text className="text-md font-semibold mb-2">App Settings</Text>
           <View className="flex-row justify-between py-2">
-            <Text>Dark Mode</Text>
+            <Text>AI Features</Text>
             <Switch value={darkMode} onValueChange={setDarkMode} />
           </View>
           <TouchableOpacity className="bg-gray-100 p-3 rounded-lg">

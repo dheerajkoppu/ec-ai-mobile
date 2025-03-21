@@ -7,11 +7,22 @@ import { icons } from "@/constants";
 import track_activities2 from "@/assets/icons/track_activities2.png";
 import { Picker } from "@react-native-picker/picker";
 import InputField from "@/components/InputField";
+import DropdownField from "@/components/DropdownField"; // <-- New import
 import { ReactNativeModal } from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomButton from "@/components/CustomButton";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
+
+const careerFields = [
+  { label: "Career Oriented", value: "Career Oriented" },
+  { label: "Engineering", value: "engineering" },
+  { label: "Medicine", value: "medicine" },
+  { label: "Business", value: "business" },
+  { label: "Law", value: "law" },
+  { label: "Arts", value: "arts" },
+  { label: "Technology", value: "technology" },
+];
 
 const activitiesData: Activity[] = [
   {
@@ -317,7 +328,7 @@ const TrackActivities = () => {
           setShowEditModal(false);
         }}
       >
-        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16">
+        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md ">
           <TouchableOpacity
             onPress={() => {
               setEditingActivity(null);
@@ -347,7 +358,23 @@ const TrackActivities = () => {
                     setEditingActivity({ ...editingActivity, name: value })
                   }
                 />
-
+                {/* New Dropdown for Career Field */}
+                <DropdownField
+                  label={
+                    <Text className="font-medium text-lg font-PoppinsBold">
+                      Career Field <Text className="text-red-500">*</Text>
+                    </Text>
+                  }
+                  data={careerFields}
+                  value={editingActivity.category}
+                  onChange={(item) =>
+                    setEditingActivity({
+                      ...editingActivity,
+                      category: item.value,
+                    })
+                  }
+                  placeholder="Select a career field"
+                />
                 {/* New Roles Field in Edit Modal */}
                 <InputField
                   label="Roles"
@@ -430,7 +457,7 @@ const TrackActivities = () => {
                 <CustomButton
                   title="Update Activity"
                   onPress={updateActivity}
-                  className="mt-5"
+                  className="mt-5 mb-5 rounded-lg shadow-md"
                 />
               </>
             )}
