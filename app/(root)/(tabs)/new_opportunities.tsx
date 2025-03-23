@@ -13,7 +13,7 @@ import CustomButton from "@/components/CustomButton";
 interface Opportunity {
   id: string;
   title: string;
-  careerField: string;
+  activityType: string;
   location: string;
   duration?: string;
   deadline?: string;
@@ -23,7 +23,7 @@ const opportunitiesData: Opportunity[] = [
   {
     id: "1",
     title: "Robotics Club",
-    careerField: "Clubs",
+    activityType: "Clubs",
     location: "In-Person",
     duration: "3 months",
     deadline: "March 20",
@@ -31,7 +31,7 @@ const opportunitiesData: Opportunity[] = [
   {
     id: "2",
     title: "Summer Internship at Tech Co.",
-    careerField: "Internships",
+    activityType: "Internships",
     location: "Remote",
     duration: "2 months",
     deadline: "April 10",
@@ -39,7 +39,7 @@ const opportunitiesData: Opportunity[] = [
   {
     id: "3",
     title: "Math Competition",
-    careerField: "Competitions",
+    activityType: "Competitions",
     location: "In-Person",
     duration: "1 day",
     deadline: "March 25",
@@ -88,7 +88,7 @@ const Opportunities = () => {
     .filter(
       (opportunity) =>
         opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opportunity.careerField
+        opportunity.activityType
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
     );
@@ -96,7 +96,7 @@ const Opportunities = () => {
   // Sorting function
   const sortOpportunities = () => {
     const sortedOpportunities = [...opportunities].sort((a, b) =>
-      a.careerField.localeCompare(b.careerField),
+      a.activityType.localeCompare(b.activityType),
     );
     setOpportunities(sortedOpportunities);
     setShowSortDropdown(false);
@@ -151,8 +151,8 @@ const Opportunities = () => {
               {item.title}
             </Text>
             <Text className="font-PoppinsRegular text-xs mb-1">
-              <Text className="font-PoppinsSemiBold">Field:</Text>{" "}
-              {item.careerField}
+              <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
+              {item.activityType}
             </Text>
             <Text className="font-PoppinsRegular text-xs mb-1">
               <Text className="font-PoppinsSemiBold">Location: </Text>{" "}

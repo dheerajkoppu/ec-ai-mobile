@@ -1,31 +1,36 @@
+// AddActivity.tsx
 import React, { useState, useRef } from "react";
-import { Text, TextInput, TouchableOpacity, View } from "react-native";
+import {
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+  ActivityIndicator,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
+import { useFetch } from "@/lib/fetch";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
-const careerFields = [
-  { label: "Engineering", value: "engineering" },
-  { label: "Medicine", value: "medicine" },
-  { label: "Business", value: "business" },
-  { label: "Law", value: "law" },
-  { label: "Arts", value: "arts" },
-  { label: "Technology", value: "technology" },
-];
 
 const AddActivity = () => {
   const [activityName, setActivityName] = useState("");
-  const [careerField, setCareerField] = useState("");
+  const [activityType, setActivityType] = useState("");
   const [timeSpent, setTimeSpent] = useState("");
   const [weeksPerYear, setWeeksPerYear] = useState("");
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
 
-  // Creating refs for each input field
+  const {
+    data: activityTypes,
+    loading,
+    error,
+  } = useFetch("/(api)/activitytypes");
+
   const timeSpentRef = useRef<TextInput>(null);
   const weeksPerYearRef = useRef<TextInput>(null);
   const rolesRef = useRef<TextInput>(null);
@@ -65,19 +70,27 @@ const AddActivity = () => {
             onSubmitEditing={() => timeSpentRef.current?.focus()}
           />
 
-          {/* Dropdown for Career Field */}
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Career Field <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={careerFields}
-            value={careerField}
-            onChange={(item) => setCareerField(item.value)}
-            placeholder="Select a career field"
-          />
+          {loading ? (
+            <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
+          ) : error ? (
+            <Text className="text-red-500 font-PoppinsRegular">
+              Failed to load activity types
+            </Text>
+          ) : (
+            <DropdownField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Activity Type <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              data={activityTypes || []}
+              value={activityType}
+              onChange={(item) => setActivityType(item.value)}
+              placeholder="Select an activity type"
+            />
+          )}
 
+          {/* Rest of your input fields remain unchanged */}
           <InputField
             ref={timeSpentRef}
             label={
@@ -129,7 +142,7 @@ const AddActivity = () => {
             multiline
           />
 
-          {/* Grade Selection Buttons */}
+          {/* Grade Selection */}
           <View>
             <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
               Grades <Text className="text-red-500">*</Text>
@@ -158,6 +171,7 @@ const AddActivity = () => {
               ))}
             </View>
           </View>
+
           <CustomButton
             title="Add Activity"
             onPress={() => {}}
