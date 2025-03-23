@@ -178,7 +178,7 @@ const AddActivity = () => {
                 Roles <Text className="text-red-500">*</Text>
               </Text>
             }
-            placeholder="Enter roles"
+            placeholder="President (12)"
             value={roles}
             onChangeText={setRoles}
             returnKeyType="next"
@@ -187,7 +187,7 @@ const AddActivity = () => {
           <InputField
             ref={descriptionRef}
             label="Description / Notes (Optional)"
-            placeholder="Enter Description"
+            placeholder="Grew club 7x..."
             scrollEnabled={false}
             value={description}
             onChangeText={setDescription}

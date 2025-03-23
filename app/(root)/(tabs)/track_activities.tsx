@@ -1,187 +1,140 @@
-import React, { useState } from "react";
-import { View, Text, TouchableOpacity, FlatList } from "react-native";
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+  Alert,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Activity } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { icons } from "@/constants";
-import track_activities2 from "@/assets/icons/track_activities2.png";
-import { Picker } from "@react-native-picker/picker";
 import InputField from "@/components/InputField";
-import DropdownField from "@/components/DropdownField"; // <-- New import
-import { ReactNativeModal } from "react-native-modal";
+import DropdownField from "@/components/DropdownField";
+import ReactNativeModal from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomButton from "@/components/CustomButton";
+import { useFetch, fetchAPI } from "@/lib/fetch";
+import { useUser } from "@clerk/clerk-expo";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
-const careerFields = [
-  { label: "Career Oriented", value: "Career Oriented" },
-  { label: "Engineering", value: "engineering" },
-  { label: "Medicine", value: "medicine" },
-  { label: "Business", value: "business" },
-  { label: "Law", value: "law" },
-  { label: "Arts", value: "arts" },
-  { label: "Technology", value: "technology" },
-];
-
-const activitiesData: Activity[] = [
-  {
-    id: 1,
-    name: "Future Business Leaders of America (FBLA)",
-    category: "Career Oriented",
-    hours: 6,
-    hoursPerWeek: 5.5,
-    weeksPerYear: 43,
-    description:
-      "Grew club 7x, managed & raised finances, mentored peers for comp, organized study resources, & secured the CA Outstanding Local Chapter Advisor Award.",
-    grade: "9, 10, 11, 12",
-    roles: "Competition VP (12)",
-  },
-  {
-    id: 2,
-    name: "Math Club",
-    category: "Career Oriented",
-    hours: 6,
-    hoursPerWeek: 5.5,
-    weeksPerYear: 43,
-    description: "I LOVE MATH SO MUCH!",
-    grade: "9, 10, 11, 12",
-    roles: "Treasurer (11)",
-  },
-  {
-    id: 3,
-    name: "Basketball Team",
-    category: "Sports",
-    hours: 8,
-    hoursPerWeek: 6,
-    weeksPerYear: 30,
-    description:
-      "Point guard and team captain; led team to regional playoffs, organized drills, and mentored younger players.",
-    grade: "10, 11, 12",
-    roles: "Member (9-10)",
-  },
-  {
-    id: 4,
-    name: "Community Coding Initiative",
-    category: "Volunteer",
-    hours: 10,
-    hoursPerWeek: 4,
-    weeksPerYear: 36,
-    description:
-      "Taught underprivileged kids Python & JavaScript basics; developed interactive coding challenges & ran hackathons.",
-    grade: "11, 12",
-    roles: "Future Business Leaders of America (FBLA)",
-  },
-  {
-    id: 5,
-    name: "Debate Team",
-    category: "Career Oriented",
-    hours: 7,
-    hoursPerWeek: 3.5,
-    weeksPerYear: 40,
-    description:
-      "Specialized in policy debate; won 3 regional tournaments; coached younger debaters in argument construction & rebuttals.",
-    grade: "9, 10, 11, 12",
-    roles: "",
-  },
-  {
-    id: 6,
-    name: "School Newspaper",
-    category: "Creative",
-    hours: 5,
-    hoursPerWeek: 2.5,
-    weeksPerYear: 35,
-    description:
-      "Editor-in-chief; managed a team of 15 writers; wrote investigative pieces on school policies & student achievements.",
-    grade: "11, 12",
-    roles: "",
-  },
-  {
-    id: 7,
-    name: "Science Olympiad",
-    category: "Academic",
-    hours: 9,
-    hoursPerWeek: 5,
-    weeksPerYear: 38,
-    description:
-      "Competed in Physics and Chemistry events; developed lab experiments and won 2nd place at state competition.",
-    grade: "9, 10, 11",
-    roles: "",
-  },
-  {
-    id: 8,
-    name: "Volunteering at Animal Shelter",
-    category: "Volunteer",
-    hours: 4,
-    hoursPerWeek: 2,
-    weeksPerYear: 30,
-    description:
-      "Cared for rescue dogs & cats, assisted in adoption events, and managed social media for shelter outreach.",
-    grade: "10, 11, 12",
-    roles: "",
-  },
-  {
-    id: 9,
-    name: "YouTube Channel - Tech Tutorials",
-    category: "Creative",
-    hours: 12,
-    hoursPerWeek: 3,
-    weeksPerYear: 50,
-    description:
-      "Produced and edited videos on Python & AI topics; gained 5,000+ subscribers and collaborated with ed-tech companies.",
-    grade: "11, 12",
-    roles: "",
-  },
-  {
-    id: 10,
-    name: "Student Government",
-    category: "Leadership",
-    hours: 8,
-    hoursPerWeek: 4,
-    weeksPerYear: 40,
-    description:
-      "Senior class president; planned school-wide events, led fundraising campaigns, and represented students in policy discussions.",
-    grade: "12",
-    roles: "",
-  },
-];
-
 const TrackActivities = () => {
-  const [activities, setActivities] = useState<Activity[]>(activitiesData);
+  const { user } = useUser();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
-
-  // State for editing
+  const [refreshing, setRefreshing] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
 
-  // Update function
-  const updateActivity = () => {
-    if (editingActivity) {
+  const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const requestOptions = useMemo(() => {
+    if (!email) return undefined;
+    return {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    };
+  }, [email]);
+
+  const {
+    data: fetchedActivities,
+    loading,
+    error,
+    refetch,
+  } = useFetch<Activity[]>("/(api)/getactivities", requestOptions);
+
+  const {
+    data: careerFields,
+    loading: loadingCareerFields,
+    error: errorCareerFields,
+  } = useFetch("/(api)/activitytypes");
+
+  useEffect(() => {
+    if (fetchedActivities && Array.isArray(fetchedActivities)) {
+      setActivities(fetchedActivities);
+    }
+  }, [fetchedActivities]);
+
+  const handleRefresh = async () => {
+    try {
+      setRefreshing(true);
+      await refetch();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const updateActivity = async () => {
+    if (editingActivity && email) {
       const updatedActivity = {
         ...editingActivity,
         grade: editingGrades.join(", "),
       };
-      setActivities((prevActivities) =>
-        prevActivities.map((activity) =>
-          activity.id === editingActivity.id ? updatedActivity : activity,
-        ),
-      );
-      setEditingActivity(null);
-      setShowEditModal(false);
+
+      try {
+        await fetchAPI("/(api)/alteractivity", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userEmail: email,
+            activityId: editingActivity.id,
+            name: updatedActivity.name,
+            category: updatedActivity.category,
+            roles: updatedActivity.roles,
+            grade: updatedActivity.grade,
+            hoursPerWeek: updatedActivity.hoursPerWeek,
+            weeksPerYear: updatedActivity.weeksPerYear,
+            description: updatedActivity.description,
+          }),
+        });
+
+        await refetch();
+        setEditingActivity(null);
+        setShowEditModal(false);
+        Alert.alert("Success", "Activity updated successfully!");
+      } catch (error) {
+        console.error("Update error:", error);
+        Alert.alert("Error", "Failed to update activity.");
+      }
     }
   };
 
-  // Handler for edit button
+  const deleteActivity = async () => {
+    if (!deleteTarget) return;
+    try {
+      const res = await fetch("/(api)/deleteactivity", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ activityId: deleteTarget.id }),
+      });
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      setActivities((prev) => prev.filter((a) => a.id !== deleteTarget.id));
+      setShowDeleteModal(false);
+      setDeleteTarget(null);
+      Alert.alert("Deleted", "Activity deleted successfully.");
+    } catch (error) {
+      console.error("Delete error:", error);
+      Alert.alert("Error", "Failed to delete activity.");
+    }
+  };
+
   const handleEditPress = (item: Activity) => {
     setEditingActivity(item);
     setEditingGrades(item.grade.split(",").map((g) => g.trim()));
     setShowEditModal(true);
   };
 
-  // Toggle function for grade selection in edit mode
   const toggleEditingGrade = (grade: string) => {
     if (editingGrades.includes(grade)) {
       setEditingGrades(editingGrades.filter((g) => g !== grade));
@@ -190,7 +143,6 @@ const TrackActivities = () => {
     }
   };
 
-  // Sorting and delete functions remain unchanged...
   const sortActivities = (option: string) => {
     let sortedActivities = [...activities];
     if (option === "hours") {
@@ -199,12 +151,8 @@ const TrackActivities = () => {
       sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
     }
     setSortOption(option);
-    setActivities([...sortedActivities]);
+    setActivities(sortedActivities);
     setShowSortDropdown(false);
-  };
-
-  const deleteActivity = (id: number) => {
-    setActivities(activities.filter((activity) => activity.id !== id));
   };
 
   const filteredActivities = activities.filter((activity) =>
@@ -213,23 +161,27 @@ const TrackActivities = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
-      <View className="flex-row">
-        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
-          Track Activities
+      <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+        Track Activities
+      </Text>
+
+      {loading && !refreshing && (
+        <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
+      )}
+
+      {error && (
+        <Text className="text-red-500 font-PoppinsRegular my-4">
+          Error loading activities: {error}
         </Text>
-      </View>
+      )}
 
-      {/* Search Bar */}
-      <View className="mb-4">
-        <InputField
-          label=""
-          placeholder="Search Activities"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
+      <InputField
+        label=""
+        placeholder="Search Activities"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+      />
 
-      {/* Sorting Options */}
       <View className="flex-row mb-4 relative z-10">
         <TouchableOpacity
           onPress={() => setShowSortDropdown(!showSortDropdown)}
@@ -253,11 +205,13 @@ const TrackActivities = () => {
         )}
       </View>
 
-      {/* Activities List */}
       <FlatList
         data={filteredActivities}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={{ paddingBottom: 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+        }
         renderItem={({ item }) => (
           <View className="bg-white p-4 mb-4 rounded-lg shadow">
             <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
@@ -277,12 +231,11 @@ const TrackActivities = () => {
               </View>
               <View className="flex-1">
                 <Text className="font-PoppinsSemiBold mb-1">{item.name}</Text>
-                {/* New Roles Field Display */}
-                {item.roles ? (
+                {item.roles && (
                   <Text className="font-PoppinsRegular text-xs text-gray-600 mb-1">
                     Roles: {item.roles}
                   </Text>
-                ) : null}
+                )}
                 <Text className="font-PoppinsRegular text-xs text-gray-800">
                   {item.description}
                 </Text>
@@ -299,7 +252,12 @@ const TrackActivities = () => {
                   color="#5b55f6"
                 />
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => deleteActivity(item.id)}>
+              <TouchableOpacity
+                onPress={() => {
+                  setDeleteTarget(item);
+                  setShowDeleteModal(true);
+                }}
+              >
                 <MaterialCommunityIcons
                   name="trash-can-outline"
                   size={24}
@@ -311,7 +269,36 @@ const TrackActivities = () => {
         )}
       />
 
-      {/* React Native Modal for Editing */}
+      {/* Delete Activity Confirmation Modal */}
+      <ReactNativeModal isVisible={showDeleteModal}>
+        <View className="bg-white px-7 py-9 rounded-2xl">
+          <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
+            Confirm Delete
+          </Text>
+          <Text className="text-base font-PoppinsSemiBold text-center mb-6">
+            Are you sure you want to delete this activity? This action cannot be
+            undone.
+          </Text>
+          <View className="flex-row justify-between">
+            <CustomButton
+              title="Cancel"
+              onPress={() => {
+                setShowDeleteModal(false);
+                setDeleteTarget(null);
+              }}
+              className="w-1/2 p-2 rounded-lg mr-2 font-PoppinsRegular shadow-md"
+            />
+            <CustomButton
+              title="Delete"
+              onPress={deleteActivity}
+              bgVariant="danger"
+              className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"
+            />
+          </View>
+        </View>
+      </ReactNativeModal>
+
+      {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
         style={{
@@ -338,11 +325,9 @@ const TrackActivities = () => {
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          {/* Static header section */}
           <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
             Edit Activity
           </Text>
-          {/* Only the form fields below will be scrollable */}
           <KeyboardAwareScrollView
             keyboardShouldPersistTaps="handled"
             extraScrollHeight={90}
@@ -358,24 +343,34 @@ const TrackActivities = () => {
                     setEditingActivity({ ...editingActivity, name: value })
                   }
                 />
-                {/* New Dropdown for Career Field */}
-                <DropdownField
-                  label={
-                    <Text className="font-medium text-lg font-PoppinsBold">
-                      Career Field <Text className="text-red-500">*</Text>
-                    </Text>
-                  }
-                  data={careerFields}
-                  value={editingActivity.category}
-                  onChange={(item) =>
-                    setEditingActivity({
-                      ...editingActivity,
-                      category: item.value,
-                    })
-                  }
-                  placeholder="Select a career field"
-                />
-                {/* New Roles Field in Edit Modal */}
+                {loadingCareerFields ? (
+                  <ActivityIndicator
+                    size="small"
+                    color="#5b55f6"
+                    className="my-2"
+                  />
+                ) : errorCareerFields ? (
+                  <Text className="text-red-500 font-PoppinsRegular mb-2">
+                    Failed to load career fields
+                  </Text>
+                ) : (
+                  <DropdownField
+                    label={
+                      <Text className="font-medium text-lg font-PoppinsBold">
+                        Career Field <Text className="text-red-500">*</Text>
+                      </Text>
+                    }
+                    data={careerFields || []}
+                    value={editingActivity.category}
+                    onChange={(item) =>
+                      setEditingActivity({
+                        ...editingActivity,
+                        category: item.value,
+                      })
+                    }
+                    placeholder="Select a career field"
+                  />
+                )}
                 <InputField
                   label="Roles"
                   placeholder="Enter Roles"
@@ -384,7 +379,6 @@ const TrackActivities = () => {
                     setEditingActivity({ ...editingActivity, roles: value })
                   }
                 />
-
                 <View className="mb-4">
                   <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
                     Grades <Text className="text-red-500">*</Text>
@@ -413,7 +407,6 @@ const TrackActivities = () => {
                     ))}
                   </View>
                 </View>
-
                 <InputField
                   label="Hours/Week"
                   placeholder="e.g. 5.5"
@@ -426,7 +419,6 @@ const TrackActivities = () => {
                     })
                   }
                 />
-
                 <InputField
                   label="Weeks/Year"
                   placeholder="e.g. 43"
@@ -439,7 +431,6 @@ const TrackActivities = () => {
                     })
                   }
                 />
-
                 <InputField
                   label="Description"
                   scrollEnabled={false}
@@ -453,7 +444,6 @@ const TrackActivities = () => {
                   }
                   multiline
                 />
-
                 <CustomButton
                   title="Update Activity"
                   onPress={updateActivity}
