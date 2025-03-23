@@ -1,4 +1,3 @@
-// AddActivity.tsx
 import React, { useState, useRef } from "react";
 import {
   Text,
@@ -6,17 +5,20 @@ import {
   TouchableOpacity,
   View,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
-import { useFetch } from "@/lib/fetch";
+import { fetchAPI, useFetch } from "@/lib/fetch";
+import { useUser } from "@clerk/clerk-expo";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
 const AddActivity = () => {
+  const { user } = useUser();
   const [activityName, setActivityName] = useState("");
   const [activityType, setActivityType] = useState("");
   const [timeSpent, setTimeSpent] = useState("");
@@ -24,6 +26,7 @@ const AddActivity = () => {
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     data: activityTypes,
@@ -41,6 +44,56 @@ const AddActivity = () => {
       setSelectedGrades(selectedGrades.filter((g) => g !== grade));
     } else {
       setSelectedGrades([...selectedGrades, grade]);
+    }
+  };
+
+  const handleAddActivity = async () => {
+    if (
+      !user?.primaryEmailAddress?.emailAddress ||
+      !activityName ||
+      !activityType ||
+      !timeSpent ||
+      !weeksPerYear ||
+      !roles ||
+      selectedGrades.length === 0
+    ) {
+      Alert.alert("Missing Fields", "Please fill out all required fields.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+
+      await fetchAPI("/(api)/adduseractivity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userEmail: user.primaryEmailAddress.emailAddress,
+          name: activityName,
+          activity_type: activityType,
+          hours_per_week: timeSpent,
+          weeks_per_year: weeksPerYear,
+          roles,
+          description,
+          grades: selectedGrades.join(","),
+        }),
+      });
+
+      Alert.alert("Success", "Your activity was added successfully!");
+
+      // Reset form
+      setActivityName("");
+      setActivityType("");
+      setTimeSpent("");
+      setWeeksPerYear("");
+      setRoles("");
+      setDescription("");
+      setSelectedGrades([]);
+    } catch (error) {
+      console.error("Error adding activity:", error);
+      Alert.alert("Error", "Something went wrong while adding your activity.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,7 +143,6 @@ const AddActivity = () => {
             />
           )}
 
-          {/* Rest of your input fields remain unchanged */}
           <InputField
             ref={timeSpentRef}
             label={
@@ -142,7 +194,6 @@ const AddActivity = () => {
             multiline
           />
 
-          {/* Grade Selection */}
           <View>
             <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
               Grades <Text className="text-red-500">*</Text>
@@ -173,9 +224,8 @@ const AddActivity = () => {
           </View>
 
           <CustomButton
-            title="Add Activity"
-            onPress={() => {}}
-            disabled
+            title={isSubmitting ? "Submitting..." : "Add Activity"}
+            onPress={handleAddActivity}
             className="mt-5"
           />
         </View>
