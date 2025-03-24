@@ -7,6 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 
@@ -62,8 +63,29 @@ const Opportunities = () => {
   );
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
 
-  const handleSave = (id: string) => {
-    setSavedOpportunities((prev) => new Set([...prev, id]));
+  // Save opportunity to AsyncStorage and update saved state
+  const handleSave = async (opportunity: Opportunity) => {
+    try {
+      const savedOpportunities =
+        await AsyncStorage.getItem("savedOpportunities");
+      const savedList = savedOpportunities
+        ? JSON.parse(savedOpportunities)
+        : [];
+      const isAlreadySaved = savedList.some(
+        (item: Opportunity) => item.id === opportunity.id,
+      );
+
+      if (!isAlreadySaved) {
+        const updatedList = [...savedList, opportunity];
+        await AsyncStorage.setItem(
+          "savedOpportunities",
+          JSON.stringify(updatedList),
+        );
+        setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
+      }
+    } catch (error) {
+      console.error("Error saving opportunity:", error);
+    }
   };
 
   const handleAutoAdd = (id: string) => {
@@ -178,7 +200,7 @@ const Opportunities = () => {
                   addedOpportunities.has(item.id) ? "Added" : "Add Activity"
                 }
                 onPress={() => handleAutoAdd(item.id)}
-                bgVariant="primary" // Keep valid value
+                bgVariant="primary"
                 textVariant="default"
                 className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
                   addedOpportunities.has(item.id)
@@ -189,8 +211,8 @@ const Opportunities = () => {
 
               <CustomButton
                 title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
-                onPress={() => handleSave(item.id)}
-                bgVariant="primary" // Keep valid value
+                onPress={() => handleSave(item)}
+                bgVariant="primary"
                 textVariant="default"
                 className={`px-4 py-2 rounded-lg flex-1 items-center ${
                   savedOpportunities.has(item.id)

@@ -69,7 +69,7 @@ module.exports = {
           900: "#742A2A",
         },
         warning: {
-          100: "#FFFBEB",
+          100: "#FFFFFF",
           200: "#FEF3C7",
           300: "#FDE68A",
           400: "#FACC15",
