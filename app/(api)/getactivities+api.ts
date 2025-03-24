@@ -20,25 +20,31 @@ export async function POST(request: Request) {
         a.description,
         a.grades
       FROM activities a
-      JOIN users u ON a.user_id = u.id
+             JOIN users u ON a.user_id = u.id
       WHERE u.email = ${email};
     `;
 
-    const formatted = activities.map((a: any) => ({
-      id: a.id,
-      name: a.name,
-      category: a.category,
-      hours: a.hours_per_week * a.weeks_per_year,
-      hoursPerWeek: a.hours_per_week,
-      weeksPerYear: a.weeks_per_year,
-      roles: a.roles,
-      description: a.description,
-      grade: a.grades,
-    }));
+    let totalHoursPerWeek = 0;
 
-    return new Response(JSON.stringify({ data: formatted }), {
-      status: 200,
+    const formatted = activities.map((a: any) => {
+      totalHoursPerWeek += a.hours_per_week;
+      return {
+        id: a.id,
+        name: a.name,
+        category: a.category,
+        hours: a.hours_per_week * a.weeks_per_year,
+        hoursPerWeek: a.hours_per_week,
+        weeksPerYear: a.weeks_per_year,
+        roles: a.roles,
+        description: a.description,
+        grade: a.grades,
+      };
     });
+
+    return new Response(
+      JSON.stringify({ data: formatted, totalHoursPerWeek }),
+      { status: 200 },
+    );
   } catch (error) {
     console.error("Error fetching activities:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
