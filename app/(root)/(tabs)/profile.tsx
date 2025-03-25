@@ -141,12 +141,20 @@ const Profile = () => {
           />
           <CustomButton
             title="Contact Support"
-            onPress={() => {}}
+            onPress={() =>
+              Linking.openURL(
+                "mailto:ask.ecai@gmail.com?subject=Support%20Inquiry&body=Enter%20your%20inquiry...",
+              )
+            }
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
           <CustomButton
             title="Submit Feedback"
-            onPress={() => {}}
+            onPress={() =>
+              Linking.openURL(
+                "mailto:ask.ecai@gmail.com?subject=Feedback&body=Enter%20your%20feedback...",
+              )
+            }
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
         </View>

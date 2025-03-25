@@ -48,16 +48,18 @@ const Sign_Up = () => {
     if (!isLoaded) return;
 
     try {
-      // Start sign-up process using email and password provided
+      const [firstName, ...rest] = form.name.trim().split(" ");
+      const lastName = rest.join(" ") || ""; // Handle cases where there's no last name
+
       await signUp.create({
         emailAddress: form.email,
         password: form.password,
+        firstName,
+        lastName,
       });
 
-      // Send user an email with verification code
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
-      // Set to 'pending' to display the verification modal
       setVerification({
         ...verification,
         state: "pending",

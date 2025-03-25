@@ -255,7 +255,7 @@ const ProfileSetup: React.FC = () => {
 
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="City & State"
+            label="City"
             data={dropdowns.cities}
             value={formData.location || ""}
             placeholder="Select location"

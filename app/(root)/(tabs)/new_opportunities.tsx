@@ -1,17 +1,17 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   RefreshControl,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import { Linking } from "react-native";
+import ReactNativeModal from "react-native-modal";
 
 interface Opportunity {
   id: string;
@@ -68,15 +68,13 @@ const Opportunities = () => {
     new Set(),
   );
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
+  const [modalVisible, setModalVisible] = useState<boolean>(false);
 
   // Save opportunity to AsyncStorage and update saved state
   const handleSave = async (opportunity: Opportunity) => {
     try {
-      const savedOpportunities =
-        await AsyncStorage.getItem("savedOpportunities");
-      const savedList = savedOpportunities
-        ? JSON.parse(savedOpportunities)
-        : [];
+      const saved = await AsyncStorage.getItem("savedOpportunities");
+      const savedList = saved ? JSON.parse(saved) : [];
       const isAlreadySaved = savedList.some(
         (item: Opportunity) => item.id === opportunity.id,
       );
@@ -105,8 +103,8 @@ const Opportunities = () => {
       setRemovedOpportunities(
         new Set([...savedOpportunities, ...addedOpportunities]),
       );
-      setSavedOpportunities(new Set()); // Reset saved state
-      setAddedOpportunities(new Set()); // Reset added state
+      setSavedOpportunities(new Set());
+      setAddedOpportunities(new Set());
       setRefreshing(false);
     }, 1000);
   };
@@ -147,12 +145,17 @@ const Opportunities = () => {
         />
       </View>
 
-      {/* Sorting Options */}
-      <View className="flex-row mb-4 relative z-10">
+      {/* Sorting and AI Suggested Options */}
+      <View className="flex-row mb-4 items-center justify-between relative z-10">
         <TouchableOpacity
           onPress={() => setShowSortDropdown(!showSortDropdown)}
         >
           <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Text className="text-general-400 font-PoppinsBold">
+            AI Suggested ✨
+          </Text>
         </TouchableOpacity>
         {showSortDropdown && (
           <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-2.5 z-20">
@@ -183,18 +186,18 @@ const Opportunities = () => {
               {item.activityType}
             </Text>
             <Text className="font-PoppinsRegular text-xs mb-1">
-              <Text className="font-PoppinsSemiBold">Location: </Text>{" "}
+              <Text className="font-PoppinsSemiBold">Location: </Text>
               {item.location}
             </Text>
             {item.duration && (
               <Text className="font-PoppinsRegular text-xs mb-1">
-                <Text className="font-PoppinsSemiBold">Duration: </Text>{" "}
+                <Text className="font-PoppinsSemiBold">Duration: </Text>
                 {item.duration}
               </Text>
             )}
             {item.deadline && (
               <Text className="font-PoppinsRegular text-xs mb-1">
-                <Text className="font-PoppinsSemiBold">Deadline: </Text>{" "}
+                <Text className="font-PoppinsSemiBold">Deadline: </Text>
                 {item.deadline}
               </Text>
             )}
@@ -211,6 +214,19 @@ const Opportunities = () => {
             {/* Buttons */}
             <View className="flex-row justify-between mt-4">
               <CustomButton
+                title={
+                  addedOpportunities.has(item.id) ? "Added" : "Add Activity"
+                }
+                onPress={() => handleAutoAdd(item.id)}
+                bgVariant="primary"
+                textVariant="default"
+                className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
+                  addedOpportunities.has(item.id)
+                    ? "bg-primary-900"
+                    : "bg-primary"
+                }`}
+              />
+              <CustomButton
                 title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 onPress={() => handleSave(item)}
                 bgVariant="primary"
@@ -225,6 +241,87 @@ const Opportunities = () => {
           </View>
         )}
       />
+
+      {/* AI Suggested Modal */}
+      <ReactNativeModal
+        isVisible={modalVisible}
+        style={{
+          justifyContent: "flex-start",
+          marginTop: 60,
+          marginHorizontal: 10,
+          marginBottom: 30,
+        }}
+        onBackdropPress={() => setModalVisible(false)}
+        onBackButtonPress={() => setModalVisible(false)}
+      >
+        <View className="bg-primary-200 px-4 py-9 rounded-2xl mb-20 shadow-md">
+          <TouchableOpacity
+            onPress={() => setModalVisible(false)}
+            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+          >
+            <Text className="text-xl font-bold">×</Text>
+          </TouchableOpacity>
+          <Text className="text-3xl font-bold text-primary-800 font-PoppinsBold pb-2 text-center">
+            AI Suggested Opportunities
+          </Text>
+          {opportunities.length > 0 ? (
+            <FlatList
+              data={opportunities}
+              showsVerticalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <View className="bg-white p-4 mb-3 rounded-lg" key={item.id}>
+                  <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+                    {item.title}
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    {item.activityType} | {item.location}
+                  </Text>
+                  {item.duration && (
+                    <Text className="text-sm text-gray-500">
+                      Duration: {item.duration}
+                    </Text>
+                  )}
+                  {item.deadline && (
+                    <Text className="text-sm text-gray-500">
+                      Deadline: {item.deadline}
+                    </Text>
+                  )}
+                  {/* Add Activity and Save buttons */}
+                  <View className="flex-row justify-between mt-4">
+                    <CustomButton
+                      title={addedOpportunities.has(item.id) ? "Added" : "Add"}
+                      onPress={() => handleAutoAdd(item.id)}
+                      bgVariant="primary"
+                      textVariant="default"
+                      className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
+                        addedOpportunities.has(item.id)
+                          ? "bg-primary-900"
+                          : "bg-primary"
+                      }`}
+                    />
+                    <CustomButton
+                      title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
+                      onPress={() => handleSave(item)}
+                      bgVariant="primary"
+                      textVariant="default"
+                      className={`px-4 py-2 rounded-lg flex-1 items-center ${
+                        savedOpportunities.has(item.id)
+                          ? "bg-primary-900"
+                          : "bg-primary"
+                      }`}
+                    />
+                  </View>
+                </View>
+              )}
+            />
+          ) : (
+            <Text className="text-gray-500 text-base text-center">
+              No AI Suggested opportunities yet.
+            </Text>
+          )}
+        </View>
+      </ReactNativeModal>
     </SafeAreaView>
   );
 };
