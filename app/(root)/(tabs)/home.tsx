@@ -69,6 +69,9 @@ export default function Home() {
               <Text className="text-lg font-PoppinsSemiBold">
                 Hello, {user?.fullName}!
               </Text>
+              <Text className="text-gray-500 font-PoppinsRegular">
+                Total Hours Logged: {totalHoursLogged}
+              </Text>
             </View>
           </View>
 

@@ -10,6 +10,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
+import { Linking } from "react-native";
 
 interface Opportunity {
   id: string;
@@ -18,6 +19,7 @@ interface Opportunity {
   location: string;
   duration?: string;
   deadline?: string;
+  apply?: string;
 }
 
 const opportunitiesData: Opportunity[] = [
@@ -28,6 +30,7 @@ const opportunitiesData: Opportunity[] = [
     location: "In-Person",
     duration: "3 months",
     deadline: "March 20",
+    apply: "https://www.youtube.com",
   },
   {
     id: "2",
@@ -36,6 +39,7 @@ const opportunitiesData: Opportunity[] = [
     location: "Remote",
     duration: "2 months",
     deadline: "April 10",
+    apply: "https://www.youtube.com",
   },
   {
     id: "3",
@@ -44,6 +48,7 @@ const opportunitiesData: Opportunity[] = [
     location: "In-Person",
     duration: "1 day",
     deadline: "March 25",
+    apply: "https://www.youtube.com",
   },
 ];
 
@@ -192,7 +197,16 @@ const Opportunities = () => {
                 {item.deadline}
               </Text>
             )}
-
+            {item.apply && (
+              <View className="flex-row flex-wrap items-center">
+                <Text className="font-PoppinsSemiBold text-xs">Apply: </Text>
+                <TouchableOpacity onPress={() => Linking.openURL(item.apply!)}>
+                  <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+                    {item.apply}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
             {/* Buttons */}
             <View className="flex-row justify-between mt-4">
               <CustomButton

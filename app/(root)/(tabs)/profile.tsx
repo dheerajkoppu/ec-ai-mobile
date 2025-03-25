@@ -9,6 +9,7 @@ import CustomButton from "@/components/CustomButton";
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
 
@@ -24,6 +25,34 @@ const Profile = () => {
       Linking.openURL(Linking.createURL("/"));
     } catch (err) {
       console.error(JSON.stringify(err, null, 2));
+    }
+  };
+
+  const deleteAccount = async () => {
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      console.log("Error", "User email is missing.");
+      return;
+    }
+    try {
+      const response = await fetch("/(api)/deleteuser", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userEmail: user.primaryEmailAddress.emailAddress,
+        }), // Send email, not ID
+      });
+
+      if (response.ok) {
+        await signOut(); // Sign out the user after successful deletion
+        Linking.openURL(Linking.createURL("/"));
+      } else {
+        const error = await response.json();
+        console.error("Failed to delete account:", error);
+      }
+    } catch (err) {
+      console.error("Delete account error:", err);
     }
   };
 
@@ -186,7 +215,7 @@ const Profile = () => {
               title="Delete"
               onPress={() => {
                 setShowDeleteModal(false);
-                // Add your delete account logic here
+                deleteAccount();
               }}
               bgVariant="danger"
               className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"

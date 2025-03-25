@@ -25,6 +25,12 @@
     "plugins": [
       [ "expo-router" , { "origin": "https://ec.ai/" } ],
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to let you add a profile picture."
+        }
+      ],
+      [
         "expo-splash-screen",
         {
           "image": "./assets/images/splash.png",
