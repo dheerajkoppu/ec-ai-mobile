@@ -150,7 +150,11 @@ const Profile = () => {
           />
           <CustomButton
             title="Submit Feedback"
-            onPress={() => {}}
+            onPress={() =>
+              Linking.openURL(
+                "mailto:ask.ecai@gmail.com?subject=Feedback%&body=Enter%20your%feedback...",
+              )
+            }
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
         </View>
