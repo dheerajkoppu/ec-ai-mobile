@@ -1,10 +1,11 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TouchableOpacity,
   FlatList,
   RefreshControl,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -209,20 +210,6 @@ const Opportunities = () => {
             )}
             {/* Buttons */}
             <View className="flex-row justify-between mt-4">
-              <CustomButton
-                title={
-                  addedOpportunities.has(item.id) ? "Added" : "Add Activity"
-                }
-                onPress={() => handleAutoAdd(item.id)}
-                bgVariant="primary"
-                textVariant="default"
-                className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
-                  addedOpportunities.has(item.id)
-                    ? "bg-primary-900"
-                    : "bg-primary"
-                }`}
-              />
-
               <CustomButton
                 title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 onPress={() => handleSave(item)}

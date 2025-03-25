@@ -10,8 +10,9 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useFocusEffect, router } from "expo-router";
+import { useFocusEffect } from "expo-router";
 import ReactNativeModal from "react-native-modal";
+import { FontAwesome } from "@expo/vector-icons"; // Import FontAwesome for trash icon
 
 interface Opportunity {
   id: string;
@@ -23,6 +24,7 @@ interface Opportunity {
 }
 
 export default function Home() {
+  const { user } = useUser();
   const activitiesThisWeek = 5;
   const totalHoursLogged = 40;
   const streak = 7;
@@ -31,12 +33,12 @@ export default function Home() {
     { name: "Hackathon Participation", timestamp: "4 days ago" },
     { name: "Comp Sci Club Meeting", timestamp: "6 days ago" },
   ];
-  const { user } = useUser();
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
   const [modalVisible, setModalVisible] = useState(false);
 
+  // Load opportunities from AsyncStorage
   const loadSavedOpportunities = async () => {
     try {
       const savedData = await AsyncStorage.getItem("savedOpportunities");
@@ -48,6 +50,18 @@ export default function Home() {
     } catch (error) {
       console.error("Error loading saved opportunities:", error);
     }
+  };
+
+  // Delete an opportunity
+  const deleteOpportunity = async (id: string) => {
+    const updatedOpportunities = savedOpportunities.filter(
+      (opp) => opp.id !== id,
+    );
+    setSavedOpportunities(updatedOpportunities);
+    await AsyncStorage.setItem(
+      "savedOpportunities",
+      JSON.stringify(updatedOpportunities),
+    );
   };
 
   useFocusEffect(
@@ -117,6 +131,7 @@ export default function Home() {
           </View>
         </ScrollView>
 
+        {/* MODAL */}
         <ReactNativeModal
           isVisible={modalVisible}
           style={{
@@ -137,28 +152,37 @@ export default function Home() {
             <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
               Saved Opportunities
             </Text>
+
             {savedOpportunities.length > 0 ? (
               <FlatList
                 data={savedOpportunities}
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
-                  <View className="bg-white p-4 mb-3 rounded-lg" key={item.id}>
-                    <Text className="text-lg font-PoppinsSemiBold text-gray-900">
-                      {item.title}
-                    </Text>
-                    <Text className="text-sm text-gray-500">
-                      {item.activityType} | {item.location}
-                    </Text>
-                    {item.duration && (
-                      <Text className="text-sm text-gray-500">
-                        Duration: {item.duration}
+                  <View className="bg-white p-4 mb-3 rounded-lg flex-row justify-between items-center">
+                    <View>
+                      <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+                        {item.title}
                       </Text>
-                    )}
-                    {item.deadline && (
                       <Text className="text-sm text-gray-500">
-                        Deadline: {item.deadline}
+                        {item.activityType} | {item.location}
                       </Text>
-                    )}
+                      {item.duration && (
+                        <Text className="text-sm text-gray-500">
+                          Duration: {item.duration}
+                        </Text>
+                      )}
+                      {item.deadline && (
+                        <Text className="text-sm text-gray-500">
+                          Deadline: {item.deadline}
+                        </Text>
+                      )}
+                    </View>
+
+                    <TouchableOpacity
+                      onPress={() => deleteOpportunity(item.id)}
+                    >
+                      <FontAwesome name="trash" size={22} color="red" />
+                    </TouchableOpacity>
                   </View>
                 )}
               />
