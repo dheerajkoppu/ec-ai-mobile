@@ -152,7 +152,7 @@ const Profile = () => {
             title="Submit Feedback"
             onPress={() =>
               Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Feedback%&body=Enter%20your%feedback...",
+                "mailto:ask.ecai@gmail.com?subject=Feedback&body=Enter%20your%20feedback...",
               )
             }
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
