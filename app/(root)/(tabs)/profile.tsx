@@ -1,14 +1,54 @@
 import { useUser, useClerk } from "@clerk/clerk-expo";
-import { View, Text, Image, ScrollView, Switch } from "react-native";
+import { useEffect } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+import {
+  View,
+  Text,
+  Image,
+  ScrollView,
+  Switch,
+  TouchableOpacity,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import React, { useState } from "react";
 import ReactNativeModal from "react-native-modal";
 import * as Linking from "expo-linking";
+import * as ImagePicker from "expo-image-picker";
 import CustomButton from "@/components/CustomButton";
+import { Ionicons } from "@expo/vector-icons";
 
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const [imageUri, setImageUri] = useState(user?.imageUrl);
+
+  useEffect(() => {
+    const loadImage = async () => {
+      const storedImage = await AsyncStorage.getItem("profileImage");
+      if (storedImage) {
+        setImageUri(storedImage);
+      } else {
+        setImageUri(user?.imageUrl);
+      }
+    };
+    loadImage();
+  }, []);
+
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const newImageUri = result.assets[0].uri;
+      setImageUri(newImageUri);
+      await AsyncStorage.setItem("profileImage", newImageUri); // Save to AsyncStorage
+    }
+  };
 
   const [darkMode, setDarkMode] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -63,11 +103,19 @@ const Profile = () => {
         showsVerticalScrollIndicator={false}
       >
         {/* Profile Information */}
-        <View className="items-center mb-6">
-          <Image
-            source={{ uri: user?.imageUrl }}
-            className="w-24 h-24 rounded-full"
-          />
+        <View className="items-center mb-6 relative">
+          <View className="relative">
+            <Image
+              source={{ uri: imageUri }}
+              className="w-24 h-24 rounded-full"
+            />
+            <TouchableOpacity
+              onPress={pickImage}
+              className="absolute bottom-0 right-0 bg-[#5b55f7] p-2 rounded-full shadow"
+            >
+              <Ionicons name="cloud-upload" size={18} color="white" />
+            </TouchableOpacity>
+          </View>
           <Text className="text-xl font-PoppinsSemiBold mt-2">
             {user?.fullName}
           </Text>

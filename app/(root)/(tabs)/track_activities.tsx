@@ -360,12 +360,13 @@ const TrackActivities = () => {
                         Career Field <Text className="text-red-500">*</Text>
                       </Text>
                     }
-                    data={careerFields || []}
-                    value={editingActivity.category}
-                    onChange={(item) =>
+                    data={careerFields ?? []} // Ensures careerFields is never undefined
+                    value={editingActivity?.category} // Prevents errors if editingActivity is null
+                    onChange={({ value }) =>
+                      editingActivity &&
                       setEditingActivity({
                         ...editingActivity,
-                        category: item.value,
+                        category: value,
                       })
                     }
                     placeholder="Select a career field"

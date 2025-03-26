@@ -52,6 +52,18 @@ export default function Home() {
     }
   };
 
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    const loadProfileImage = async () => {
+      const storedImage = await AsyncStorage.getItem("profileImage");
+      if (storedImage) {
+        setProfileImage(storedImage);
+      }
+    };
+    loadProfileImage();
+  }, []);
+
   // Delete an opportunity
   const deleteOpportunity = async (id: string) => {
     const updatedOpportunities = savedOpportunities.filter(
@@ -76,7 +88,9 @@ export default function Home() {
         <ScrollView>
           <View className="flex-row items-center mb-4">
             <Image
-              source={{ uri: user?.imageUrl }}
+              source={
+                profileImage ? { uri: profileImage } : { uri: user?.imageUrl }
+              } // Use the URI for profile image or fallback
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4">
