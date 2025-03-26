@@ -214,19 +214,6 @@ const Opportunities = () => {
             {/* Buttons */}
             <View className="flex-row justify-between mt-4">
               <CustomButton
-                title={
-                  addedOpportunities.has(item.id) ? "Added" : "Add Activity"
-                }
-                onPress={() => handleAutoAdd(item.id)}
-                bgVariant="primary"
-                textVariant="default"
-                className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
-                  addedOpportunities.has(item.id)
-                    ? "bg-primary-900"
-                    : "bg-primary"
-                }`}
-              />
-              <CustomButton
                 title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                 onPress={() => handleSave(item)}
                 bgVariant="primary"
@@ -289,17 +276,6 @@ const Opportunities = () => {
                   )}
                   {/* Add Activity and Save buttons */}
                   <View className="flex-row justify-between mt-4">
-                    <CustomButton
-                      title={addedOpportunities.has(item.id) ? "Added" : "Add"}
-                      onPress={() => handleAutoAdd(item.id)}
-                      bgVariant="primary"
-                      textVariant="default"
-                      className={`px-4 py-2 rounded-lg flex-1 mr-2 items-center ${
-                        addedOpportunities.has(item.id)
-                          ? "bg-primary-900"
-                          : "bg-primary"
-                      }`}
-                    />
                     <CustomButton
                       title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
                       onPress={() => handleSave(item)}
