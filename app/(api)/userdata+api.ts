@@ -33,7 +33,6 @@ export async function POST(request: Request) {
       ecType,
       source,
       usedOtherApps,
-      profilePic,
       notifications,
       agreeTerms,
     } = await request.json();
@@ -112,7 +111,6 @@ export async function POST(request: Request) {
         extracurricular_format = ${ecType},
         referral_source = ${source},
         used_other_ec_finders = ${usedOtherECFinders},
-        profile_picture_url = ${profilePic},
         wants_notifications = ${wantsNotifications},
         agreed_to_terms = ${agreedToTerms}
       WHERE email = ${userEmail};

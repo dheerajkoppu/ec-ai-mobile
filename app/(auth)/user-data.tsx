@@ -68,7 +68,6 @@ interface IFormData {
   ecType?: string;
   source?: string;
   usedOtherApps?: string;
-  profilePic?: string;
   notifications?: string;
   agreeTerms?: string;
 }
@@ -145,18 +144,6 @@ const ProfileSetup: React.FC = () => {
         "Error",
         "An error occurred while submitting your profile data.",
       );
-    }
-  };
-
-  const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-    if (!result.canceled) {
-      handleChange("profilePic", result.assets[0].uri);
     }
   };
 
@@ -440,22 +427,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("usedOtherApps", item.value)}
           />
-          <CustomButton
-            title="Pick a Profile Picture"
-            onPress={pickImage}
-            className="mt-4 mb-4"
-          />
-          {formData.profilePic && (
-            <Image
-              source={{ uri: formData.profilePic }}
-              style={{
-                width: 75,
-                height: 75,
-                alignSelf: "center",
-                marginVertical: 6,
-              }}
-            />
-          )}
           <DropdownField
             label="Notifications?"
             data={yesNo}
