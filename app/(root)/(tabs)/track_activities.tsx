@@ -53,10 +53,10 @@ const TrackActivities = () => {
   } = useFetch<Activity[]>("/(api)/getactivities", requestOptions);
 
   const {
-    data: careerFields,
+    data: careerFields = [],
     loading: loadingCareerFields,
     error: errorCareerFields,
-  } = useFetch("/(api)/activitytypes");
+  } = useFetch<{ label: string; value: string }[]>("/(api)/activitytypes");
 
   useEffect(() => {
     if (fetchedActivities && Array.isArray(fetchedActivities)) {
