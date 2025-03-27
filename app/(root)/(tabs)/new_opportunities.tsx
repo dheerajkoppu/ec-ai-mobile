@@ -274,6 +274,20 @@ const Opportunities = () => {
                       Deadline: {item.deadline}
                     </Text>
                   )}
+                  {item.apply && (
+                    <View className="flex-row flex-wrap items-center">
+                      <Text className="font-PoppinsSemiBold text-xs">
+                        Apply:{" "}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => Linking.openURL(item.apply!)}
+                      >
+                        <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+                          {item.apply}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                   {/* Add Activity and Save buttons */}
                   <View className="flex-row justify-between mt-4">
                     <CustomButton

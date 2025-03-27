@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   FlatList,
+  Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
@@ -21,6 +22,7 @@ interface Opportunity {
   location: string;
   duration?: string;
   deadline?: string;
+  apply: "https://www.youtube.com";
 }
 
 export default function Home() {
@@ -189,6 +191,20 @@ export default function Home() {
                         <Text className="text-sm text-gray-500">
                           Deadline: {item.deadline}
                         </Text>
+                      )}
+                      {item.apply && (
+                        <View className="flex-row flex-wrap items-center">
+                          <Text className="font-PoppinsSemiBold text-xs">
+                            Apply:{" "}
+                          </Text>
+                          <TouchableOpacity
+                            onPress={() => Linking.openURL(item.apply!)}
+                          >
+                            <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+                              {item.apply}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
                       )}
                     </View>
 
