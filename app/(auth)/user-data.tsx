@@ -4,14 +4,15 @@ import {
   View,
   Alert,
   ActivityIndicator,
-  Image,
   TouchableOpacity,
+  Modal,
+  FlatList,
+  StyleSheet,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { useUser } from "@clerk/clerk-expo";
-import * as ImagePicker from "expo-image-picker";
 
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
@@ -32,6 +33,9 @@ interface IDropdowns {
   gender: DropdownOption[];
   cities: DropdownOption[];
   extracurricularReasons: DropdownOption[];
+  satRange: DropdownOption[];
+  actRange: DropdownOption[];
+  psatRange: DropdownOption[];
   fieldLevel: DropdownOption[];
   opportunitySelectivity: DropdownOption[];
   weeklyCommitment: DropdownOption[];
@@ -54,11 +58,14 @@ interface IFormData {
   satScore?: string;
   actScore?: string;
   psatScore?: string;
-  careerInterest?: string;
+  // Changed to array for multi-select
+  careerInterest?: string[];
   entrepreneur?: string;
   research?: string;
-  ecReason?: string;
-  ecLevel?: string;
+  // Changed to array for multi-select
+  ecReason?: string[];
+  // Changed to array for multi-select
+  ecLevel?: string[];
   leadership?: string;
   createOwn?: string;
   selectivity?: string;
@@ -72,6 +79,121 @@ interface IFormData {
   agreeTerms?: string;
 }
 
+// MultiSelectDropdown Component
+interface MultiSelectDropdownProps {
+  options: DropdownOption[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  placeholder?: string;
+}
+
+const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
+  options,
+  selectedValues,
+  onChange,
+  placeholder = "Select options",
+}) => {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const toggleOption = (value: string) => {
+    if (selectedValues.includes(value)) {
+      onChange(selectedValues.filter((item) => item !== value));
+    } else {
+      onChange([...selectedValues, value]);
+    }
+  };
+
+  const renderOption = ({ item }: { item: DropdownOption }) => {
+    const isSelected = selectedValues.includes(item.value);
+    return (
+      <TouchableOpacity
+        style={[styles.option, isSelected && styles.selectedOption]}
+        onPress={() => toggleOption(item.value)}
+      >
+        <Text style={styles.optionText}>{item.label}</Text>
+      </TouchableOpacity>
+    );
+  };
+
+  return (
+    <View>
+      <TouchableOpacity
+        style={styles.dropdownButton}
+        onPress={() => setModalVisible(true)}
+      >
+        <Text style={styles.dropdownButtonText}>
+          {selectedValues.length
+            ? options
+                .filter((o) => selectedValues.includes(o.value))
+                .map((o) => o.label)
+                .join(", ")
+            : placeholder}
+        </Text>
+      </TouchableOpacity>
+
+      <Modal visible={modalVisible} animationType="slide">
+        <View style={styles.modalContainer}>
+          <Text style={styles.modalTitle}>Select Options</Text>
+          <FlatList
+            data={options}
+            keyExtractor={(item) => item.value}
+            renderItem={renderOption}
+          />
+          <TouchableOpacity
+            style={styles.doneButton}
+            onPress={() => setModalVisible(false)}
+          >
+            <Text style={styles.doneButtonText}>Done</Text>
+          </TouchableOpacity>
+        </View>
+      </Modal>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  dropdownButton: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    padding: 10,
+    borderRadius: 5,
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: "#333",
+  },
+  modalContainer: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#fff",
+  },
+  modalTitle: {
+    fontSize: 20,
+    marginBottom: 20,
+  },
+  option: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+  },
+  selectedOption: {
+    backgroundColor: "#ddd",
+  },
+  optionText: {
+    fontSize: 16,
+  },
+  doneButton: {
+    marginTop: 20,
+    padding: 10,
+    alignSelf: "center",
+  },
+  doneButtonText: {
+    fontSize: 18,
+    color: "blue",
+  },
+});
+
+// SlideWrapper component to wrap each slide in the form
 const SlideWrapper: React.FC<{
   children: React.ReactNode;
   showBack?: boolean;
@@ -84,7 +206,16 @@ const SlideWrapper: React.FC<{
     extraScrollHeight={80}
     showsVerticalScrollIndicator={false}
   >
-    <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16 pb-20">
+    <View
+      style={{
+        backgroundColor: "white",
+        padding: 16,
+        borderRadius: 8,
+        shadowColor: "#000",
+        marginBottom: 16,
+        paddingBottom: 20,
+      }}
+    >
       {showBack && (
         <TouchableOpacity
           onPress={onBack}
@@ -110,6 +241,14 @@ const ProfileSetup: React.FC = () => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
+  // Handler for multi-select fields
+  const handleMultiSelectChange = useCallback(
+    (key: keyof IFormData, values: string[]) => {
+      setFormData((prev) => ({ ...prev, [key]: values }));
+    },
+    [],
+  );
+
   const handleBack = () => {
     if (step > 0) {
       swiperRef.current?.scrollBy(-1);
@@ -132,7 +271,6 @@ const ProfileSetup: React.FC = () => {
         body: JSON.stringify(payload),
       });
       console.log("API result:", response);
-
       if (response.ok) {
         router.push("/(root)/(tabs)/home");
       } else {
@@ -143,6 +281,80 @@ const ProfileSetup: React.FC = () => {
       Alert.alert(
         "Error",
         "An error occurred while submitting your profile data.",
+      );
+    }
+  };
+
+  const validateSlide = (currentStep: number): boolean => {
+    switch (currentStep) {
+      case 0:
+        // Slide 1: Grade Level, Race/Ethnicity, School Name, Gender, Age
+        return !!(
+          formData.gradeLevel?.trim() &&
+          formData.race?.trim() &&
+          formData.schoolName?.trim() &&
+          formData.gender?.trim() &&
+          formData.age?.trim()
+        );
+      case 1:
+        // Slide 2: City, Lunch, First-Gen, Weighted GPA, Unweighted GPA
+        return !!(
+          formData.location?.trim() &&
+          formData.lunch?.trim() &&
+          formData.firstGen?.trim() &&
+          formData.gpaWeighted?.trim() &&
+          formData.gpaUnweighted?.trim()
+        );
+      case 2:
+        // Slide 3: SAT, ACT, PSAT, Career Interest (multi-select), Entrepreneur
+        return !!(
+          formData.satScore?.trim() &&
+          formData.actScore?.trim() &&
+          formData.psatScore?.trim() &&
+          formData.careerInterest &&
+          formData.careerInterest.length > 0 &&
+          formData.entrepreneur?.trim()
+        );
+      case 3:
+        // Slide 4: Research, EC Goals (multi-select), Field Level (multi-select), Leadership, Create Own
+        return !!(
+          formData.research?.trim() &&
+          formData.ecReason &&
+          formData.ecReason.length > 0 &&
+          formData.ecLevel &&
+          formData.ecLevel.length > 0 &&
+          formData.leadership?.trim() &&
+          formData.createOwn?.trim()
+        );
+      case 4:
+        // Slide 5: Opportunity Selectiveness, Paid, Travel, Weekly Commitment, EC Format
+        return !!(
+          formData.selectivity?.trim() &&
+          formData.paid?.trim() &&
+          formData.travel?.trim() &&
+          formData.timeWeekly?.trim() &&
+          formData.ecType?.trim()
+        );
+      case 5:
+        // Slide 6: Referral Source, Used Other Apps, Notifications, Agree Terms
+        return !!(
+          formData.source?.trim() &&
+          formData.usedOtherApps?.trim() &&
+          formData.notifications?.trim() &&
+          formData.agreeTerms?.trim()
+        );
+      default:
+        return true;
+    }
+  };
+
+  const goToNextSlide = () => {
+    if (validateSlide(step)) {
+      swiperRef.current?.scrollBy(1);
+    } else {
+      Alert.alert(
+        "Incomplete",
+        "Please fill out all required fields on this page.",
       );
     }
   };
@@ -168,9 +380,23 @@ const ProfileSetup: React.FC = () => {
 
   if (loading || !dropdowns) {
     return (
-      <SafeAreaView className="flex-1 bg-primary-200 justify-center items-center">
+      <SafeAreaView
+        style={{
+          flex: 1,
+          backgroundColor: "#E0E8F0",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
+      >
         <ActivityIndicator size="large" color="#5b55f6" />
-        <Text className="text-lg mt-2 text-gray-600 font-PoppinsRegular">
+        <Text
+          style={{
+            fontSize: 18,
+            marginTop: 8,
+            color: "#555",
+            fontFamily: "Poppins-Regular",
+          }}
+        >
           Loading form...
         </Text>
       </SafeAreaView>
@@ -180,12 +406,21 @@ const ProfileSetup: React.FC = () => {
   const yesNo = dropdowns.yesNo;
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200">
-      <View className="px-4 pt-6 pb-2">
-        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold">
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#E0E8F0" }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 }}>
+        <Text
+          style={{
+            fontSize: 24,
+            fontWeight: "bold",
+            color: "#333",
+            fontFamily: "Poppins-Bold",
+          }}
+        >
           Profile Setup
         </Text>
-        <Text className="text-base text-gray-600 font-PoppinsRegular">
+        <Text
+          style={{ fontSize: 16, color: "#555", fontFamily: "Poppins-Regular" }}
+        >
           Step {step + 1} of 6
         </Text>
       </View>
@@ -197,6 +432,7 @@ const ProfileSetup: React.FC = () => {
         scrollEnabled={false}
         onIndexChanged={(index) => setStep(index)}
       >
+        {/* Slide 1 */}
         <SlideWrapper showBack={step > 0} onBack={handleBack}>
           <DropdownField
             label="Grade Level"
@@ -235,11 +471,12 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={() => swiperRef.current?.scrollBy(1)}
-            className="mt-4 mb-4"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
 
+        {/* Slide 2 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label="City"
@@ -278,39 +515,42 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={() => swiperRef.current?.scrollBy(1)}
-            className="mt-4 mb-4"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
 
+        {/* Slide 3 */}
         <SlideWrapper showBack onBack={handleBack}>
-          <InputField
+          <DropdownField
             label="SAT Score"
-            keyboardType="numeric"
-            placeholder="Enter SAT Score"
-            value={formData.satScore}
-            onChangeText={(val) => handleChange("satScore", val)}
-          />
-          <InputField
-            label="ACT Score"
-            keyboardType="numeric"
-            placeholder="Enter ACT Score"
-            value={formData.actScore}
-            onChangeText={(val) => handleChange("actScore", val)}
-          />
-          <InputField
-            label="PSAT Score"
-            keyboardType="numeric"
-            placeholder="Enter PSAT Score"
-            value={formData.psatScore}
-            onChangeText={(val) => handleChange("psatScore", val)}
+            data={dropdowns.satRange}
+            value={formData.satScore || ""}
+            placeholder="Select SAT range"
+            onChange={(item) => handleChange("satScore", item.value)}
           />
           <DropdownField
-            label="Career Interest"
-            data={dropdowns.careerInterest}
-            value={formData.careerInterest || ""}
-            placeholder="Select a career"
-            onChange={(item) => handleChange("careerInterest", item.value)}
+            label="ACT Score"
+            data={dropdowns.actRange}
+            value={formData.actScore || ""}
+            placeholder="Select ACT range"
+            onChange={(item) => handleChange("actScore", item.value)}
+          />
+          <DropdownField
+            label="PSAT Score"
+            data={dropdowns.psatRange}
+            value={formData.psatScore || ""}
+            placeholder="Select PSAT range"
+            onChange={(item) => handleChange("psatScore", item.value)}
+          />
+          <Text style={{ marginBottom: 5, fontSize: 16 }}>Career Interest</Text>
+          <MultiSelectDropdown
+            options={dropdowns.careerInterest}
+            selectedValues={formData.careerInterest || []}
+            onChange={(values) =>
+              handleMultiSelectChange("careerInterest", values)
+            }
+            placeholder="Select career interests"
           />
           <DropdownField
             label="Want to start a business or nonprofit?"
@@ -321,11 +561,12 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={() => swiperRef.current?.scrollBy(1)}
-            className="mt-4 mb-4"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
 
+        {/* Slide 4 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label="Interested in research?"
@@ -334,19 +575,21 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("research", item.value)}
           />
-          <DropdownField
-            label="Why ECs?"
-            data={dropdowns.extracurricularReasons}
-            value={formData.ecReason || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("ecReason", item.value)}
+          <Text style={{ marginBottom: 5, fontSize: 16 }}>EC Goals?</Text>
+          <MultiSelectDropdown
+            options={dropdowns.extracurricularReasons}
+            selectedValues={formData.ecReason || []}
+            onChange={(values) => handleMultiSelectChange("ecReason", values)}
+            placeholder="Select EC goals"
           />
-          <DropdownField
-            label="Level to reach in your field?"
-            data={dropdowns.fieldLevel}
-            value={formData.ecLevel || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("ecLevel", item.value)}
+          <Text style={{ marginBottom: 5, fontSize: 16 }}>
+            Level to reach in your field?
+          </Text>
+          <MultiSelectDropdown
+            options={dropdowns.fieldLevel}
+            selectedValues={formData.ecLevel || []}
+            onChange={(values) => handleMultiSelectChange("ecLevel", values)}
+            placeholder="Select levels"
           />
           <DropdownField
             label="Looking for leadership?"
@@ -364,11 +607,12 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={() => swiperRef.current?.scrollBy(1)}
-            className="mt-4 mb-4"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
 
+        {/* Slide 5 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label="Opportunity Selectiveness"
@@ -407,11 +651,12 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={() => swiperRef.current?.scrollBy(1)}
-            className="mt-4 mb-4"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
 
+        {/* Slide 6 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label="Referral Source"
@@ -435,7 +680,7 @@ const ProfileSetup: React.FC = () => {
             onChange={(item) => handleChange("notifications", item.value)}
           />
           <DropdownField
-            label="Agree to Terms & Privacy Policy"
+            label="Agree to Terms & Privacy Policy & Under 18"
             data={yesNo}
             value={formData.agreeTerms || ""}
             placeholder="Confirm"
@@ -443,8 +688,17 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Submit"
-            onPress={handleSubmit}
-            className="mt-4"
+            onPress={() => {
+              if (validateSlide(step)) {
+                handleSubmit();
+              } else {
+                Alert.alert(
+                  "Incomplete",
+                  "Please fill out all required fields on this page.",
+                );
+              }
+            }}
+            style={{ marginTop: 16 }}
           />
         </SlideWrapper>
       </Swiper>

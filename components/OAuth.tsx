@@ -13,11 +13,25 @@ const OAuth = () => {
     const result = await googleOAuth(startOAuthFlow);
 
     if (result.code === "session_exists" || result.code === "success") {
+      if (result.date) {
+        const timeSinceSignIn = Date.now() - result.date;
+
+        // If account is new (within 5 seconds), go to user-data
+        if (timeSinceSignIn < 5000) {
+          router.push("/(auth)/user-data");
+          Alert.alert("Success", "Welcome! Let’s finish setting things up.");
+          return;
+        }
+      }
+
       router.push("/(root)/(tabs)/home");
+      Alert.alert("Success", result.message);
+      return;
     }
 
-    Alert.alert(result.success ? "Success" : "Error", result.message);
+    Alert.alert("Error", result.message);
   };
+
   return (
     <View>
       <View className="flex flex-row justify-center items-center mt-4 gap-x-3">

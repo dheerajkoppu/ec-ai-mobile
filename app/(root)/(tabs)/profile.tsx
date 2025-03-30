@@ -221,17 +221,21 @@ const Profile = () => {
         onBackdropPress={() => setPrivacyOpen(false)}
         onBackButtonPress={() => setPrivacyOpen(false)}
       >
-        <ScrollView>
-          <View className="bg-primary-200 px-4 py-9 rounded-2xl mb-20 shadow-md">
-            <TouchableOpacity
-              onPress={() => setPrivacyOpen(false)}
-              style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
-            >
-              <Text className="text-xl font-bold">×</Text>
-            </TouchableOpacity>
-            <Text className="text-3xl font-bold text-primary-800 font-PoppinsBold pb-2 text-center">
+        <View className="bg-primary-200 px-4 py-6 rounded-2xl mb-20 shadow-md max-h-[90vh]">
+          {/* Fixed Header */}
+          <View className="flex-row justify-between items-center mb-2">
+            <Text className="text-2xl font-bold text-primary-800 font-PoppinsBold text-center flex-1">
               Privacy Policy
             </Text>
+            <TouchableOpacity onPress={() => setPrivacyOpen(false)}>
+              <Text className="text-3xl font-bold text-primary-800 px-2">
+                ×
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Scrollable Content */}
+          <ScrollView className="max-h-[80vh]">
             <View className="bg-white p-4 mb-3 rounded-lg">
               <Text className="text-xl font-medium text-primary-800 font-PoppinsSemiBold pb-1 text-left">
                 1. Privacy and Data Protection Rules
@@ -499,8 +503,8 @@ const Profile = () => {
                 remains usable for everyone, regardless of budget.
               </Text>
             </View>
-          </View>
-        </ScrollView>
+          </ScrollView>
+        </View>
       </ReactNativeModal>
       {/* Sign Out Confirmation Modal */}
       <ReactNativeModal isVisible={showSignOutModal}>
