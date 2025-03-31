@@ -27,15 +27,13 @@ const ActivityTabs = () => {
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
   const [milestone, setMilestone] = useState("");
-  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [selectedGrades, setSelectedGrades] = useState([]);
   const [logDate, setLogDate] = useState(new Date());
   const [logHours, setLogHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch full activity types for the "Add New Activity" tab
   const { data: activities } = useFetch("/(api)/activitytypes");
 
-  // Prepare request options for the new endpoint using the user's email
   const activityNamesRequestOptions = user?.primaryEmailAddress?.emailAddress
     ? {
         method: "POST",
@@ -46,13 +44,11 @@ const ActivityTabs = () => {
       }
     : undefined;
 
-  // Fetch only activity names and ids for the "Log Hours" tab
   const { data: activityNames } = useFetch(
     "/(api)/getactivitynames",
     activityNamesRequestOptions,
   );
 
-  // Format the data so that each object has { label, value }
   const formattedActivityNames = (
     Array.isArray(activityNames) ? activityNames : activityNames?.data || []
   ).map((item) => ({
@@ -68,6 +64,17 @@ const ActivityTabs = () => {
     } else {
       setSelectedGrades([...selectedGrades, grade]);
     }
+  };
+
+  // Helper function to format a Date object into "YYYY-MM-DD"
+  const formatDateToISO = (date) => {
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date");
+    }
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
   };
 
   const handleAddActivity = async () => {
@@ -112,6 +119,38 @@ const ActivityTabs = () => {
     } catch (error) {
       console.error("Error adding activity:", error);
       Alert.alert("Error", "Something went wrong while adding your activity.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleLogHours = async () => {
+    if (!activityName || !logDate || !logHours) {
+      Alert.alert("Missing Fields", "Please fill out all required fields.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await fetchAPI("/(api)/loghours", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activity_id: activityName,
+          date_of_activity: formatDateToISO(logDate),
+          hours_logged: parseFloat(logHours),
+          description: milestone,
+        }),
+      });
+
+      Alert.alert("Success", "Your hours were logged successfully!");
+      setActivityName("");
+      setLogDate(new Date());
+      setLogHours("");
+      setMilestone("");
+    } catch (error) {
+      console.error("Error logging hours:", error);
+      Alert.alert("Error", "Something went wrong while logging your hours.");
     } finally {
       setIsSubmitting(false);
     }
@@ -196,7 +235,6 @@ const ActivityTabs = () => {
               value={roles}
               onChangeText={setRoles}
             />
-            {/* Grade Level Section */}
             <Text className="font-medium text-lg font-PoppinsBold mt-4">
               Grade Level <Text className="text-red-500">*</Text>
             </Text>
@@ -241,12 +279,10 @@ const ActivityTabs = () => {
                   Name of Activity <Text className="text-red-500">*</Text>
                 </Text>
               }
-              // Use the formatted activity names data for logging hours
               data={formattedActivityNames}
               value={activityName}
               onChange={(item) => setActivityName(item.value)}
             />
-            {/* Updated Date of Activity Input Field */}
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField
               label={
@@ -265,8 +301,8 @@ const ActivityTabs = () => {
               multiline
             />
             <CustomButton
-              title="Log Hours"
-              onPress={() => {}}
+              title={isSubmitting ? "Submitting..." : "Log Hours"}
+              onPress={handleLogHours}
               className="mt-5"
             />
           </View>
@@ -276,31 +312,22 @@ const ActivityTabs = () => {
   );
 };
 
-// Custom Date Input Field
 const DateInputField = ({ logDate, setLogDate }) => {
   const [dateText, setDateText] = useState(logDate.toLocaleDateString("en-US"));
 
   const formatDate = (text) => {
-    // Remove non-numeric characters
     const digits = text.replace(/\D/g, "");
-    let formattedText = "";
-    if (digits.length <= 2) {
-      formattedText = digits;
-    } else if (digits.length <= 4) {
-      formattedText = `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    } else if (digits.length <= 8) {
-      formattedText = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-    } else {
-      formattedText = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-    }
-    return formattedText;
+    if (digits.length <= 2) return digits;
+    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    if (digits.length <= 8)
+      return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
   };
 
   const isValidDate = (dateString) => {
     const [month, day, year] = dateString.split("/").map(Number);
-    if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999) {
+    if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999)
       return false;
-    }
     const date = new Date(year, month - 1, day);
     return (
       date.getFullYear() === year &&
@@ -313,7 +340,8 @@ const DateInputField = ({ logDate, setLogDate }) => {
     const formattedText = formatDate(text);
     setDateText(formattedText);
     if (formattedText.length === 10 && isValidDate(formattedText)) {
-      setLogDate(new Date(formattedText));
+      const [month, day, year] = formattedText.split("/").map(Number);
+      setLogDate(new Date(year, month - 1, day));
     }
   };
 

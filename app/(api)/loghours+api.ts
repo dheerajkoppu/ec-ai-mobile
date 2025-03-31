@@ -1,0 +1,37 @@
+import { neon } from "@neondatabase/serverless";
+
+export async function POST(request: Request) {
+  try {
+    const sql = neon(`${process.env.DATABASE_URL}`);
+    const { activity_id, date_of_activity, hours_logged, description } =
+      await request.json();
+
+    if (!activity_id || !date_of_activity || !hours_logged) {
+      return Response.json(
+        { error: "Missing required fields" },
+        { status: 400 },
+      );
+    }
+
+    const response = await sql`
+      INSERT INTO hours_logged (
+        activity_id,
+        date_of_activity,
+        hours_logged,
+        description
+      )
+      VALUES (
+        ${activity_id},
+        ${date_of_activity},
+        ${hours_logged},
+        ${description || null}
+      );`;
+
+    return new Response(JSON.stringify({ data: response }), {
+      status: 201,
+    });
+  } catch (error) {
+    console.error("Error logging hours:", error);
+    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
