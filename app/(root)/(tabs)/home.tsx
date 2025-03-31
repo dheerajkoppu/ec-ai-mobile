@@ -4,8 +4,8 @@ import {
   Text,
   Image,
   ScrollView,
-  TouchableOpacity,
   FlatList,
+  TouchableOpacity,
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -13,7 +13,8 @@ import { SignedIn, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import ReactNativeModal from "react-native-modal";
-import { FontAwesome } from "@expo/vector-icons"; // Import FontAwesome for trash icon
+import { FontAwesome } from "@expo/vector-icons";
+import CustomButton from "@/components/CustomButton"; // Import your custom button
 
 interface Opportunity {
   id: string;
@@ -35,10 +36,16 @@ export default function Home() {
     { name: "Hackathon Participation", timestamp: "4 days ago" },
     { name: "Comp Sci Club Meeting", timestamp: "6 days ago" },
   ];
+
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
   const [modalVisible, setModalVisible] = useState(false);
+
+  // State for nested delete confirmation modal
+  const [deleteOpportunityTarget, setDeleteOpportunityTarget] =
+    useState<Opportunity | null>(null);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
 
   // Load opportunities from AsyncStorage
   const loadSavedOpportunities = async () => {
@@ -66,7 +73,7 @@ export default function Home() {
     loadProfileImage();
   }, []);
 
-  // Delete an opportunity
+  // Delete an opportunity from AsyncStorage and update state
   const deleteOpportunity = async (id: string) => {
     const updatedOpportunities = savedOpportunities.filter(
       (opp) => opp.id !== id,
@@ -92,7 +99,7 @@ export default function Home() {
             <Image
               source={
                 profileImage ? { uri: profileImage } : { uri: user?.imageUrl }
-              } // Use the URI for profile image or fallback
+              }
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4">
@@ -109,7 +116,7 @@ export default function Home() {
             <Text className="text-xl text-white font-PoppinsSemiBold">
               Quick Stats
             </Text>
-            <Text className="text-white text-base font-PoppinsSemiBold ">
+            <Text className="text-white text-base font-PoppinsSemiBold">
               Activities this week:{" "}
               <Text className="font-normal">{activitiesThisWeek}</Text>
             </Text>
@@ -147,7 +154,7 @@ export default function Home() {
           </View>
         </ScrollView>
 
-        {/* MODAL */}
+        {/* Outer Modal for Saved Opportunities */}
         <ReactNativeModal
           isVisible={modalVisible}
           style={{
@@ -198,7 +205,7 @@ export default function Home() {
                             Apply:{" "}
                           </Text>
                           <TouchableOpacity
-                            onPress={() => Linking.openURL(item.apply!)}
+                            onPress={() => Linking.openURL(item.apply)}
                           >
                             <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
                               {item.apply}
@@ -209,7 +216,11 @@ export default function Home() {
                     </View>
 
                     <TouchableOpacity
-                      onPress={() => deleteOpportunity(item.id)}
+                      onPress={() => {
+                        // Open the nested confirmation modal without closing the outer modal
+                        setDeleteOpportunityTarget(item);
+                        setDeleteModalVisible(true);
+                      }}
                     >
                       <FontAwesome name="trash" size={22} color="red" />
                     </TouchableOpacity>
@@ -221,6 +232,57 @@ export default function Home() {
                 No saved opportunities yet.
               </Text>
             )}
+
+            {/* Nested Confirmation Modal */}
+            <ReactNativeModal
+              isVisible={deleteModalVisible}
+              style={{
+                margin: 20,
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+              onBackdropPress={() => {
+                setDeleteModalVisible(false);
+                setDeleteOpportunityTarget(null);
+              }}
+              onBackButtonPress={() => {
+                setDeleteModalVisible(false);
+                setDeleteOpportunityTarget(null);
+              }}
+            >
+              <View className="bg-white px-7 py-9 rounded-2xl">
+                <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
+                  Confirm Delete
+                </Text>
+                <Text className="text-base font-PoppinsSemiBold text-center mb-6">
+                  Are you sure you want to delete this opportunity? This action
+                  cannot be undone.
+                </Text>
+                <View className="flex-row justify-between">
+                  <CustomButton
+                    title="Cancel"
+                    onPress={() => {
+                      setDeleteModalVisible(false);
+                      setDeleteOpportunityTarget(null);
+                    }}
+                    className="w-1/2 p-2 rounded-lg mr-2 font-PoppinsRegular shadow-md"
+                  />
+                  <CustomButton
+                    title="Delete"
+                    onPress={() => {
+                      if (deleteOpportunityTarget) {
+                        deleteOpportunity(deleteOpportunityTarget.id);
+                      }
+                      setDeleteModalVisible(false);
+                      setDeleteOpportunityTarget(null);
+                    }}
+                    bgVariant="danger"
+                    className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"
+                  />
+                </View>
+              </View>
+            </ReactNativeModal>
+            {/* End Nested Confirmation Modal */}
           </View>
         </ReactNativeModal>
       </SignedIn>

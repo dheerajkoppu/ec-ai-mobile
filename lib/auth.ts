@@ -37,27 +37,32 @@ export const googleOAuth = async (startOAuthFlow: any) => {
       redirectUrl: Linking.createURL("/(root)/(tabs)/home"),
     });
 
-    if (createdSessionId) {
-      if (setActive) {
-        await setActive({ session: createdSessionId });
+    if (createdSessionId && setActive) {
+      await setActive({ session: createdSessionId });
 
-        if (signUp.createdUserId) {
-          await fetchAPI("/(api)/user", {
-            method: "POST",
-            body: JSON.stringify({
-              name: `${signUp.firstName} ${signUp.lastName}`,
-              email: signUp.emailAddress,
-              clerkId: signUp.createdUserId,
-            }),
-          });
-        }
+      if (signUp.createdUserId) {
+        await fetchAPI("/(api)/user", {
+          method: "POST",
+          body: JSON.stringify({
+            name: `${signUp.firstName ?? ""} ${signUp.lastName ?? ""}`.trim(),
+            email: signUp.emailAddress,
+            clerkId: signUp.createdUserId,
+          }),
+        });
 
         return {
           success: true,
           code: "success",
           message: "You have successfully signed in with Google",
+          date: Date.now(), // ✅ Only returned when added to database
         };
       }
+
+      return {
+        success: true,
+        code: "success",
+        message: "You have successfully signed in with Google",
+      };
     }
 
     return {
@@ -69,7 +74,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
     return {
       success: false,
       code: err.code,
-      message: err?.errors[0]?.longMessage,
+      message: err?.errors?.[0]?.longMessage ?? "Unknown error occurred.",
     };
   }
 };
