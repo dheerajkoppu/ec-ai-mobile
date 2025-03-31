@@ -31,7 +31,7 @@ const ActivityTabs = () => {
   const [logHours, setLogHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const { data: activities } = useFetch("/(api)/useractivities");
+  const { data: activities } = useFetch("/(api)/activitytypes");
 
   const handleTabSwitch = (tab) => setActiveTab(tab);
 
