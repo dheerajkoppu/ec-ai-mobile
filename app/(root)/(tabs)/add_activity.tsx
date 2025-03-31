@@ -31,7 +31,33 @@ const ActivityTabs = () => {
   const [logHours, setLogHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Fetch full activity types for the "Add New Activity" tab
   const { data: activities } = useFetch("/(api)/activitytypes");
+
+  // Prepare request options for the new endpoint using the user's email
+  const activityNamesRequestOptions = user?.primaryEmailAddress?.emailAddress
+    ? {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.primaryEmailAddress.emailAddress,
+        }),
+      }
+    : undefined;
+
+  // Fetch only activity names and ids for the "Log Hours" tab
+  const { data: activityNames } = useFetch(
+    "/(api)/getactivitynames",
+    activityNamesRequestOptions,
+  );
+
+  // Format the data so that each object has { label, value }
+  const formattedActivityNames = (
+    Array.isArray(activityNames) ? activityNames : activityNames?.data || []
+  ).map((item) => ({
+    label: item.name,
+    value: item.id,
+  }));
 
   const handleTabSwitch = (tab) => setActiveTab(tab);
 
@@ -168,7 +194,6 @@ const ActivityTabs = () => {
               value={roles}
               onChangeText={setRoles}
             />
-
             {/* Grade Level Section */}
             <Text className="font-medium text-lg font-PoppinsBold mt-4">
               Grade Level <Text className="text-red-500">*</Text>
@@ -194,7 +219,6 @@ const ActivityTabs = () => {
                 </Pressable>
               ))}
             </View>
-
             <InputField
               label="Description / Notes (Optional)"
               value={description}
@@ -215,14 +239,13 @@ const ActivityTabs = () => {
                   Name of Activity <Text className="text-red-500">*</Text>
                 </Text>
               }
-              data={activities || []}
+              // Use the formatted activity names data for logging hours
+              data={formattedActivityNames}
               value={activityName}
               onChange={(item) => setActivityName(item.value)}
             />
-
             {/* Updated Date of Activity Input Field */}
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
-
             <InputField
               label={
                 <Text className="font-medium text-lg font-PoppinsBold">
@@ -252,8 +275,6 @@ const DateInputField = ({ logDate, setLogDate }) => {
   const formatDate = (text) => {
     // Remove non-numeric characters
     const digits = text.replace(/\D/g, "");
-
-    // Format MM/DD/YYYY
     let formattedText = "";
     if (digits.length <= 2) {
       formattedText = digits;
@@ -272,8 +293,6 @@ const DateInputField = ({ logDate, setLogDate }) => {
     if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999) {
       return false;
     }
-
-    // Check if it's a valid day for the given month/year
     const date = new Date(year, month - 1, day);
     return (
       date.getFullYear() === year &&
@@ -285,8 +304,6 @@ const DateInputField = ({ logDate, setLogDate }) => {
   const handleDateChange = (text) => {
     const formattedText = formatDate(text);
     setDateText(formattedText);
-
-    // Only validate when full length is achieved (MM/DD/YYYY)
     if (formattedText.length === 10 && isValidDate(formattedText)) {
       setLogDate(new Date(formattedText));
     }
@@ -294,7 +311,6 @@ const DateInputField = ({ logDate, setLogDate }) => {
 
   return (
     <View>
-      {/* Updated label with a red asterisk */}
       <Text className="font-medium text-lg font-PoppinsBold">
         Date of Activity <Text className="text-red-500">*</Text>
       </Text>
@@ -303,7 +319,7 @@ const DateInputField = ({ logDate, setLogDate }) => {
         onChangeText={handleDateChange}
         placeholder="MM/DD/YYYY"
         keyboardType="numeric"
-        maxLength={10} // Limit to 10 characters (MM/DD/YYYY)
+        maxLength={10}
         style={{
           backgroundColor: "white",
           color: "black",
