@@ -383,7 +383,7 @@ const ProfileSetup: React.FC = () => {
       <SafeAreaView
         style={{
           flex: 1,
-          backgroundColor: "#E0E8F0",
+          backgroundColor: "#F5F7FA",
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -406,7 +406,7 @@ const ProfileSetup: React.FC = () => {
   const yesNo = dropdowns.yesNo;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#E0E8F0" }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 }}>
         <Text
           style={{
@@ -543,7 +543,16 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select PSAT range"
             onChange={(item) => handleChange("psatScore", item.value)}
           />
-          <Text style={{ marginBottom: 5, fontSize: 16 }}>Career Interest</Text>
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: "Poppins-Bold",
+              marginBottom: 5,
+              color: "#333",
+            }}
+          >
+            Career Interest
+          </Text>
           <MultiSelectDropdown
             options={dropdowns.careerInterest}
             selectedValues={formData.careerInterest || []}
@@ -575,14 +584,30 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("research", item.value)}
           />
-          <Text style={{ marginBottom: 5, fontSize: 16 }}>EC Goals?</Text>
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: "Poppins-Bold",
+              marginBottom: 5,
+              color: "#333",
+            }}
+          >
+            EC Goals?
+          </Text>
           <MultiSelectDropdown
             options={dropdowns.extracurricularReasons}
             selectedValues={formData.ecReason || []}
             onChange={(values) => handleMultiSelectChange("ecReason", values)}
             placeholder="Select EC goals"
           />
-          <Text style={{ marginBottom: 5, fontSize: 16 }}>
+          <Text
+            style={{
+              fontSize: 18,
+              fontFamily: "Poppins-Bold",
+              marginBottom: 5,
+              color: "#333",
+            }}
+          >
             Level to reach in your field?
           </Text>
           <MultiSelectDropdown
