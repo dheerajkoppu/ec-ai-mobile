@@ -258,16 +258,16 @@ const ActivityTabs = () => {
               onChangeText={setLogHours}
               keyboardType="number-pad"
             />
+            <InputField
+              label="Milestone"
+              value={milestone}
+              onChangeText={setMilestone}
+              multiline
+            />
             <CustomButton
               title="Log Hours"
               onPress={() => {}}
               className="mt-5"
-            />
-            <InputField
-              label="Milestone"
-              value={description}
-              onChangeText={setMilestone}
-              multiline
             />
           </View>
         )}
