@@ -150,7 +150,7 @@ const Profile = () => {
           <CustomButton
             title="Privacy Policy"
             onPress={() => setPrivacyOpen(true)}
-            className="w-auto p-2 rounded-lg font-PoppinsRegular shadow-md"
+            className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
 
           <CustomButton

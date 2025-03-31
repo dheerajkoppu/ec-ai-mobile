@@ -1,11 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import {
   Text,
-  TextInput,
   TouchableOpacity,
   View,
-  ActivityIndicator,
   Alert,
+  Pressable,
+  TextInput,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -17,8 +17,9 @@ import { useUser } from "@clerk/clerk-expo";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
-const AddActivity = () => {
+const ActivityTabs = () => {
   const { user } = useUser();
+  const [activeTab, setActiveTab] = useState("add");
   const [activityName, setActivityName] = useState("");
   const [activityType, setActivityType] = useState("");
   const [timeSpent, setTimeSpent] = useState("");
@@ -26,20 +27,15 @@ const AddActivity = () => {
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [logDate, setLogDate] = useState(new Date());
+  const [logHours, setLogHours] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const {
-    data: activityTypes,
-    loading,
-    error,
-  } = useFetch("/(api)/activitytypes");
+  const { data: activities } = useFetch("/(api)/useractivities");
 
-  const timeSpentRef = useRef<TextInput>(null);
-  const weeksPerYearRef = useRef<TextInput>(null);
-  const rolesRef = useRef<TextInput>(null);
-  const descriptionRef = useRef<TextInput>(null);
+  const handleTabSwitch = (tab) => setActiveTab(tab);
 
-  const toggleGradeSelection = (grade: string) => {
+  const toggleGradeSelection = (grade) => {
     if (selectedGrades.includes(grade)) {
       setSelectedGrades(selectedGrades.filter((g) => g !== grade));
     } else {
@@ -63,7 +59,6 @@ const AddActivity = () => {
 
     try {
       setIsSubmitting(true);
-
       await fetchAPI("/(api)/adduseractivity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -78,10 +73,7 @@ const AddActivity = () => {
           grades: selectedGrades.join(","),
         }),
       });
-
       Alert.alert("Success", "Your activity was added successfully!");
-
-      // Reset form
       setActivityName("");
       setActivityType("");
       setTimeSpent("");
@@ -99,139 +91,232 @@ const AddActivity = () => {
 
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
-      <View>
-        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
-          Add New Activity
-        </Text>
+      <View className="flex-row justify-center mb-4">
+        <TouchableOpacity
+          className={`flex-1 py-2 rounded-2xl ${
+            activeTab === "add" ? "bg-[#5b55f6]" : "bg-gray-300"
+          }`}
+          onPress={() => handleTabSwitch("add")}
+        >
+          <Text className="text-center text-white font-PoppinsBold">
+            Add New Activity
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          className={`flex-1 py-2 rounded-2xl ${
+            activeTab === "log" ? "bg-[#5b55f6]" : "bg-gray-300"
+          }`}
+          onPress={() => handleTabSwitch("log")}
+        >
+          <Text className="text-center text-white font-PoppinsBold">
+            Log Hours
+          </Text>
+        </TouchableOpacity>
       </View>
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
         extraScrollHeight={90}
       >
-        <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Name of Activity <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            placeholder="Enter activity name"
-            value={activityName}
-            onChangeText={setActivityName}
-            returnKeyType="next"
-            onSubmitEditing={() => timeSpentRef.current?.focus()}
-          />
-
-          {loading ? (
-            <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
-          ) : error ? (
-            <Text className="text-red-500 font-PoppinsRegular">
-              Failed to load activity types
-            </Text>
-          ) : (
+        {activeTab === "add" ? (
+          <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
+            <InputField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Name of Activity <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              value={activityName}
+              onChangeText={setActivityName}
+            />
             <DropdownField
               label={
                 <Text className="font-medium text-lg font-PoppinsBold">
                   Activity Type <Text className="text-red-500">*</Text>
                 </Text>
               }
-              data={activityTypes || []}
+              data={activities || []}
               value={activityType}
               onChange={(item) => setActivityType(item.value)}
-              placeholder="Select an activity type"
             />
-          )}
+            <InputField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Hours Per Week <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              value={timeSpent}
+              onChangeText={setTimeSpent}
+              keyboardType="number-pad"
+            />
+            <InputField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Weeks per Year <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              value={weeksPerYear}
+              onChangeText={setWeeksPerYear}
+              keyboardType="number-pad"
+            />
+            <InputField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Roles <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              value={roles}
+              onChangeText={setRoles}
+            />
 
-          <InputField
-            ref={timeSpentRef}
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Hours Per Week <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            placeholder="Enter hours"
-            keyboardType="number-pad"
-            value={timeSpent}
-            onChangeText={setTimeSpent}
-            returnKeyType="next"
-            onSubmitEditing={() => weeksPerYearRef.current?.focus()}
-          />
-          <InputField
-            ref={weeksPerYearRef}
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Weeks per Year <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            placeholder="Enter weeks"
-            keyboardType="number-pad"
-            value={weeksPerYear}
-            onChangeText={setWeeksPerYear}
-            returnKeyType="next"
-            onSubmitEditing={() => rolesRef.current?.focus()}
-          />
-          <InputField
-            ref={rolesRef}
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Roles <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            placeholder="President (12)"
-            value={roles}
-            onChangeText={setRoles}
-            returnKeyType="next"
-            onSubmitEditing={() => descriptionRef.current?.focus()}
-          />
-          <InputField
-            ref={descriptionRef}
-            label="Description / Notes (Optional)"
-            placeholder="Grew club 7x..."
-            scrollEnabled={false}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-          />
-
-          <View>
-            <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
-              Grades <Text className="text-red-500">*</Text>
+            {/* Grade Level Section */}
+            <Text className="font-medium text-lg font-PoppinsBold mt-4">
+              Grade Level <Text className="text-red-500">*</Text>
             </Text>
-            <View className="flex-row flex-wrap gap-3">
+            <View className="flex-wrap flex-row mt-2">
               {gradeOptions.map((grade) => (
-                <TouchableOpacity
+                <Pressable
                   key={grade}
                   onPress={() => toggleGradeSelection(grade)}
-                  className={`px-2 py-2 border rounded-lg ${
-                    selectedGrades.includes(grade)
-                      ? "bg-[#5b55f6] border-[#5b55f6]"
-                      : "border-gray-300 bg-white"
+                  className={`mr-4 mb-2 px-4 py-2 rounded-lg border border-gray-300 ${
+                    selectedGrades.includes(grade) ? "bg-[#5b55f7]" : "bg-white"
                   }`}
                 >
                   <Text
-                    className={`font-PoppinsRegular ${
+                    className={`text-sm font-PoppinsMedium ${
                       selectedGrades.includes(grade)
                         ? "text-white"
-                        : "text-gray-700"
+                        : "text-black"
                     }`}
                   >
                     {grade}
                   </Text>
-                </TouchableOpacity>
+                </Pressable>
               ))}
             </View>
-          </View>
 
-          <CustomButton
-            title={isSubmitting ? "Submitting..." : "Add Activity"}
-            onPress={handleAddActivity}
-            className="mt-5"
-          />
-        </View>
+            <InputField
+              label="Description / Notes (Optional)"
+              value={description}
+              onChangeText={setDescription}
+              multiline
+            />
+            <CustomButton
+              title={isSubmitting ? "Submitting..." : "Add Activity"}
+              onPress={handleAddActivity}
+              className="mt-5"
+            />
+          </View>
+        ) : (
+          <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
+            <DropdownField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Name of Activity <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              data={activities || []}
+              value={activityName}
+              onChange={(item) => setActivityName(item.value)}
+            />
+
+            {/* Updated Date of Activity Input Field */}
+            <DateInputField logDate={logDate} setLogDate={setLogDate} />
+
+            <InputField
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Hours <Text className="text-red-500">*</Text>
+                </Text>
+              }
+              value={logHours}
+              onChangeText={setLogHours}
+              keyboardType="number-pad"
+            />
+            <CustomButton
+              title="Log Hours"
+              onPress={() => {}}
+              className="mt-5"
+            />
+          </View>
+        )}
       </KeyboardAwareScrollView>
     </SafeAreaView>
   );
 };
 
-export default AddActivity;
+// Custom Date Input Field
+const DateInputField = ({ logDate, setLogDate }) => {
+  const [dateText, setDateText] = useState(logDate.toLocaleDateString("en-US"));
+
+  const formatDate = (text) => {
+    // Remove non-numeric characters
+    const digits = text.replace(/\D/g, "");
+
+    // Format MM/DD/YYYY
+    let formattedText = "";
+    if (digits.length <= 2) {
+      formattedText = digits;
+    } else if (digits.length <= 4) {
+      formattedText = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+    } else if (digits.length <= 8) {
+      formattedText = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+    } else {
+      formattedText = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+    }
+    return formattedText;
+  };
+
+  const isValidDate = (dateString) => {
+    const [month, day, year] = dateString.split("/").map(Number);
+    if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999) {
+      return false;
+    }
+
+    // Check if it's a valid day for the given month/year
+    const date = new Date(year, month - 1, day);
+    return (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    );
+  };
+
+  const handleDateChange = (text) => {
+    const formattedText = formatDate(text);
+    setDateText(formattedText);
+
+    // Only validate when full length is achieved (MM/DD/YYYY)
+    if (formattedText.length === 10 && isValidDate(formattedText)) {
+      setLogDate(new Date(formattedText));
+    }
+  };
+
+  return (
+    <View>
+      {/* Updated label with a red asterisk */}
+      <Text className="font-medium text-lg font-PoppinsBold">
+        Date of Activity <Text className="text-red-500">*</Text>
+      </Text>
+      <TextInput
+        value={dateText}
+        onChangeText={handleDateChange}
+        placeholder="MM/DD/YYYY"
+        keyboardType="numeric"
+        maxLength={10} // Limit to 10 characters (MM/DD/YYYY)
+        style={{
+          backgroundColor: "white",
+          color: "black",
+          height: 40,
+          borderWidth: 1,
+          borderColor: "#ccc",
+          borderRadius: 8,
+          paddingHorizontal: 12,
+          marginTop: 4,
+        }}
+      />
+    </View>
+  );
+};
+
+export default ActivityTabs;
