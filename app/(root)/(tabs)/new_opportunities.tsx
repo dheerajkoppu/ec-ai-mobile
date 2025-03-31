@@ -447,14 +447,17 @@ const Opportunities = () => {
             )}
           </ScrollView>
           {/* Additional actions if needed */}
-          <View className="mt-4">
+          <View className="flex-row justify-between mt-4">
             <CustomButton
-              title="Save Opportunity"
-              onPress={() => {
-                if (selectedOpportunity) handleSave(selectedOpportunity);
-              }}
+              title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
+              onPress={() => handleSave(item)}
               bgVariant="primary"
               textVariant="default"
+              className={`px-4 py-2 rounded-lg flex-1 items-center ${
+                savedOpportunities.has(item.id)
+                  ? "bg-primary-900"
+                  : "bg-primary"
+              }`}
             />
           </View>
         </View>
@@ -519,6 +522,21 @@ const Opportunities = () => {
                         </TouchableOpacity>
                       </View>
                     )}
+                    <View className="flex-row justify-between mt-4">
+                      <CustomButton
+                        title={
+                          savedOpportunities.has(item.id) ? "Saved" : "Save"
+                        }
+                        onPress={() => handleSave(item)}
+                        bgVariant="primary"
+                        textVariant="default"
+                        className={`px-4 py-2 rounded-lg flex-1 items-center ${
+                          savedOpportunities.has(item.id)
+                            ? "bg-primary-900"
+                            : "bg-primary"
+                        }`}
+                      />
+                    </View>
                   </View>
                   {/* You can add additional actions here if needed */}
                 </View>
