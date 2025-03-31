@@ -447,17 +447,14 @@ const Opportunities = () => {
             )}
           </ScrollView>
           {/* Additional actions if needed */}
-          <View className="flex-row justify-between mt-4">
+          <View className="mt-4">
             <CustomButton
-              title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
-              onPress={() => handleSave(item)}
+              title="Save"
+              onPress={() => {
+                if (selectedOpportunity) handleSave(selectedOpportunity);
+              }}
               bgVariant="primary"
               textVariant="default"
-              className={`px-4 py-2 rounded-lg flex-1 items-center ${
-                savedOpportunities.has(item.id)
-                  ? "bg-primary-900"
-                  : "bg-primary"
-              }`}
             />
           </View>
         </View>
