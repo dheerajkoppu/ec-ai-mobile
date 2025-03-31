@@ -26,6 +26,7 @@ const ActivityTabs = () => {
   const [weeksPerYear, setWeeksPerYear] = useState("");
   const [roles, setRoles] = useState("");
   const [description, setDescription] = useState("");
+  const [milestone, setMilestone] = useState("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
   const [logDate, setLogDate] = useState(new Date());
   const [logHours, setLogHours] = useState("");
@@ -106,6 +107,7 @@ const ActivityTabs = () => {
       setWeeksPerYear("");
       setRoles("");
       setDescription("");
+      setMilestone("");
       setSelectedGrades([]);
     } catch (error) {
       console.error("Error adding activity:", error);
@@ -260,6 +262,12 @@ const ActivityTabs = () => {
               title="Log Hours"
               onPress={() => {}}
               className="mt-5"
+            />
+            <InputField
+              label="Milestone"
+              value={description}
+              onChangeText={setMilestone}
+              multiline
             />
           </View>
         )}
