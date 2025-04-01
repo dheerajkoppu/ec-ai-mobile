@@ -210,7 +210,7 @@ const SlideWrapper: React.FC<{
     <View
       style={{
         backgroundColor: "white",
-        padding: 16,
+        padding: 20,
         borderRadius: 8,
         shadowColor: "#000",
         marginBottom: 16,
@@ -220,7 +220,7 @@ const SlideWrapper: React.FC<{
       {showBack && (
         <TouchableOpacity
           onPress={onBack}
-          style={{ position: "absolute", top: 10, left: 10, zIndex: 10 }}
+          style={{ position: "absolute", top: 3, left: 10, zIndex: 10 }}
         >
           <Text>{"< Back"}</Text>
         </TouchableOpacity>
