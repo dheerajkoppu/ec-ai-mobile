@@ -12,8 +12,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
-import ReactNativeModal from "react-native-modal";
-import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import { FontAwesome } from "@expo/vector-icons";
 
 interface Opportunity {
   id: string;
@@ -34,8 +33,6 @@ export default function Home() {
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
-  const [modalVisible, setModalVisible] = useState(false);
-  const [profileImage, setProfileImage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   // Fetch saved opportunities from API using the user's clerk_id
@@ -119,8 +116,7 @@ export default function Home() {
     }
   }, [user]);
 
-  // Delete a saved opportunity by calling the API route,
-  // then update local state.
+  // Delete a saved opportunity by calling the API route, then update local state.
   const deleteOpportunity = async (id: string) => {
     if (!user) return;
     try {
@@ -133,7 +129,6 @@ export default function Home() {
         console.error("Failed to remove saved opportunity from backend");
         return;
       }
-      // Update local state
       const updatedOpportunities = savedOpportunities.filter(
         (opp) => opp.id !== id,
       );
@@ -157,6 +152,7 @@ export default function Home() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
           }
         >
+          {/* Profile & Total Hours */}
           <View className="flex-row items-center mb-4">
             <Image
               source={{ uri: user?.imageUrl }}
@@ -172,6 +168,7 @@ export default function Home() {
             </View>
           </View>
 
+          {/* Recent Activities Section */}
           <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
             <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
               Recent Activities
@@ -197,101 +194,82 @@ export default function Home() {
             )}
           </View>
 
-          <View className="mb-4">
-            <TouchableOpacity
-              onPress={() => setModalVisible(true)}
-              className="bg-general-400 p-3 rounded-lg mb-2"
-            >
-              <Text className="text-white font-PoppinsSemiBold text-base text-center">
-                Saved Opportunities
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-
-        {/* Modal for Saved Opportunities */}
-        <ReactNativeModal
-          isVisible={modalVisible}
-          style={{
-            justifyContent: "flex-start",
-            marginTop: 60,
-            marginHorizontal: 10,
-          }}
-          onBackdropPress={() => setModalVisible(false)}
-          onBackButtonPress={() => setModalVisible(false)}
-        >
-          <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
-            <TouchableOpacity
-              onPress={() => setModalVisible(false)}
-              style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
-            >
-              <MaterialCommunityIcons name="close" size={24} color="#000" />
-            </TouchableOpacity>
-            <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
+          {/* Saved Opportunities Section */}
+          <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
+            <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
               Saved Opportunities
             </Text>
-
-            {savedOpportunities.length > 0 ? (
-              <FlatList
-                data={savedOpportunities}
-                keyExtractor={(item) => item.id}
-                renderItem={({ item }) => (
-                  <View className="bg-white p-4 mb-3 rounded-lg flex-row justify-between items-center">
-                    <View>
-                      <Text className="text-lg font-PoppinsSemiBold text-gray-900">
-                        {item.title}
-                      </Text>
-                      <Text className="text-sm text-gray-500">
-                        {item.activityType} | {item.location}
-                      </Text>
-                      {item.duration && (
-                        <Text className="text-sm text-gray-500">
-                          Duration: {item.duration}
+            <View style={{ maxHeight: 250 }}>
+              {savedOpportunities.length > 0 ? (
+                <FlatList
+                  data={savedOpportunities}
+                  keyExtractor={(item) => item.id}
+                  ItemSeparatorComponent={() => (
+                    <View
+                      style={{
+                        height: 1,
+                        backgroundColor: "#ccc",
+                        marginVertical: 8,
+                      }}
+                    />
+                  )}
+                  renderItem={({ item }) => (
+                    <View className="bg-white p-4 rounded-lg flex-row justify-between items-center">
+                      <View>
+                        <Text className="text-lg font-PoppinsSemiBold text-gray-900">
+                          {item.title}
                         </Text>
-                      )}
-                      {item.deadline && (
                         <Text className="text-sm text-gray-500">
-                          Deadline: {item.deadline}
+                          {item.activityType} | {item.location}
                         </Text>
-                      )}
-                      {item.apply && (
-                        <View className="flex-row flex-wrap items-center">
-                          <Text className="font-PoppinsSemiBold text-xs">
-                            Apply:{" "}
+                        {item.duration && (
+                          <Text className="text-sm text-gray-500">
+                            Duration: {item.duration}
                           </Text>
-                          <TouchableOpacity
-                            onPress={() => Linking.openURL(item.apply)}
-                          >
-                            <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-                              {item.apply}
+                        )}
+                        {item.deadline && (
+                          <Text className="text-sm text-gray-500">
+                            Deadline: {item.deadline}
+                          </Text>
+                        )}
+                        {item.apply && (
+                          <View className="flex-row flex-wrap items-center">
+                            <Text className="font-PoppinsSemiBold text-xs">
+                              Apply:{" "}
                             </Text>
-                          </TouchableOpacity>
-                        </View>
-                      )}
+                            <TouchableOpacity
+                              onPress={() => Linking.openURL(item.apply)}
+                            >
+                              <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+                                {item.apply}
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => deleteOpportunity(item.id)}
+                      >
+                        <FontAwesome name="trash" size={22} color="red" />
+                      </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                      onPress={() => deleteOpportunity(item.id)}
-                    >
-                      <FontAwesome name="trash" size={22} color="red" />
-                    </TouchableOpacity>
-                  </View>
-                )}
-                ListEmptyComponent={
-                  <View style={{ alignItems: "center", marginTop: 20 }}>
-                    <Text className="text-gray-500 text-base text-center">
-                      No saved opportunities yet.
-                    </Text>
-                  </View>
-                }
-              />
-            ) : (
-              <Text className="text-gray-500 text-base text-center">
-                No saved opportunities yet.
-              </Text>
-            )}
+                  )}
+                  ListEmptyComponent={
+                    <View style={{ alignItems: "center", marginTop: 20 }}>
+                      <Text className="text-gray-500 text-base text-center">
+                        No saved opportunities yet.
+                      </Text>
+                    </View>
+                  }
+                />
+              ) : (
+                <Text className="text-gray-500 text-base text-center">
+                  No saved opportunities yet.
+                </Text>
+              )}
+            </View>
           </View>
-        </ReactNativeModal>
+        </ScrollView>
       </SignedIn>
     </SafeAreaView>
   );
