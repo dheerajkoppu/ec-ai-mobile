@@ -435,7 +435,11 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 1 */}
         <SlideWrapper showBack={step > 0} onBack={handleBack}>
           <DropdownField
-            label="Grade Level"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Grade Level <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.grades}
             value={formData.gradeLevel || ""}
             placeholder="Select grade"
@@ -453,21 +457,33 @@ const ProfileSetup: React.FC = () => {
             onChange={(item) => handleChange("race", item.value)}
           />
           <DropdownField
-            label="School Name"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                School Name <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.schoolName}
             value={formData.schoolName || ""}
             placeholder="Select school"
             onChange={(item) => handleChange("schoolName", item.value)}
           />
           <DropdownField
-            label="Gender"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Gender <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.gender}
             value={formData.gender || ""}
             placeholder="Select gender"
             onChange={(item) => handleChange("gender", item.value)}
           />
           <InputField
-            label="Age"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Age<Text className="text-red-500">*</Text>
+              </Text>
+            }
             keyboardType="numeric"
             placeholder="Enter your age"
             value={formData.age}
@@ -483,35 +499,55 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 2 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="City"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold pt-1">
+                City <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.cities}
             value={formData.location || ""}
             placeholder="Select location"
             onChange={(item) => handleChange("location", item.value)}
           />
           <DropdownField
-            label="Free/Reduced Lunch?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Free/Reduced Lunch? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.lunch || ""}
             placeholder="Select"
             onChange={(item) => handleChange("lunch", item.value)}
           />
           <DropdownField
-            label="First-gen Student?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                First-gen Student? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.firstGen || ""}
             placeholder="Select"
             onChange={(item) => handleChange("firstGen", item.value)}
           />
           <InputField
-            label="Weighted GPA"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Weighted GPA <Text className="text-red-500">*</Text>
+              </Text>
+            }
             keyboardType="numeric"
             placeholder="Enter weighted GPA"
             value={formData.gpaWeighted}
             onChangeText={(val) => handleChange("gpaWeighted", val)}
           />
           <InputField
-            label="Unweighted GPA"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Unweighted GPA <Text className="text-red-500">*</Text>
+              </Text>
+            }
             keyboardType="numeric"
             placeholder="Enter unweighted GPA"
             value={formData.gpaUnweighted}
@@ -527,21 +563,33 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 3 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="SAT Score"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                SAT Score <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.satRange}
             value={formData.satScore || ""}
             placeholder="Select SAT range"
             onChange={(item) => handleChange("satScore", item.value)}
           />
           <DropdownField
-            label="ACT Score"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                ACT Score <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.actRange}
             value={formData.actScore || ""}
             placeholder="Select ACT range"
             onChange={(item) => handleChange("actScore", item.value)}
           />
           <DropdownField
-            label="PSAT Score"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                PSAT Score <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.psatRange}
             value={formData.psatScore || ""}
             placeholder="Select PSAT range"
@@ -557,6 +605,7 @@ const ProfileSetup: React.FC = () => {
           >
             Career Interest
           </Text>
+          <Text className="text-red-500">*</Text>
           <MultiSelectDropdown
             options={dropdowns.careerInterest}
             selectedValues={formData.careerInterest || []}
@@ -566,7 +615,12 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select career interests"
           />
           <DropdownField
-            label="Want to start a business or nonprofit?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Want to start a business or nonprofit?{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.entrepreneur || ""}
             placeholder="Select"
@@ -582,7 +636,11 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 4 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="Interested in research?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Interested in research? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.research || ""}
             placeholder="Select"
@@ -598,6 +656,7 @@ const ProfileSetup: React.FC = () => {
           >
             EC Goals?
           </Text>
+          <Text className="text-red-500">*</Text>
           <MultiSelectDropdown
             options={dropdowns.extracurricularReasons}
             selectedValues={formData.ecReason || []}
@@ -614,6 +673,7 @@ const ProfileSetup: React.FC = () => {
           >
             Level to reach in your field?
           </Text>
+          <Text className="text-red-500">*</Text>
           <MultiSelectDropdown
             options={dropdowns.fieldLevel}
             selectedValues={formData.ecLevel || []}
@@ -621,14 +681,23 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select levels"
           />
           <DropdownField
-            label="Looking for leadership?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Looking for leadership? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.leadership || ""}
             placeholder="Select"
             onChange={(item) => handleChange("leadership", item.value)}
           />
           <DropdownField
-            label="Open to starting your own club/project?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Open to starting your own club/project?{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.createOwn || ""}
             placeholder="Select"
@@ -644,35 +713,58 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 5 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="Opportunity Selectiveness"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Opportunity Selectiveness{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.opportunitySelectivity}
             value={formData.selectivity || ""}
             placeholder="Select"
             onChange={(item) => handleChange("selectivity", item.value)}
           />
           <DropdownField
-            label="Interested in Paid Opportunities?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Interested in Paid Opportunities?{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.paid || ""}
             placeholder="Select"
             onChange={(item) => handleChange("paid", item.value)}
           />
           <DropdownField
-            label="Interested in Travel/Study Abroad?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Interested in Travel/Study Abroad?{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.travel || ""}
             placeholder="Select"
             onChange={(item) => handleChange("travel", item.value)}
           />
           <DropdownField
-            label="Time per Week for ECs"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Time per week for ECs <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.weeklyCommitment}
             value={formData.timeWeekly || ""}
             placeholder="Select"
             onChange={(item) => handleChange("timeWeekly", item.value)}
           />
           <DropdownField
-            label="EC Format Preference"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                EC Format Preference <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.extracurricularFormat}
             value={formData.ecType || ""}
             placeholder="Select"
@@ -688,28 +780,45 @@ const ProfileSetup: React.FC = () => {
         {/* Slide 6 */}
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
-            label="Referral Source"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Referral Source <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.referralSource}
             value={formData.source || ""}
             placeholder="Select"
             onChange={(item) => handleChange("source", item.value)}
           />
           <DropdownField
-            label="Used Other EC Apps?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Used Other EC Apps? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.usedOtherApps || ""}
             placeholder="Select"
             onChange={(item) => handleChange("usedOtherApps", item.value)}
           />
           <DropdownField
-            label="Notifications?"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Notifications? <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.notifications || ""}
             placeholder="Select"
             onChange={(item) => handleChange("notifications", item.value)}
           />
           <DropdownField
-            label="Agree to Terms & Privacy Policy & Under 18"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Agree to Terms & Privacy Policy & Under 18{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={yesNo}
             value={formData.agreeTerms || ""}
             placeholder="Confirm"
