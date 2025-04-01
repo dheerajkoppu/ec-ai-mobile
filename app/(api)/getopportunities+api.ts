@@ -62,8 +62,6 @@ export async function GET() {
       createdAt: op.created_at,
     }));
 
-    console.log("API Response:", formatted);
-
     return new Response(JSON.stringify({ data: formatted }), { status: 200 });
   } catch (error) {
     console.error("Error fetching opportunities:", error);

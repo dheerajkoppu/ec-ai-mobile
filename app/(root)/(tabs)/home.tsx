@@ -14,7 +14,7 @@ import { SignedIn, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import ReactNativeModal from "react-native-modal";
-import { FontAwesome } from "@expo/vector-icons";
+import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface Opportunity {
   id: string;
@@ -205,10 +205,12 @@ export default function Home() {
         >
           <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
             <TouchableOpacity
-              onPress={() => setModalVisible(false)}
+              onPress={() => {
+                setModalVisible(false);
+              }}
               style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
             >
-              <Text className="text-xl font-bold">×</Text>
+              <MaterialCommunityIcons name="close" size={24} color="#000" />
             </TouchableOpacity>
             <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
               Saved Opportunities

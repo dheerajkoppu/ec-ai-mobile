@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import ReactNativeModal from "react-native-modal";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 interface Opportunity {
   id: string;
@@ -309,9 +310,15 @@ const Opportunities = () => {
         style={{ marginTop: 60, marginHorizontal: 10 }}
       >
         <View className="bg-white p-6 rounded-lg max-h-full">
-          <TouchableOpacity onPress={() => setSelectedOpportunity(null)}>
-            <Text className="text-xl text-right font-bold">×</Text>
+          <TouchableOpacity
+            onPress={() => {
+              setSelectedOpportunity(null);
+            }}
+            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+          >
+            <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
+
           <Text className="text-2xl font-bold mb-2">
             {selectedOpportunity?.title}
           </Text>
@@ -473,11 +480,14 @@ const Opportunities = () => {
       >
         <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
           <TouchableOpacity
-            onPress={() => setShowAISuggestedModal(false)}
+            onPress={() => {
+              setShowAISuggestedModal(false);
+            }}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
-            <Text className="text-xl font-bold">×</Text>
+            <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
+
           <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
             AI Suggested Opportunities
           </Text>
