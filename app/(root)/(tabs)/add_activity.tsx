@@ -130,15 +130,30 @@ const ActivityTabs = () => {
       return;
     }
 
+    const parsedHours = parseFloat(logHours);
+    if (isNaN(parsedHours) || parsedHours < 0) {
+      Alert.alert("Invalid Input", "Please enter a valid number of hours.");
+      return;
+    }
+
+    if (parsedHours > 24) {
+      Alert.alert(
+        "Invalid Hours",
+        "You cannot log more than 24 hours per day.",
+      );
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       await fetchAPI("/(api)/loghours", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          user_id: user?.id,
           activity_id: activityName,
           date_of_activity: formatDateToISO(logDate),
-          hours_logged: parseFloat(logHours),
+          hours_logged: parsedHours,
           description: milestone,
         }),
       });
@@ -298,7 +313,6 @@ const ActivityTabs = () => {
               label="Milestone"
               value={milestone}
               onChangeText={setMilestone}
-              multiline
             />
             <CustomButton
               title={isSubmitting ? "Submitting..." : "Log Hours"}

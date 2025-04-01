@@ -7,13 +7,14 @@ import {
   TouchableOpacity,
   FlatList,
   Linking,
+  RefreshControl,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import ReactNativeModal from "react-native-modal";
-import { FontAwesome } from "@expo/vector-icons"; // Import FontAwesome for trash icon
+import { FontAwesome } from "@expo/vector-icons";
 
 interface Opportunity {
   id: string;
@@ -22,25 +23,22 @@ interface Opportunity {
   location: string;
   duration?: string;
   deadline?: string;
-  apply: "https://www.youtube.com";
+  apply: string;
 }
 
 export default function Home() {
   const { user } = useUser();
-  const activitiesThisWeek = 5;
-  const totalHoursLogged = 40;
-  const streak = 7;
-  const recentActivities = [
-    { name: "Volunteered at shelter", timestamp: "2 days ago" },
-    { name: "Hackathon Participation", timestamp: "4 days ago" },
-    { name: "Comp Sci Club Meeting", timestamp: "6 days ago" },
-  ];
+  const [recentActivities, setRecentActivities] = useState<
+    { name: string; timestamp: string }[]
+  >([]);
+  const [totalHoursLogged, setTotalHoursLogged] = useState(0);
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
   const [modalVisible, setModalVisible] = useState(false);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Load opportunities from AsyncStorage
   const loadSavedOpportunities = async () => {
     try {
       const savedData = await AsyncStorage.getItem("savedOpportunities");
@@ -54,7 +52,50 @@ export default function Home() {
     }
   };
 
-  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const fetchRecentActivities = async () => {
+    try {
+      const res = await fetch("/(api)/getloggedhours", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          user_id: user?.id,
+        }),
+      });
+
+      const json = await res.json();
+
+      if (res.ok) {
+        const formatted = json.data.map((item: any) => ({
+          name: item.description || "No description",
+          timestamp: formatDateDifference(new Date(item.date_of_activity)),
+        }));
+        setRecentActivities(formatted);
+        setTotalHoursLogged(json.total_hours || 0);
+      } else {
+        console.error("Error fetching activities:", json.error);
+      }
+    } catch (err) {
+      console.error("Failed to fetch logged hours:", err);
+    }
+  };
+
+  const formatDateDifference = (date: Date) => {
+    const now = new Date();
+    const diff = Math.floor(
+      (now.getTime() - date.getTime()) / (1000 * 3600 * 24),
+    );
+    if (diff === 0) return "Today";
+    if (diff === 1) return "1 day ago";
+    return `${diff} days ago`;
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await fetchRecentActivities();
+    setRefreshing(false);
+  };
 
   useEffect(() => {
     const loadProfileImage = async () => {
@@ -66,7 +107,12 @@ export default function Home() {
     loadProfileImage();
   }, []);
 
-  // Delete an opportunity
+  useEffect(() => {
+    if (user?.id) {
+      fetchRecentActivities();
+    }
+  }, [user]);
+
   const deleteOpportunity = async (id: string) => {
     const updatedOpportunities = savedOpportunities.filter(
       (opp) => opp.id !== id,
@@ -87,12 +133,16 @@ export default function Home() {
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6 font-PoppinsBlack">
       <SignedIn>
-        <ScrollView>
+        <ScrollView
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          }
+        >
           <View className="flex-row items-center mb-4">
             <Image
               source={
                 profileImage ? { uri: profileImage } : { uri: user?.imageUrl }
-              } // Use the URI for profile image or fallback
+              }
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4">
@@ -105,34 +155,29 @@ export default function Home() {
             </View>
           </View>
 
-          <View className="bg-general-400 p-6 rounded-lg mb-4 space-y-2">
-            <Text className="text-xl text-white font-PoppinsSemiBold">
-              Quick Stats
-            </Text>
-            <Text className="text-white text-base font-PoppinsSemiBold ">
-              Activities this week:{" "}
-              <Text className="font-normal">{activitiesThisWeek}</Text>
-            </Text>
-            <Text className="text-white text-base font-PoppinsSemiBold font-bold">
-              Streak: <Text className="font-normal">{streak} days</Text>
-            </Text>
-          </View>
-
           <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
             <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
               Recent Activities
             </Text>
-            {recentActivities.map((activity, index) => (
-              <View
-                key={index}
-                className="flex-row justify-between font-PoppinsRegular items-center py-3 border-b border-gray-200 last:border-b-0"
-              >
-                <Text className="text-base text-gray-800">{activity.name}</Text>
-                <Text className="text-sm text-gray-500">
-                  {activity.timestamp}
-                </Text>
-              </View>
-            ))}
+            {recentActivities.length > 0 ? (
+              recentActivities.map((activity, index) => (
+                <View
+                  key={index}
+                  className="flex-row justify-between font-PoppinsRegular items-center py-3 border-b border-gray-200 last:border-b-0"
+                >
+                  <Text className="text-base text-gray-800">
+                    {activity.name}
+                  </Text>
+                  <Text className="text-sm text-gray-500">
+                    {activity.timestamp}
+                  </Text>
+                </View>
+              ))
+            ) : (
+              <Text className="text-base text-gray-500">
+                No recent activities found.
+              </Text>
+            )}
           </View>
 
           <View className="mb-4">
