@@ -24,6 +24,7 @@ const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 const TrackActivities = () => {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress;
+  const userId = user?.id; // Assuming user.id is available
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
@@ -35,6 +36,20 @@ const TrackActivities = () => {
 
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  // New state for the activity logs modal
+  const [logs, setLogs] = useState<any[]>([]);
+  const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
+
+  // Helper function to format a timestamp into "YYYY-MM-DD"
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
 
   const requestOptions = useMemo(() => {
     if (!email) return undefined;
@@ -129,7 +144,8 @@ const TrackActivities = () => {
     }
   };
 
-  const handleEditPress = (item: Activity) => {
+  const handleEditPress = (item: Activity, e?: any) => {
+    if (e && e.stopPropagation) e.stopPropagation();
     setEditingActivity(item);
     setEditingGrades(item.grade.split(",").map((g) => g.trim()));
     setShowEditModal(true);
@@ -158,6 +174,32 @@ const TrackActivities = () => {
   const filteredActivities = activities.filter((activity) =>
     activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
+
+  // New function to fetch logs and open the logs modal for an activity
+  const openLogs = async (activity: Activity) => {
+    if (!userId) {
+      Alert.alert("Error", "User not found");
+      return;
+    }
+    try {
+      const response = await fetch("/(api)/getactivitylogs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, activity_id: activity.id }),
+      });
+      const result = await response.json();
+      if (result.data) {
+        setLogs(result.data);
+      } else {
+        setLogs([]);
+        Alert.alert("Error", "No logs found for this activity.");
+      }
+      setShowLogsModal(true);
+    } catch (error) {
+      console.error("Error fetching logs:", error);
+      Alert.alert("Error", "Failed to fetch activity logs.");
+    }
+  };
 
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
@@ -213,7 +255,10 @@ const TrackActivities = () => {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         renderItem={({ item }) => (
-          <View className="bg-white p-4 mb-4 rounded-lg shadow">
+          <TouchableOpacity
+            onPress={() => openLogs(item)}
+            className="bg-white p-4 mb-4 rounded-lg shadow"
+          >
             <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
               {item.category}
             </Text>
@@ -243,7 +288,7 @@ const TrackActivities = () => {
             </View>
             <View className="flex-row justify-end mt-2">
               <TouchableOpacity
-                onPress={() => handleEditPress(item)}
+                onPress={(e) => handleEditPress(item, e)}
                 className="mr-4"
               >
                 <MaterialCommunityIcons
@@ -253,7 +298,8 @@ const TrackActivities = () => {
                 />
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => {
+                onPress={(e) => {
+                  e.stopPropagation();
                   setDeleteTarget(item);
                   setShowDeleteModal(true);
                 }}
@@ -265,7 +311,7 @@ const TrackActivities = () => {
                 />
               </TouchableOpacity>
             </View>
-          </View>
+          </TouchableOpacity>
         )}
       />
 
@@ -360,8 +406,8 @@ const TrackActivities = () => {
                         Career Field <Text className="text-red-500">*</Text>
                       </Text>
                     }
-                    data={careerFields ?? []} // Ensures careerFields is never undefined
-                    value={editingActivity?.category} // Prevents errors if editingActivity is null
+                    data={careerFields ?? []}
+                    value={editingActivity?.category}
                     onChange={({ value }) =>
                       editingActivity &&
                       setEditingActivity({
@@ -453,6 +499,50 @@ const TrackActivities = () => {
               </>
             )}
           </KeyboardAwareScrollView>
+        </View>
+      </ReactNativeModal>
+
+      {/* Activity Logs Modal */}
+      <ReactNativeModal
+        isVisible={showLogsModal}
+        onBackdropPress={() => setShowLogsModal(false)}
+      >
+        <View className="bg-white px-7 py-9 rounded-2xl shadow-md max-h-[80%]">
+          <TouchableOpacity
+            onPress={() => setShowLogsModal(false)}
+            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+          >
+            <MaterialCommunityIcons name="close" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text className="text-2xl font-bold text-gray-800 mb-4">
+            Activity Logs
+          </Text>
+          {logs.length === 0 ? (
+            <Text className="text-gray-600 mb-4">No logs found.</Text>
+          ) : (
+            <FlatList
+              data={logs}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item }) => (
+                <View className="border-b border-gray-300 pb-2 mb-2">
+                  <Text className="font-PoppinsBold">
+                    Date: {formatDate(item.date_of_activity)}
+                  </Text>
+                  <Text className="font-PoppinsRegular">
+                    Hours Logged: {item.hours_logged}
+                  </Text>
+                  <Text className="font-PoppinsRegular">
+                    Description: {item.description}
+                  </Text>
+                </View>
+              )}
+            />
+          )}
+          <CustomButton
+            title="Close"
+            onPress={() => setShowLogsModal(false)}
+            className="mt-4"
+          />
         </View>
       </ReactNativeModal>
     </SafeAreaView>
