@@ -39,7 +39,7 @@ export async function POST(request: Request) {
         hours_per_week,
         created_at
       FROM opportunities
-      WHERE id NOT IN (
+      WHERE id IN (
         SELECT opportunity_id
         FROM user_saved_opportunities
         WHERE clerk_id = ${clerk_id}
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
 
     return new Response(JSON.stringify({ data: formatted }), { status: 200 });
   } catch (error) {
-    console.error("Error fetching opportunities:", error);
+    console.error("Error fetching saved opportunities:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
     });

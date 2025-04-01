@@ -10,11 +10,11 @@ import {
   Linking,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useUser } from "@clerk/clerk-expo";
 
 interface Opportunity {
   id: string;
@@ -45,6 +45,7 @@ interface Opportunity {
 }
 
 const Opportunities = () => {
+  const { user } = useUser();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -63,14 +64,19 @@ const Opportunities = () => {
   // State for the detailed view modal
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
-  // NEW state for the AI Suggested modal
+  // State for the AI Suggested modal
   const [showAISuggestedModal, setShowAISuggestedModal] =
     useState<boolean>(false);
 
-  // Fetch opportunities from the API and map all fields
+  // Fetch opportunities from the API and map fields accordingly
   const fetchOpportunities = async () => {
+    if (!user) return; // Ensure the user is loaded
     try {
-      const response = await fetch("/(api)/getopportunities");
+      const response = await fetch("/(api)/getopportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id }),
+      });
       if (!response.ok) {
         throw new Error("Failed to fetch opportunities");
       }
@@ -115,25 +121,39 @@ const Opportunities = () => {
   };
 
   useEffect(() => {
-    fetchOpportunities();
-  }, []);
+    if (user) {
+      fetchOpportunities();
+    }
+  }, [user]);
 
-  // Save opportunity to AsyncStorage and update saved state
+  // Save opportunity and call the API route to persist the saved opportunity.
   const handleSave = async (opportunity: Opportunity) => {
     try {
-      const saved = await AsyncStorage.getItem("savedOpportunities");
-      const savedList = saved ? JSON.parse(saved) : [];
-      const isAlreadySaved = savedList.some(
-        (item: Opportunity) => item.id === opportunity.id,
-      );
+      if (!user) {
+        console.error("User not logged in");
+        return;
+      }
+      const clerk_id = user.id; // Using Clerk's user id as clerk_id
 
-      if (!isAlreadySaved) {
-        const updatedList = [...savedList, opportunity];
-        await AsyncStorage.setItem(
-          "savedOpportunities",
-          JSON.stringify(updatedList),
-        );
-        setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
+      // Avoid saving if already saved
+      if (savedOpportunities.has(opportunity.id)) {
+        return;
+      }
+      setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
+
+      // Call the addsavedopportunity API route to add the saved opportunity
+      const res = await fetch("/(api)/addsavedopportunity", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clerk_id,
+          opportunity_id: opportunity.id,
+        }),
+      });
+      if (!res.ok) {
+        console.error("Failed to add saved opportunity to backend");
       }
     } catch (error) {
       console.error("Error saving opportunity:", error);
@@ -244,6 +264,13 @@ const Opportunities = () => {
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
+        ListEmptyComponent={
+          <View style={{ alignItems: "center", marginTop: 20 }}>
+            <Text className="text-gray-500 text-base">
+              No opportunities available.
+            </Text>
+          </View>
+        }
         renderItem={({ item }) => (
           // Wrap each opportunity in a TouchableOpacity to allow clicking
           <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
@@ -311,14 +338,11 @@ const Opportunities = () => {
       >
         <View className="bg-white p-6 rounded-lg max-h-full">
           <TouchableOpacity
-            onPress={() => {
-              setSelectedOpportunity(null);
-            }}
+            onPress={() => setSelectedOpportunity(null)}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-
           <Text className="text-2xl font-bold mb-2">
             {selectedOpportunity?.title}
           </Text>
@@ -453,21 +477,10 @@ const Opportunities = () => {
               </Text>
             )}
           </ScrollView>
-          {/* Additional actions if needed */}
-          <View className="mt-4">
-            <CustomButton
-              title="Save"
-              onPress={() => {
-                if (selectedOpportunity) handleSave(selectedOpportunity);
-              }}
-              bgVariant="primary"
-              textVariant="default"
-            />
-          </View>
         </View>
       </ReactNativeModal>
 
-      {/* AI Suggested Modal with detailed view */}
+      {/* AI Suggested Modal */}
       <ReactNativeModal
         isVisible={showAISuggestedModal}
         style={{
@@ -480,18 +493,14 @@ const Opportunities = () => {
       >
         <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
           <TouchableOpacity
-            onPress={() => {
-              setShowAISuggestedModal(false);
-            }}
+            onPress={() => setShowAISuggestedModal(false)}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-
           <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
             AI Suggested Opportunities
           </Text>
-
           {filteredOpportunities.length > 0 ? (
             <FlatList
               data={filteredOpportunities}
@@ -545,7 +554,6 @@ const Opportunities = () => {
                       />
                     </View>
                   </View>
-                  {/* You can add additional actions here if needed */}
                 </View>
               )}
             />

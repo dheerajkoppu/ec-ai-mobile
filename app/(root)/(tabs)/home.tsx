@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "expo-router";
 import ReactNativeModal from "react-native-modal";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
@@ -39,16 +38,37 @@ export default function Home() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
+  // Fetch saved opportunities from API using the user's clerk_id
   const loadSavedOpportunities = async () => {
+    if (!user) return;
     try {
-      const savedData = await AsyncStorage.getItem("savedOpportunities");
-      if (savedData) {
-        setSavedOpportunities(JSON.parse(savedData));
+      const res = await fetch("/(api)/getsavedopportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id }),
+      });
+      const json = await res.json();
+      if (res.ok) {
+        // Map API response: activityName -> title, applicationLink -> apply
+        const mapped = json.data.map((item: any) => ({
+          id: item.id,
+          title: item.activityName || "No Title",
+          activityType: item.activityType,
+          location: item.location,
+          duration: item.duration,
+          deadline: item.deadline
+            ? new Date(item.deadline).toISOString().split("T")[0]
+            : undefined,
+          apply: item.applicationLink,
+        }));
+        setSavedOpportunities(mapped);
       } else {
+        console.error("Error fetching saved opportunities:", json.error);
         setSavedOpportunities([]);
       }
     } catch (error) {
       console.error("Error loading saved opportunities:", error);
+      setSavedOpportunities([]);
     }
   };
 
@@ -56,16 +76,10 @@ export default function Home() {
     try {
       const res = await fetch("/(api)/getloggedhours", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          user_id: user?.id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user?.id }),
       });
-
       const json = await res.json();
-
       if (res.ok) {
         const formatted = json.data.map((item: any) => ({
           name: item.description || "No description",
@@ -94,40 +108,45 @@ export default function Home() {
   const onRefresh = async () => {
     setRefreshing(true);
     await fetchRecentActivities();
+    await loadSavedOpportunities();
     setRefreshing(false);
   };
 
   useEffect(() => {
-    const loadProfileImage = async () => {
-      const storedImage = await AsyncStorage.getItem("profileImage");
-      if (storedImage) {
-        setProfileImage(storedImage);
-      }
-    };
-    loadProfileImage();
-  }, []);
-
-  useEffect(() => {
     if (user?.id) {
       fetchRecentActivities();
+      loadSavedOpportunities();
     }
   }, [user]);
 
+  // Delete a saved opportunity by calling the API route,
+  // then update local state.
   const deleteOpportunity = async (id: string) => {
-    const updatedOpportunities = savedOpportunities.filter(
-      (opp) => opp.id !== id,
-    );
-    setSavedOpportunities(updatedOpportunities);
-    await AsyncStorage.setItem(
-      "savedOpportunities",
-      JSON.stringify(updatedOpportunities),
-    );
+    if (!user) return;
+    try {
+      const res = await fetch("/(api)/deletesavedopportunity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id, opportunity_id: id }),
+      });
+      if (!res.ok) {
+        console.error("Failed to remove saved opportunity from backend");
+        return;
+      }
+      // Update local state
+      const updatedOpportunities = savedOpportunities.filter(
+        (opp) => opp.id !== id,
+      );
+      setSavedOpportunities(updatedOpportunities);
+    } catch (error) {
+      console.error("Error removing saved opportunity:", error);
+    }
   };
 
   useFocusEffect(
     useCallback(() => {
       loadSavedOpportunities();
-    }, []),
+    }, [user]),
   );
 
   return (
@@ -140,9 +159,7 @@ export default function Home() {
         >
           <View className="flex-row items-center mb-4">
             <Image
-              source={
-                profileImage ? { uri: profileImage } : { uri: user?.imageUrl }
-              }
+              source={{ uri: user?.imageUrl }}
               className="w-16 h-16 rounded-full"
             />
             <View className="ml-4">
@@ -192,7 +209,7 @@ export default function Home() {
           </View>
         </ScrollView>
 
-        {/* MODAL */}
+        {/* Modal for Saved Opportunities */}
         <ReactNativeModal
           isVisible={modalVisible}
           style={{
@@ -205,9 +222,7 @@ export default function Home() {
         >
           <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
             <TouchableOpacity
-              onPress={() => {
-                setModalVisible(false);
-              }}
+              onPress={() => setModalVisible(false)}
               style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
             >
               <MaterialCommunityIcons name="close" size={24} color="#000" />
@@ -245,7 +260,7 @@ export default function Home() {
                             Apply:{" "}
                           </Text>
                           <TouchableOpacity
-                            onPress={() => Linking.openURL(item.apply!)}
+                            onPress={() => Linking.openURL(item.apply)}
                           >
                             <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
                               {item.apply}
@@ -262,6 +277,13 @@ export default function Home() {
                     </TouchableOpacity>
                   </View>
                 )}
+                ListEmptyComponent={
+                  <View style={{ alignItems: "center", marginTop: 20 }}>
+                    <Text className="text-gray-500 text-base text-center">
+                      No saved opportunities yet.
+                    </Text>
+                  </View>
+                }
               />
             ) : (
               <Text className="text-gray-500 text-base text-center">
