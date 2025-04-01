@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 10,
     borderRadius: 5,
+    paddingTop: 50,
   },
   dropdownButtonText: {
     fontSize: 16,
@@ -500,7 +501,7 @@ const ProfileSetup: React.FC = () => {
         <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
-              <Text className="font-medium text-lg font-PoppinsBold pt-1">
+              <Text className="font-medium text-lg font-PoppinsBold">
                 City <Text className="text-red-500">*</Text>
               </Text>
             }
