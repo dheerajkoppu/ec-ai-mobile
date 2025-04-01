@@ -14,6 +14,8 @@ import { SignedIn, useUser } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
 import { FontAwesome } from "@expo/vector-icons";
 
+import { LogBox } from "react-native";
+
 interface Opportunity {
   id: string;
   title: string;
@@ -34,6 +36,7 @@ export default function Home() {
     [],
   );
   const [refreshing, setRefreshing] = useState(false);
+  LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
 
   // Fetch saved opportunities from API using the user's clerk_id
   const loadSavedOpportunities = async () => {
@@ -202,6 +205,7 @@ export default function Home() {
             <View style={{ maxHeight: 250 }}>
               {savedOpportunities.length > 0 ? (
                 <FlatList
+                  nestedScrollEnabled={true} // Enable nested scrolling
                   data={savedOpportunities}
                   keyExtractor={(item) => item.id}
                   ItemSeparatorComponent={() => (
