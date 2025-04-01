@@ -442,7 +442,11 @@ const ProfileSetup: React.FC = () => {
             onChange={(item) => handleChange("gradeLevel", item.value)}
           />
           <DropdownField
-            label="Race/Ethnicity"
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Race/Ethnicity <Text className="text-red-500">*</Text>
+              </Text>
+            }
             data={dropdowns.raceEthnicity}
             value={formData.race || ""}
             placeholder="Select race"

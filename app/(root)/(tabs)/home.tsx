@@ -174,7 +174,7 @@ export default function Home() {
           {/* Recent Activities Section */}
           <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
             <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
-              Recent Activities
+              Recent
             </Text>
             {recentActivities.length > 0 ? (
               recentActivities.map((activity, index) => (
