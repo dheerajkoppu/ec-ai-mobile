@@ -191,11 +191,14 @@ const Opportunities = () => {
           .includes(searchQuery.toLowerCase()),
     );
 
-  // Sorting function
+  // Sorting function updated to sort by deadline.
   const sortOpportunities = () => {
-    const sortedOpportunities = [...opportunities].sort((a, b) =>
-      a.activityType.localeCompare(b.activityType),
-    );
+    const sortedOpportunities = [...opportunities].sort((a, b) => {
+      if (!a.deadline && !b.deadline) return 0;
+      if (!a.deadline) return 1;
+      if (!b.deadline) return -1;
+      return a.deadline.localeCompare(b.deadline);
+    });
     setOpportunities(sortedOpportunities);
     setShowSortDropdown(false);
   };
@@ -245,16 +248,32 @@ const Opportunities = () => {
             AI Suggested ✨
           </Text>
         </TouchableOpacity>
-        {showSortDropdown && (
-          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-2.5 z-20">
+      </View>
+
+      {/* Inline Sort Dropdown with Overlay to dismiss */}
+      {showSortDropdown && (
+        <>
+          <TouchableOpacity
+            onPress={() => setShowSortDropdown(false)}
+            activeOpacity={1}
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              zIndex: 10,
+            }}
+          />
+          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-60 py-3 z-20">
             <TouchableOpacity onPress={sortOpportunities}>
               <Text className="text-general-400 font-PoppinsSemiBold">
-                Career Field
+                Deadline
               </Text>
             </TouchableOpacity>
           </View>
-        )}
-      </View>
+        </>
+      )}
 
       {/* List of Opportunities */}
       <FlatList
@@ -272,7 +291,6 @@ const Opportunities = () => {
           </View>
         }
         renderItem={({ item }) => (
-          // Wrap each opportunity in a TouchableOpacity to allow clicking
           <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
             <View className="bg-white p-4 mb-4 rounded-lg shadow">
               <Text className="font-PoppinsSemiBold text-base mb-2">
@@ -311,7 +329,6 @@ const Opportunities = () => {
                   </TouchableOpacity>
                 </View>
               )}
-              {/* Save Button */}
               <View className="flex-row justify-between mt-4">
                 <CustomButton
                   title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
@@ -472,7 +489,7 @@ const Opportunities = () => {
             )}
             {selectedOpportunity?.createdAt && (
               <Text className="mb-1">
-                <Text className="font-semibold">Created At:</Text>{" "}
+                <Text className="font-semibold">Added On:</Text>{" "}
                 {selectedOpportunity.createdAt}
               </Text>
             )}
