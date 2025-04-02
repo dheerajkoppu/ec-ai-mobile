@@ -56,10 +56,18 @@ export async function POST(request: Request) {
       duration: op.duration,
       deadline: op.deadline,
       applicationLink: op.application_link,
-      gradeRequirements: op.grade_requirements,
-      raceRequirements: op.race_requirements,
-      genderRequirements: op.gender_requirements,
-      ageRequirements: op.age_requirements,
+      gradeRequirements: Array.isArray(op.grade_requirements)
+        ? op.grade_requirements.join(", ")
+        : op.grade_requirements,
+      raceRequirements: Array.isArray(op.race_requirements)
+        ? op.race_requirements.join(", ")
+        : op.race_requirements,
+      genderRequirements: Array.isArray(op.gender_requirements)
+        ? op.gender_requirements.join(", ")
+        : op.gender_requirements,
+      ageRequirements: Array.isArray(op.age_requirements)
+        ? op.age_requirements.join(", ")
+        : op.age_requirements,
       primaryCity: op.primary_city,
       onlyFRLStudents: op.only_frl_students,
       onlyFirstGen: op.only_first_gen,
