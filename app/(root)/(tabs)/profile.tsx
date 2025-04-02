@@ -1,7 +1,5 @@
 import { useUser, useClerk } from "@clerk/clerk-expo";
-import { useEffect } from "react";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
+import { useEffect, useState } from "react";
 import {
   View,
   Text,
@@ -11,32 +9,24 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import React, { useState } from "react";
 import ReactNativeModal from "react-native-modal";
 import * as Linking from "expo-linking";
 import * as ImagePicker from "expo-image-picker";
 import CustomButton from "@/components/CustomButton";
 import { Ionicons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
 
 const Profile = () => {
-  const { user } = useUser();
-  const { signOut } = useClerk();
+  const { user, signOut } = useClerk();
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+
   useEffect(() => {
-    const loadImage = async () => {
-      const storedImage = await AsyncStorage.getItem("profileImage");
-      if (storedImage) {
-        setImageUri(storedImage);
-      } else {
-        setImageUri(user?.imageUrl);
-      }
-    };
-    loadImage();
-  }, []);
+    setImageUri(user?.imageUrl);
+  }, [user?.imageUrl]);
 
   const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
+    const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       aspect: [1, 1],
@@ -44,11 +34,30 @@ const Profile = () => {
     });
 
     if (!result.canceled) {
-      const newImageUri = result.assets[0].uri;
-      setImageUri(newImageUri);
-      await AsyncStorage.setItem("profileImage", newImageUri); // Save to AsyncStorage
+      const localUri = result.assets[0].uri;
+
+      // Read the selected image file as a base64 string.
+      const base64Img = await FileSystem.readAsStringAsync(localUri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      // Create a valid data URL for a JPEG image.
+      const dataUrl = `data:image/jpeg;base64,${base64Img}`;
+
+      // Update Clerk with the new profile image by passing the base64 string.
+      try {
+        const updatedImage = await user?.setProfileImage({ file: dataUrl });
+        console.log("Updated image:", updatedImage);
+        // Update state using the publicUrl returned by Clerk if available,
+        // otherwise fall back to the base64 dataUrl.
+        setImageUri(updatedImage?.publicUrl || dataUrl);
+      } catch (error) {
+        console.error("Error updating profile image:", error);
+      }
     }
   };
+
+  // Remove the imgbb upload function as it's no longer needed.
 
   const [aiFeatures, setAIFeatures] = useState(false);
   const [notifications, setNotifications] = useState(true);
@@ -81,7 +90,7 @@ const Profile = () => {
         },
         body: JSON.stringify({
           userEmail: user.primaryEmailAddress.emailAddress,
-        }), // Send email, not ID
+        }),
       });
 
       if (response.ok) {

@@ -6,9 +6,9 @@ import {
   ImageSourcePropType,
   TouchableOpacity,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useUser } from "@clerk/clerk-expo";
 import { icons } from "@/constants";
-import { useNavigation } from "@react-navigation/native"; // Import navigation hook
+import { useNavigation } from "@react-navigation/native";
 
 // TabIcon Component for custom icons
 const TabIcon = ({
@@ -24,13 +24,12 @@ const TabIcon = ({
   isProfile?: boolean;
   profileImage?: string | null;
 }) => {
-  const navigation = useNavigation(); // Get navigation instance
-
+  const navigation = useNavigation();
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate(screenName as never)} // Navigate correctly
-      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }} // Expands tap area
-      activeOpacity={1} // Prevents flickering effect
+      onPress={() => navigation.navigate(screenName as never)}
+      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+      activeOpacity={1}
     >
       <View
         className={`flex flex-row justify-center items-center rounded-full ${
@@ -58,18 +57,10 @@ const TabIcon = ({
 
 // Layout Component for the tab bar
 const Layout = () => {
-  const [profileImage, setProfileImage] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadProfileImage = async () => {
-      // Fetch the profile image from AsyncStorage
-      const storedImage = await AsyncStorage.getItem("profileImage");
-      if (storedImage) {
-        setProfileImage(storedImage);
-      }
-    };
-    loadProfileImage();
-  }, []);
+  // Get the user object from Clerk
+  const { user } = useUser();
+  // Use the user image URL directly for the profile icon
+  const profileImage = user?.imageUrl;
 
   return (
     <Tabs
@@ -89,7 +80,7 @@ const Layout = () => {
           position: "absolute",
         },
         tabBarItemStyle: {
-          paddingVertical: 20, // Expands the touch area vertically
+          paddingVertical: 20,
         },
       }}
     >
@@ -155,8 +146,8 @@ const Layout = () => {
               focused={focused}
               source={icons.profile1}
               screenName="profile"
-              isProfile={true} // Mark as Profile tab
-              profileImage={profileImage} // Pass profileImage to the icon
+              isProfile={true}
+              profileImage={profileImage}
             />
           ),
         }}
