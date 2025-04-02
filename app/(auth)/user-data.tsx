@@ -157,7 +157,6 @@ const styles = StyleSheet.create({
     borderColor: "#ccc",
     padding: 10,
     borderRadius: 5,
-    paddingTop: 50,
   },
   dropdownButtonText: {
     fontSize: 16,
