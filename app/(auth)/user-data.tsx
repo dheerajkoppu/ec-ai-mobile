@@ -8,6 +8,7 @@ import {
   Modal,
   FlatList,
   StyleSheet,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
@@ -107,10 +108,16 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
     const isSelected = selectedValues.includes(item.value);
     return (
       <TouchableOpacity
-        style={[styles.option, isSelected && styles.selectedOption]}
+        style={multiSelectStyles.option}
         onPress={() => toggleOption(item.value)}
       >
-        <Text style={styles.optionText}>{item.label}</Text>
+        <View
+          style={[
+            multiSelectStyles.checkbox,
+            isSelected && multiSelectStyles.checkedCheckbox,
+          ]}
+        />
+        <Text style={multiSelectStyles.optionText}>{item.label}</Text>
       </TouchableOpacity>
     );
   };
@@ -118,10 +125,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   return (
     <View>
       <TouchableOpacity
-        style={styles.dropdownButton}
+        style={multiSelectStyles.dropdownButton}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={styles.dropdownButtonText}>
+        <Text style={multiSelectStyles.dropdownButtonText}>
           {selectedValues.length
             ? options
                 .filter((o) => selectedValues.includes(o.value))
@@ -131,25 +138,100 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         </Text>
       </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="slide">
-        <View style={styles.modalContainer}>
-          <Text style={styles.modalTitle}>Select Options</Text>
-          <FlatList
-            data={options}
-            keyExtractor={(item) => item.value}
-            renderItem={renderOption}
-          />
-          <TouchableOpacity
-            style={styles.doneButton}
-            onPress={() => setModalVisible(false)}
-          >
-            <Text style={styles.doneButtonText}>Done</Text>
-          </TouchableOpacity>
+      <Modal visible={modalVisible} animationType="fade" transparent>
+        <View style={multiSelectStyles.modalOverlay}>
+          <View style={multiSelectStyles.modalContainer}>
+            <ScrollView style={multiSelectStyles.scrollContainer}>
+              <FlatList
+                data={options}
+                keyExtractor={(item) => item.value}
+                renderItem={renderOption}
+              />
+            </ScrollView>
+            <TouchableOpacity
+              style={multiSelectStyles.doneButton}
+              onPress={() => setModalVisible(false)}
+            >
+              <Text style={multiSelectStyles.doneButtonText}>Done</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </Modal>
     </View>
   );
 };
+
+const multiSelectStyles = StyleSheet.create({
+  dropdownButton: {
+    padding: 10,
+    borderWidth: 1,
+    borderRadius: 8,
+    borderColor: "#ccc",
+    backgroundColor: "white",
+  },
+  dropdownButtonText: {
+    fontSize: 16,
+    color: "black",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.3)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContainer: {
+    width: 300,
+    maxHeight: "70%",
+    backgroundColor: "#f5f7fa",
+    borderRadius: 12,
+    padding: 15,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
+    alignSelf: "center",
+  },
+  scrollContainer: {
+    flexGrow: 1,
+  },
+  option: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+  },
+  optionText: {
+    fontFamily: "Poppins-SemiBold",
+    fontSize: 16,
+    color: "black",
+    flexShrink: 1,
+    flexWrap: "wrap",
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderWidth: 1,
+    borderColor: "black",
+    backgroundColor: "white",
+    marginRight: 10,
+    borderRadius: 4,
+  },
+  checkedCheckbox: {
+    backgroundColor: "#5b55f7",
+  },
+  doneButton: {
+    marginTop: 10,
+    padding: 10,
+    backgroundColor: "#5b55f7",
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  doneButtonText: {
+    color: "white",
+    fontSize: 16,
+    fontWeight: "bold",
+  },
+});
 
 const styles = StyleSheet.create({
   dropdownButton: {
@@ -603,9 +685,9 @@ const ProfileSetup: React.FC = () => {
               color: "#333",
             }}
           >
-            Career Interest
+            Career Interest <Text className="text-red-500">*</Text>
           </Text>
-          <Text className="text-red-500">*</Text>
+
           <MultiSelectDropdown
             options={dropdowns.careerInterest}
             selectedValues={formData.careerInterest || []}
@@ -617,7 +699,7 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                Want to start a business or nonprofit?{" "}
+                Want to start a business/nonprofit?{" "}
                 <Text className="text-red-500">*</Text>
               </Text>
             }
@@ -654,9 +736,9 @@ const ProfileSetup: React.FC = () => {
               color: "#333",
             }}
           >
-            EC Goals?
+            EC Goals? <Text className="text-red-500">*</Text>
           </Text>
-          <Text className="text-red-500">*</Text>
+
           <MultiSelectDropdown
             options={dropdowns.extracurricularReasons}
             selectedValues={formData.ecReason || []}
@@ -667,13 +749,15 @@ const ProfileSetup: React.FC = () => {
             style={{
               fontSize: 18,
               fontFamily: "Poppins-Bold",
+              marginTop: 10,
               marginBottom: 5,
               color: "#333",
             }}
           >
-            Level to reach in your field?
+            Level to reach in your field?{" "}
+            <Text className="text-red-500">*</Text>
           </Text>
-          <Text className="text-red-500">*</Text>
+
           <MultiSelectDropdown
             options={dropdowns.fieldLevel}
             selectedValues={formData.ecLevel || []}
