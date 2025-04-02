@@ -209,6 +209,7 @@ const ActivityTabs = () => {
                 </Text>
               }
               value={activityName}
+              placeholder="ex. Future Business Leader of America"
               onChangeText={setActivityName}
             />
             <DropdownField
@@ -228,6 +229,7 @@ const ActivityTabs = () => {
                 </Text>
               }
               value={timeSpent}
+              placeholder="Enter hours"
               onChangeText={setTimeSpent}
               keyboardType="number-pad"
             />
@@ -238,6 +240,7 @@ const ActivityTabs = () => {
                 </Text>
               }
               value={weeksPerYear}
+              placeholder="Enter weeks"
               onChangeText={setWeeksPerYear}
               keyboardType="number-pad"
             />
@@ -248,6 +251,7 @@ const ActivityTabs = () => {
                 </Text>
               }
               value={roles}
+              placeholder="ex. President (12)"
               onChangeText={setRoles}
             />
             <Text className="font-medium text-lg font-PoppinsBold mt-4">
@@ -277,6 +281,7 @@ const ActivityTabs = () => {
             <InputField
               label="Description / Notes (Optional)"
               value={description}
+              placeholder="ex. Grew club 7x"
               onChangeText={setDescription}
               multiline
             />
@@ -306,11 +311,13 @@ const ActivityTabs = () => {
                 </Text>
               }
               value={logHours}
+              placeholder="Enter hours"
               onChangeText={setLogHours}
               keyboardType="number-pad"
             />
             <InputField
               label="Milestone"
+              placeholder="ex. FBLA Club Meeting"
               value={milestone}
               onChangeText={setMilestone}
             />
