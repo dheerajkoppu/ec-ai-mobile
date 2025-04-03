@@ -7,6 +7,7 @@ import {
   ScrollView,
   Switch,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ReactNativeModal from "react-native-modal";
@@ -18,6 +19,23 @@ import * as FileSystem from "expo-file-system";
 
 const Profile = () => {
   const { user, signOut } = useClerk();
+  const updateNotificationStatus = async (value: boolean) => {
+    try {
+      setNotifications(value); // Optimistic UI
+      await fetch("/(api)/updatenotifications", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user?.primaryEmailAddress?.emailAddress,
+          wants_notifications: value,
+        }),
+      });
+    } catch (error) {
+      console.error("Error updating notification status:", error);
+      Alert.alert("Error", "Failed to update notification setting.");
+    }
+  };
+
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const [privacyOpen, setPrivacyOpen] = useState(false);
 
@@ -59,8 +77,35 @@ const Profile = () => {
 
   // Remove the imgbb upload function as it's no longer needed.
 
-  const [aiFeatures, setAIFeatures] = useState(false);
   const [notifications, setNotifications] = useState(true);
+  useEffect(() => {
+    const fetchNotificationStatus = async () => {
+      if (!user?.primaryEmailAddress?.emailAddress) return;
+
+      try {
+        const response = await fetch("/(api)/getnotificationstatus", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            email: user.primaryEmailAddress.emailAddress,
+          }),
+        });
+
+        const data = await response.json();
+        if (response.ok && data?.wants_notifications !== undefined) {
+          setNotifications(data.wants_notifications);
+        } else {
+          console.warn("Could not fetch notifications setting:", data);
+        }
+      } catch (error) {
+        console.error("Failed to load notification setting:", error);
+      }
+    };
+
+    fetchNotificationStatus();
+  }, [user?.primaryEmailAddress?.emailAddress]);
 
   // Modal visibility states for logout and delete account
   const [showSignOutModal, setShowSignOutModal] = useState(false);
@@ -74,6 +119,39 @@ const Profile = () => {
       Linking.openURL(Linking.createURL("/"));
     } catch (err) {
       console.error(JSON.stringify(err, null, 2));
+    }
+  };
+  const requestDataExport = async () => {
+    if (!user?.primaryEmailAddress?.emailAddress) {
+      console.log("User email is missing.");
+      return;
+    }
+
+    try {
+      const response = await fetch("/(api)/exportdata", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userEmail: user.primaryEmailAddress.emailAddress,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert(
+          "Request Sent",
+          "Your data request has been sent successfully.",
+        );
+      } else {
+        console.error("Failed to send export request:", data);
+        Alert.alert("Error", "Your data request has been sent successfully.");
+      }
+    } catch (error) {
+      console.error("Export data error:", error);
+      Alert.alert("Error", "An unexpected error occurred.");
     }
   };
 
@@ -154,7 +232,10 @@ const Profile = () => {
             <Text className="text-lg font-PoppinsSemiBold mb-2">
               Notifications
             </Text>
-            <Switch value={notifications} onValueChange={setNotifications} />
+            <Switch
+              value={notifications}
+              onValueChange={updateNotificationStatus}
+            />
           </View>
           <CustomButton
             title="Privacy Policy"
@@ -163,18 +244,10 @@ const Profile = () => {
           />
 
           <CustomButton
-            title="Export Data (PDF/CSV)"
-            onPress={() => {}}
+            title="Export Data"
+            onPress={requestDataExport}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
-        </View>
-
-        {/* App Settings Section */}
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md flex-row justify-between">
-          <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
-            AI Features
-          </Text>
-          <Switch value={aiFeatures} onValueChange={setAIFeatures} />
         </View>
 
         {/* Help & Support Section */}

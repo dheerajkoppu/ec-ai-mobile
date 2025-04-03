@@ -823,15 +823,15 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                Interested in Travel/Study Abroad?{" "}
-                <Text className="text-red-500">*</Text>
+                EC Format Preference <Text className="text-red-500">*</Text>
               </Text>
             }
-            data={yesNo}
-            value={formData.travel || ""}
+            data={dropdowns.extracurricularFormat}
+            value={formData.ecType || ""}
             placeholder="Select"
-            onChange={(item) => handleChange("travel", item.value)}
+            onChange={(item) => handleChange("ecType", item.value)}
           />
+
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -846,13 +846,14 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                EC Format Preference <Text className="text-red-500">*</Text>
+                Interested in Travel/Study Abroad?{" "}
+                <Text className="text-red-500">*</Text>
               </Text>
             }
-            data={dropdowns.extracurricularFormat}
-            value={formData.ecType || ""}
+            data={yesNo}
+            value={formData.travel || ""}
             placeholder="Select"
-            onChange={(item) => handleChange("ecType", item.value)}
+            onChange={(item) => handleChange("travel", item.value)}
           />
           <CustomButton
             title="Next"
