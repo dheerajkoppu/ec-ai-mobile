@@ -17,22 +17,30 @@ import { useUser } from "@clerk/clerk-expo";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
+type DropdownItem = {
+  label: string;
+  value: string;
+};
+
 const ActivityTabs = () => {
   const { user } = useUser();
-  const [activeTab, setActiveTab] = useState("add");
-  const [activityName, setActivityName] = useState("");
-  const [activityType, setActivityType] = useState("");
-  const [timeSpent, setTimeSpent] = useState("");
-  const [weeksPerYear, setWeeksPerYear] = useState("");
-  const [roles, setRoles] = useState("");
-  const [description, setDescription] = useState("");
-  const [milestone, setMilestone] = useState("");
-  const [selectedGrades, setSelectedGrades] = useState([]);
-  const [logDate, setLogDate] = useState(new Date());
-  const [logHours, setLogHours] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>("add");
+  const [activityName, setActivityName] = useState<string>("");
+  const [activityType, setActivityType] = useState<string>("");
+  const [timeSpent, setTimeSpent] = useState<string>("");
+  const [weeksPerYear, setWeeksPerYear] = useState<string>("");
+  const [roles, setRoles] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [milestone, setMilestone] = useState<string>("");
+  const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
+  const [logDate, setLogDate] = useState<Date>(new Date());
+  const [logHours, setLogHours] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { data: activities } = useFetch("/(api)/activitytypes");
+  const { data: activitiesRaw } = useFetch("/(api)/activitytypes");
+  const activities: DropdownItem[] = Array.isArray(activitiesRaw)
+    ? activitiesRaw
+    : [];
 
   const activityNamesRequestOptions = user?.primaryEmailAddress?.emailAddress
     ? {
@@ -44,21 +52,21 @@ const ActivityTabs = () => {
       }
     : undefined;
 
-  const { data: activityNames } = useFetch(
+  const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
     "/(api)/getactivitynames",
     activityNamesRequestOptions,
   );
 
-  const formattedActivityNames = (
-    Array.isArray(activityNames) ? activityNames : activityNames?.data || []
-  ).map((item) => ({
-    label: item.name,
-    value: item.id,
-  }));
+  const formattedActivityNames: DropdownItem[] = Array.isArray(activityNamesRaw)
+    ? activityNamesRaw.map((item) => ({
+        label: item.name,
+        value: item.id,
+      }))
+    : [];
 
-  const handleTabSwitch = (tab) => setActiveTab(tab);
+  const handleTabSwitch = (tab: string) => setActiveTab(tab);
 
-  const toggleGradeSelection = (grade) => {
+  const toggleGradeSelection = (grade: string) => {
     if (selectedGrades.includes(grade)) {
       setSelectedGrades(selectedGrades.filter((g) => g !== grade));
     } else {
@@ -66,11 +74,8 @@ const ActivityTabs = () => {
     }
   };
 
-  // Helper function to format a Date object into "YYYY-MM-DD"
-  const formatDateToISO = (date) => {
-    if (isNaN(date.getTime())) {
-      throw new Error("Invalid date");
-    }
+  const formatDateToISO = (date: Date) => {
+    if (isNaN(date.getTime())) throw new Error("Invalid date");
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -174,27 +179,21 @@ const ActivityTabs = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View className="flex-row justify-center mb-4">
-        <TouchableOpacity
-          className={`flex-1 py-2 rounded-2xl ${
-            activeTab === "add" ? "bg-[#5b55f6]" : "bg-gray-300"
-          }`}
-          onPress={() => handleTabSwitch("add")}
-        >
-          <Text className="text-center text-white font-PoppinsBold">
-            Add New Activity
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          className={`flex-1 py-2 rounded-2xl ${
-            activeTab === "log" ? "bg-[#5b55f6]" : "bg-gray-300"
-          }`}
-          onPress={() => handleTabSwitch("log")}
-        >
-          <Text className="text-center text-white font-PoppinsBold">
-            Log Hours
-          </Text>
-        </TouchableOpacity>
+        {["add", "log"].map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            className={`flex-1 py-2 rounded-2xl ${
+              activeTab === tab ? "bg-[#5b55f6]" : "bg-gray-300"
+            }`}
+            onPress={() => handleTabSwitch(tab)}
+          >
+            <Text className="text-center text-white font-PoppinsBold">
+              {tab === "add" ? "Add New Activity" : "Log Hours"}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
+
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
@@ -203,53 +202,34 @@ const ActivityTabs = () => {
         {activeTab === "add" ? (
           <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
             <InputField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Name of Activity <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Name of Activity *"
               value={activityName}
               placeholder="ex. Future Business Leader of America"
               onChangeText={setActivityName}
             />
             <DropdownField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Activity Type <Text className="text-red-500">*</Text>
-                </Text>
-              }
-              data={activities || []}
+              label="Activity Type *"
+              placeholder="Select activity type"
+              data={activities}
               value={activityType}
-              onChange={(item) => setActivityType(item.value)}
+              onChange={(item: DropdownItem) => setActivityType(item.value)}
             />
             <InputField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Hours Per Week <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Hours Per Week *"
               value={timeSpent}
               placeholder="Enter hours"
               onChangeText={setTimeSpent}
               keyboardType="number-pad"
             />
             <InputField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Weeks per Year <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Weeks per Year *"
               value={weeksPerYear}
               placeholder="Enter weeks"
               onChangeText={setWeeksPerYear}
               keyboardType="number-pad"
             />
             <InputField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Roles <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Roles *"
               value={roles}
               placeholder="ex. President (12)"
               onChangeText={setRoles}
@@ -294,22 +274,15 @@ const ActivityTabs = () => {
         ) : (
           <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
             <DropdownField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Name of Activity <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Name of Activity *"
+              placeholder="Select activity"
               data={formattedActivityNames}
               value={activityName}
-              onChange={(item) => setActivityName(item.value)}
+              onChange={(item: DropdownItem) => setActivityName(item.value)}
             />
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField
-              label={
-                <Text className="font-medium text-lg font-PoppinsBold">
-                  Hours <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label="Hours *"
               value={logHours}
               placeholder="Enter hours"
               onChangeText={setLogHours}
@@ -333,10 +306,18 @@ const ActivityTabs = () => {
   );
 };
 
-const DateInputField = ({ logDate, setLogDate }) => {
-  const [dateText, setDateText] = useState(logDate.toLocaleDateString("en-US"));
+const DateInputField = ({
+  logDate,
+  setLogDate,
+}: {
+  logDate: Date;
+  setLogDate: (date: Date) => void;
+}) => {
+  const [dateText, setDateText] = useState<string>(
+    logDate.toLocaleDateString("en-US"),
+  );
 
-  const formatDate = (text) => {
+  const formatDate = (text: string) => {
     const digits = text.replace(/\D/g, "");
     if (digits.length <= 2) return digits;
     if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
@@ -345,7 +326,7 @@ const DateInputField = ({ logDate, setLogDate }) => {
     return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
   };
 
-  const isValidDate = (dateString) => {
+  const isValidDate = (dateString: string) => {
     const [month, day, year] = dateString.split("/").map(Number);
     if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999)
       return false;
@@ -357,7 +338,7 @@ const DateInputField = ({ logDate, setLogDate }) => {
     );
   };
 
-  const handleDateChange = (text) => {
+  const handleDateChange = (text: string) => {
     const formattedText = formatDate(text);
     setDateText(formattedText);
     if (formattedText.length === 10 && isValidDate(formattedText)) {
