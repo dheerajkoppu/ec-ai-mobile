@@ -29,6 +29,7 @@
     "expo": "~52.0.35",
     "expo-blur": "~14.0.3",
     "expo-constants": "~17.0.6",
+    "expo-file-system": "~18.0.12",
     "expo-font": "~13.0.3",
     "expo-haptics": "~14.0.1",
     "expo-image-picker": "~16.0.6",
@@ -44,6 +45,7 @@
     "formidable": "^3.5.2",
     "nativewind": "^2.0.11",
     "nodemailer": "^6.10.0",
+    "openai": "^4.91.1",
     "pdf-lib": "^1.17.1",
     "react": "18.3.1",
     "react-dom": "18.3.1",
@@ -60,8 +62,7 @@
     "react-native-swiper": "^1.6.0",
     "react-native-web": "~0.19.13",
     "react-native-webview": "13.12.5",
-    "uploadthing": "^7.6.0",
-    "expo-file-system": "~18.0.12"
+    "uploadthing": "^7.6.0"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

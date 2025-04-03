@@ -42,6 +42,7 @@ interface Opportunity {
   outsideUS?: boolean;
   hoursPerWeek?: number;
   createdAt?: string;
+  top_3_reasons?: string[]; // NEW: extra field from AI
 }
 
 const Opportunities = () => {
@@ -61,16 +62,18 @@ const Opportunities = () => {
     new Set(),
   );
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
-  // State for the detailed view modal
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
-  // State for the AI Suggested modal
+
+  // New state: store AI-suggested enriched opportunities
   const [showAISuggestedModal, setShowAISuggestedModal] =
     useState<boolean>(false);
+  const [aiOpportunities, setAiOpportunities] = useState<Opportunity[]>([]);
+  const [aiLoading, setAiLoading] = useState<boolean>(false);
 
   // Fetch opportunities from the API and map fields accordingly
   const fetchOpportunities = async () => {
-    if (!user) return; // Ensure the user is loaded
+    if (!user) return;
     try {
       const response = await fetch("/(api)/getopportunities", {
         method: "POST",
@@ -126,31 +129,20 @@ const Opportunities = () => {
     }
   }, [user]);
 
-  // Save opportunity and call the API route to persist the saved opportunity.
+  // Save opportunity as before
   const handleSave = async (opportunity: Opportunity) => {
     try {
       if (!user) {
         console.error("User not logged in");
         return;
       }
-      const clerk_id = user.id; // Using Clerk's user id as clerk_id
-
-      // Avoid saving if already saved
-      if (savedOpportunities.has(opportunity.id)) {
-        return;
-      }
+      const clerk_id = user.id;
+      if (savedOpportunities.has(opportunity.id)) return;
       setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
-
-      // Call the addsavedopportunity API route to add the saved opportunity
       const res = await fetch("/(api)/addsavedopportunity", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          clerk_id,
-          opportunity_id: opportunity.id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id, opportunity_id: opportunity.id }),
       });
       if (!res.ok) {
         console.error("Failed to add saved opportunity to backend");
@@ -164,7 +156,6 @@ const Opportunities = () => {
     setAddedOpportunities((prev) => new Set([...prev, id]));
   };
 
-  // Refresh function: refetch opportunities and clear temporary states
   const onRefresh = async () => {
     setRefreshing(true);
     try {
@@ -191,7 +182,6 @@ const Opportunities = () => {
           .includes(searchQuery.toLowerCase()),
     );
 
-  // Sorting function updated to sort by deadline.
   const sortOpportunities = () => {
     const sortedOpportunities = [...opportunities].sort((a, b) => {
       if (!a.deadline && !b.deadline) return 0;
@@ -202,6 +192,102 @@ const Opportunities = () => {
     setOpportunities(sortedOpportunities);
     setShowSortDropdown(false);
   };
+
+  // Updated: Fetch AI suggestions from API route,
+  // which returns { enrichedActivities } where each activity includes a top_3_reasons property.
+  const fetchAISuggestions = async () => {
+    if (!user) return;
+    try {
+      setAiLoading(true);
+      const response = await fetch("/(api)/getaisuggested", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user?.primaryEmailAddress?.emailAddress,
+        }),
+      });
+      if (!response.ok) {
+        throw new Error("Failed to fetch AI suggestions");
+      }
+      const json = await response.json();
+      if (json.enrichedActivities) {
+        setAiOpportunities(json.enrichedActivities);
+      } else {
+        setAiOpportunities([]);
+      }
+    } catch (error) {
+      console.error("Error fetching AI suggestions:", error);
+      setAiOpportunities([]);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // Handler for AI Suggested button click
+  const handleAISuggestions = async () => {
+    await fetchAISuggestions();
+    setShowAISuggestedModal(true);
+  };
+
+  // Render a card for a single opportunity (same as normal, with extra reasons if available)
+  const renderOpportunityCard = (item: Opportunity) => (
+    <View className="bg-white p-4 mb-4 rounded-lg shadow">
+      <Text className="font-PoppinsSemiBold text-base mb-2">{item.title}</Text>
+      <Text className="font-PoppinsRegular text-xs mb-1">
+        <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
+        {item.activityType}
+      </Text>
+      <Text className="font-PoppinsRegular text-xs mb-1">
+        <Text className="font-PoppinsSemiBold">Location:</Text> {item.location}
+      </Text>
+      {item.duration && (
+        <Text className="font-PoppinsRegular text-xs mb-1">
+          <Text className="font-PoppinsSemiBold">Duration:</Text>{" "}
+          {item.duration}
+        </Text>
+      )}
+      {item.deadline && (
+        <Text className="font-PoppinsRegular text-xs mb-1">
+          <Text className="font-PoppinsSemiBold">Deadline:</Text>{" "}
+          {item.deadline}
+        </Text>
+      )}
+      {item.apply && (
+        <View className="flex-row flex-wrap items-center">
+          <Text className="font-PoppinsSemiBold text-xs">Apply:</Text>
+          <TouchableOpacity
+            onPress={() => Linking.openURL(item.apply!)}
+            style={{ marginLeft: 8 }}
+          >
+            <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+              {item.apply}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {item.top_3_reasons && item.top_3_reasons.length > 0 && (
+        <View className="mt-2">
+          <Text className="font-PoppinsSemiBold text-xs">Top Reasons:</Text>
+          {item.top_3_reasons.map((reason, index) => (
+            <Text key={index} className="font-PoppinsRegular text-xs">
+              - {reason}
+            </Text>
+          ))}
+        </View>
+      )}
+      <View className="flex-row justify-between mt-4">
+        <CustomButton
+          title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
+          onPress={() => handleSave(item)}
+          bgVariant="primary"
+          textVariant="default"
+          className={`px-4 py-2 rounded-lg flex-1 items-center ${
+            savedOpportunities.has(item.id) ? "bg-primary-900" : "bg-primary"
+          }`}
+        />
+      </View>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -243,14 +329,14 @@ const Opportunities = () => {
         >
           <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => setShowAISuggestedModal(true)}>
+        <TouchableOpacity onPress={handleAISuggestions}>
           <Text className="text-general-400 font-PoppinsBold">
             AI Suggested ✨
           </Text>
         </TouchableOpacity>
       </View>
 
-      {/* Inline Sort Dropdown with Overlay to dismiss */}
+      {/* Inline Sort Dropdown */}
       {showSortDropdown && (
         <>
           <TouchableOpacity
@@ -290,61 +376,7 @@ const Opportunities = () => {
             </Text>
           </View>
         }
-        renderItem={({ item }) => (
-          <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
-            <View className="bg-white p-4 mb-4 rounded-lg shadow">
-              <Text className="font-PoppinsSemiBold text-base mb-2">
-                {item.title}
-              </Text>
-              <Text className="font-PoppinsRegular text-xs mb-1">
-                <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
-                {item.activityType}
-              </Text>
-              <Text className="font-PoppinsRegular text-xs mb-1">
-                <Text className="font-PoppinsSemiBold">Location:</Text>{" "}
-                {item.location}
-              </Text>
-              {item.duration && (
-                <Text className="font-PoppinsRegular text-xs mb-1">
-                  <Text className="font-PoppinsSemiBold">Duration:</Text>{" "}
-                  {item.duration}
-                </Text>
-              )}
-              {item.deadline && (
-                <Text className="font-PoppinsRegular text-xs mb-1">
-                  <Text className="font-PoppinsSemiBold">Deadline:</Text>{" "}
-                  {item.deadline}
-                </Text>
-              )}
-              {item.apply && (
-                <View className="flex-row flex-wrap items-center">
-                  <Text className="font-PoppinsSemiBold text-xs">Apply:</Text>
-                  <TouchableOpacity
-                    onPress={() => Linking.openURL(item.apply!)}
-                    style={{ marginLeft: 8 }}
-                  >
-                    <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-                      {item.apply}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-              <View className="flex-row justify-between mt-4">
-                <CustomButton
-                  title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
-                  onPress={() => handleSave(item)}
-                  bgVariant="primary"
-                  textVariant="default"
-                  className={`px-4 py-2 rounded-lg flex-1 items-center ${
-                    savedOpportunities.has(item.id)
-                      ? "bg-primary-900"
-                      : "bg-primary"
-                  }`}
-                />
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
+        renderItem={({ item }) => renderOpportunityCard(item)}
       />
 
       {/* Detailed Opportunity Modal */}
@@ -518,65 +550,17 @@ const Opportunities = () => {
           <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
             AI Suggested Opportunities
           </Text>
-          {filteredOpportunities.length > 0 ? (
+          {aiLoading ? (
+            <ActivityIndicator size="large" color="#5b55f6" />
+          ) : aiOpportunities && aiOpportunities.length > 0 ? (
             <FlatList
-              data={filteredOpportunities}
+              data={aiOpportunities}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => (
-                <View className="bg-white p-4 mb-3 rounded-lg flex-row justify-between items-center">
-                  <View>
-                    <Text className="text-lg font-PoppinsSemiBold text-gray-900">
-                      {item.title}
-                    </Text>
-                    <Text className="text-sm text-gray-500">
-                      {item.activityType} | {item.location}
-                    </Text>
-                    {item.duration && (
-                      <Text className="text-sm text-gray-500">
-                        Duration: {item.duration}
-                      </Text>
-                    )}
-                    {item.deadline && (
-                      <Text className="text-sm text-gray-500">
-                        Deadline: {item.deadline}
-                      </Text>
-                    )}
-                    {item.apply && (
-                      <View className="flex-row flex-wrap items-center">
-                        <Text className="font-PoppinsSemiBold text-xs">
-                          Apply:{" "}
-                        </Text>
-                        <TouchableOpacity
-                          onPress={() => Linking.openURL(item.apply!)}
-                        >
-                          <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-                            {item.apply}
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
-                    )}
-                    <View className="flex-row justify-between mt-4">
-                      <CustomButton
-                        title={
-                          savedOpportunities.has(item.id) ? "Saved" : "Save"
-                        }
-                        onPress={() => handleSave(item)}
-                        bgVariant="primary"
-                        textVariant="default"
-                        className={`px-4 py-2 rounded-lg flex-1 items-center ${
-                          savedOpportunities.has(item.id)
-                            ? "bg-primary-900"
-                            : "bg-primary"
-                        }`}
-                      />
-                    </View>
-                  </View>
-                </View>
-              )}
+              renderItem={({ item }) => renderOpportunityCard(item)}
             />
           ) : (
             <Text className="text-gray-500 text-base text-center">
-              No AI suggested opportunities.
+              No AI suggestions available.
             </Text>
           )}
         </View>
