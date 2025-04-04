@@ -19,9 +19,10 @@ import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 import { fetchAPI } from "@/lib/fetch";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import ReactNativeModal from "react-native-modal";
 
+// Interfaces
 interface DropdownOption {
   label: string;
   value: string;
@@ -60,13 +61,10 @@ interface IFormData {
   satScore?: string;
   actScore?: string;
   psatScore?: string;
-  // Changed to array for multi-select
   careerInterest?: string[];
   entrepreneur?: string;
   research?: string;
-  // Changed to array for multi-select
   ecReason?: string[];
-  // Changed to array for multi-select
   ecLevel?: string[];
   leadership?: string;
   createOwn?: string;
@@ -276,7 +274,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// SlideWrapper component to wrap each slide in the form
+// SlideWrapper component
 const SlideWrapper: React.FC<{
   children: React.ReactNode;
   showBack?: boolean;
@@ -312,8 +310,10 @@ const SlideWrapper: React.FC<{
   </KeyboardAwareScrollView>
 );
 
+// ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
+  const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
   const [dropdowns, setDropdowns] = useState<IDropdowns | null>(null);
@@ -325,7 +325,6 @@ const ProfileSetup: React.FC = () => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
 
-  // Handler for multi-select fields
   const handleMultiSelectChange = useCallback(
     (key: keyof IFormData, values: string[]) => {
       setFormData((prev) => ({ ...prev, [key]: values }));
@@ -338,6 +337,136 @@ const ProfileSetup: React.FC = () => {
       swiperRef.current?.scrollBy(-1);
     }
   };
+
+  // Updated helper: remove curly braces and any surrounding quotes from each item
+  function parsePostgresArray(str: string): string[] {
+    if (!str) return [];
+    return str
+      .replace(/^{|}$/g, "")
+      .split(",")
+      .map((s) => s.trim().replace(/^"+|"+$/g, ""));
+  }
+
+  // Mapping functions for score ranges
+  function mapSatScoreToRange(score: number): string {
+    if (score >= 1500) return "1500+";
+    if (score >= 1400) return "1400-1490";
+    if (score >= 1200) return "1200-1390";
+    if (score >= 1000) return "1000-1190";
+    if (score >= 400) return "400-990";
+    return "None";
+  }
+
+  function mapActScoreToRange(score: number): string {
+    if (score >= 34) return "34+";
+    if (score >= 30) return "30-33";
+    if (score >= 23) return "23-29";
+    if (score >= 1) return "1-22";
+    return "None";
+  }
+
+  function mapPsatScoreToRange(score: number): string {
+    if (score >= 1400) return "1400+";
+    if (score >= 1200) return "1200-1390";
+    if (score >= 1000) return "1000-1190";
+    if (score >= 320) return "320-990";
+    return "None";
+  }
+
+  useEffect(() => {
+    if (update === "true" && user?.primaryEmailAddress?.emailAddress) {
+      const fetchUserData = async () => {
+        try {
+          const response = await fetch("/(api)/getuserdata", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userEmail: user?.primaryEmailAddress?.emailAddress,
+            }),
+          });
+          const result = await response.json();
+          if (response.ok && result?.user) {
+            const userData = result.user;
+            // Convert score strings to numbers
+            const satScoreNum = parseInt(userData.sat_score);
+            const actScoreNum = parseInt(userData.act_score);
+            const psatScoreNum = parseInt(userData.psat_score);
+
+            // Parse multi-select fields:
+            let careerInterestArr: string[] = [];
+            if (typeof userData.career_interest === "string") {
+              careerInterestArr = parsePostgresArray(userData.career_interest);
+            } else if (Array.isArray(userData.career_interest)) {
+              careerInterestArr = userData.career_interest;
+            }
+
+            let ecReasonArr: string[] = [];
+            if (Array.isArray(userData.extracurricular_motivation)) {
+              ecReasonArr = userData.extracurricular_motivation
+                .flat()
+                .map((item: string) => item.trim());
+            } else if (
+              typeof userData.extracurricular_motivation === "string"
+            ) {
+              ecReasonArr = parsePostgresArray(
+                userData.extracurricular_motivation,
+              );
+            }
+
+            let ecLevelArr: string[] = [];
+            if (typeof userData.field_goal === "string") {
+              ecLevelArr = parsePostgresArray(userData.field_goal);
+            } else if (Array.isArray(userData.field_goal)) {
+              ecLevelArr = userData.field_goal;
+            }
+
+            const transformedData: IFormData = {
+              gradeLevel: userData.grade_level,
+              race: userData.race_ethnicity,
+              schoolName: userData.school_name,
+              gender: userData.gender,
+              age: String(userData.age),
+              location: userData.city,
+              lunch: userData.free_reduced_lunch ? "Yes" : "No",
+              firstGen: userData.first_gen_college ? "Yes" : "No",
+              gpaWeighted: userData.gpa_weighted,
+              gpaUnweighted: userData.gpa_unweighted,
+              satScore: isNaN(satScoreNum)
+                ? "None"
+                : mapSatScoreToRange(satScoreNum),
+              actScore: isNaN(actScoreNum)
+                ? "None"
+                : mapActScoreToRange(actScoreNum),
+              psatScore: isNaN(psatScoreNum)
+                ? "None"
+                : mapPsatScoreToRange(psatScoreNum),
+              careerInterest: careerInterestArr,
+              entrepreneur: userData.wants_to_start_business ? "Yes" : "No",
+              research: userData.interested_in_research ? "Yes" : "No",
+              ecReason: ecReasonArr,
+              ecLevel: ecLevelArr,
+              leadership: userData.seeking_leadership ? "Yes" : "No",
+              createOwn: userData.open_to_own_project ? "Yes" : "No",
+              selectivity: userData.opportunity_selectivity,
+              paid: userData.interested_in_paid_opportunities ? "Yes" : "No",
+              travel: userData.interested_in_travel ? "Yes" : "No",
+              timeWeekly: userData.weekly_commitment,
+              ecType: userData.extracurricular_format,
+              source: userData.referral_source,
+              usedOtherApps: userData.used_other_ec_finders ? "Yes" : "No",
+              notifications: userData.wants_notifications ? "Yes" : "No",
+              agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
+            };
+            console.log("Transformed Data:", transformedData);
+            setFormData(transformedData);
+          }
+        } catch (error) {
+          console.error("Error fetching user data:", error);
+        }
+      };
+      fetchUserData();
+    }
+  }, [update, user?.primaryEmailAddress?.emailAddress]);
 
   const handleSubmit = async () => {
     if (!user?.primaryEmailAddress?.emailAddress) {
@@ -372,7 +501,6 @@ const ProfileSetup: React.FC = () => {
   const validateSlide = (currentStep: number): boolean => {
     switch (currentStep) {
       case 0:
-        // Slide 1: Grade Level, Race/Ethnicity, School Name, Gender, Age
         return !!(
           formData.gradeLevel?.trim() &&
           formData.race?.trim() &&
@@ -381,7 +509,6 @@ const ProfileSetup: React.FC = () => {
           formData.age?.trim()
         );
       case 1:
-        // Slide 2: City, Lunch, First-Gen, Weighted GPA, Unweighted GPA
         return !!(
           formData.location?.trim() &&
           formData.lunch?.trim() &&
@@ -390,7 +517,6 @@ const ProfileSetup: React.FC = () => {
           formData.gpaUnweighted?.trim()
         );
       case 2:
-        // Slide 3: SAT, ACT, PSAT, Career Interest (multi-select), Entrepreneur
         return !!(
           formData.satScore?.trim() &&
           formData.actScore?.trim() &&
@@ -400,7 +526,6 @@ const ProfileSetup: React.FC = () => {
           formData.entrepreneur?.trim()
         );
       case 3:
-        // Slide 4: Research, EC Goals (multi-select), Field Level (multi-select), Leadership, Create Own
         return !!(
           formData.research?.trim() &&
           formData.ecReason &&
@@ -411,7 +536,6 @@ const ProfileSetup: React.FC = () => {
           formData.createOwn?.trim()
         );
       case 4:
-        // Slide 5: Opportunity Selectiveness, Paid, Travel, Weekly Commitment, EC Format
         return !!(
           formData.selectivity?.trim() &&
           formData.paid?.trim() &&
@@ -420,7 +544,6 @@ const ProfileSetup: React.FC = () => {
           formData.ecType?.trim()
         );
       case 5:
-        // Slide 6: Referral Source, Used Other Apps, Notifications, Agree Terms
         return !!(
           formData.source?.trim() &&
           formData.usedOtherApps?.trim() &&
@@ -689,7 +812,6 @@ const ProfileSetup: React.FC = () => {
           >
             Career Interest <Text className="text-red-500">*</Text>
           </Text>
-
           <MultiSelectDropdown
             options={dropdowns.careerInterest}
             selectedValues={formData.careerInterest || []}
@@ -740,7 +862,6 @@ const ProfileSetup: React.FC = () => {
           >
             EC Goals? <Text className="text-red-500">*</Text>
           </Text>
-
           <MultiSelectDropdown
             options={dropdowns.extracurricularReasons}
             selectedValues={formData.ecReason || []}
@@ -759,7 +880,6 @@ const ProfileSetup: React.FC = () => {
             Level to reach in your field?{" "}
             <Text className="text-red-500">*</Text>
           </Text>
-
           <MultiSelectDropdown
             options={dropdowns.fieldLevel}
             selectedValues={formData.ecLevel || []}
@@ -833,7 +953,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("ecType", item.value)}
           />
-
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -899,7 +1018,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("notifications", item.value)}
           />
-
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -947,7 +1065,6 @@ const ProfileSetup: React.FC = () => {
         onBackButtonPress={() => setPrivacyOpen(false)}
       >
         <View className="bg-primary-200 px-4 py-6 rounded-2xl mb-20 shadow-md max-h-[90vh]">
-          {/* Fixed Header */}
           <View className="flex-row justify-between items-center mb-2">
             <Text className="text-2xl font-bold text-primary-800 font-PoppinsBold text-center flex-1">
               Privacy Policy
@@ -958,8 +1075,6 @@ const ProfileSetup: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-
-          {/* Scrollable Content */}
           <ScrollView className="max-h-[80vh]">
             <View className="bg-white p-4 mb-3 rounded-lg">
               <Text className="text-xl font-medium text-primary-800 font-PoppinsSemiBold pb-1 text-left">
