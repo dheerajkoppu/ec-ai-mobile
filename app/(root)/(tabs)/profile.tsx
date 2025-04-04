@@ -16,6 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import CustomButton from "@/components/CustomButton";
 import { Ionicons } from "@expo/vector-icons";
 import * as FileSystem from "expo-file-system";
+import { useRouter } from "expo-router";
 
 const Profile = () => {
   const { user, signOut } = useClerk();
@@ -38,6 +39,7 @@ const Profile = () => {
 
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     setImageUri(user?.imageUrl);
@@ -217,8 +219,8 @@ const Profile = () => {
             Customization
           </Text>
           <CustomButton
-            title="Extracurricular Preferences"
-            onPress={() => {}}
+            title="Update User Data"
+            onPress={() => router.push("/(auth)/user-data?update=true")}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
         </View>
