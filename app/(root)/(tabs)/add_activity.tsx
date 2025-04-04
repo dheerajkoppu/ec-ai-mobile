@@ -202,34 +202,54 @@ const ActivityTabs = () => {
         {activeTab === "add" ? (
           <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
             <InputField
-              label="Name of Activity *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Name of Activity <Text className="text-red-500">*</Text>
+                </Text>
+              }
               value={activityName}
               placeholder="ex. Future Business Leader of America"
               onChangeText={setActivityName}
             />
             <DropdownField
-              label="Activity Type *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Activity Type <Text className="text-red-500">*</Text>
+                </Text>
+              }
               placeholder="Select activity type"
               data={activities}
               value={activityType}
               onChange={(item: DropdownItem) => setActivityType(item.value)}
             />
             <InputField
-              label="Hours Per Week *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Hours Per Week <Text className="text-red-500">*</Text>
+                </Text>
+              }
               value={timeSpent}
               placeholder="Enter hours"
               onChangeText={setTimeSpent}
               keyboardType="number-pad"
             />
             <InputField
-              label="Weeks per Year *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Weeks Per Year <Text className="text-red-500">*</Text>
+                </Text>
+              }
               value={weeksPerYear}
               placeholder="Enter weeks"
               onChangeText={setWeeksPerYear}
               keyboardType="number-pad"
             />
             <InputField
-              label="Roles *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Roles <Text className="text-red-500">*</Text>
+                </Text>
+              }
               value={roles}
               placeholder="ex. President (12)"
               onChangeText={setRoles}
@@ -259,7 +279,7 @@ const ActivityTabs = () => {
               ))}
             </View>
             <InputField
-              label="Description / Notes (Optional)"
+              label="Description / Notes"
               value={description}
               placeholder="ex. Grew club 7x"
               onChangeText={setDescription}
@@ -274,7 +294,11 @@ const ActivityTabs = () => {
         ) : (
           <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
             <DropdownField
-              label="Name of Activity *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Name of Activity <Text className="text-red-500">*</Text>
+                </Text>
+              }
               placeholder="Select activity"
               data={formattedActivityNames}
               value={activityName}
@@ -282,7 +306,11 @@ const ActivityTabs = () => {
             />
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField
-              label="Hours *"
+              label={
+                <Text className="font-medium text-lg font-PoppinsBold">
+                  Hours <Text className="text-red-500">*</Text>
+                </Text>
+              }
               value={logHours}
               placeholder="Enter hours"
               onChangeText={setLogHours}
