@@ -281,7 +281,7 @@ const ActivityTabs = () => {
             <InputField
               label="Description / Notes"
               value={description}
-              placeholder="ex. Grew club 7x"
+              placeholder="ex. Grew club 7x..."
               onChangeText={setDescription}
               multiline
             />

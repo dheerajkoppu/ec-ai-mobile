@@ -231,62 +231,67 @@ const Opportunities = () => {
 
   // Render a card for a single opportunity (same as normal, with extra reasons if available)
   const renderOpportunityCard = (item: Opportunity) => (
-    <View className="bg-white p-4 mb-4 rounded-lg shadow">
-      <Text className="font-PoppinsSemiBold text-base mb-2">{item.title}</Text>
-      <Text className="font-PoppinsRegular text-xs mb-1">
-        <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
-        {item.activityType}
-      </Text>
-      <Text className="font-PoppinsRegular text-xs mb-1">
-        <Text className="font-PoppinsSemiBold">Location:</Text> {item.location}
-      </Text>
-      {item.duration && (
-        <Text className="font-PoppinsRegular text-xs mb-1">
-          <Text className="font-PoppinsSemiBold">Duration:</Text>{" "}
-          {item.duration}
+    <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
+      <View className="bg-white p-4 mb-4 rounded-lg shadow">
+        <Text className="font-PoppinsSemiBold text-base mb-2">
+          {item.title}
         </Text>
-      )}
-      {item.deadline && (
         <Text className="font-PoppinsRegular text-xs mb-1">
-          <Text className="font-PoppinsSemiBold">Deadline:</Text>{" "}
-          {item.deadline}
+          <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
+          {item.activityType}
         </Text>
-      )}
-      {item.apply && (
-        <View className="flex-row flex-wrap items-center">
-          <Text className="font-PoppinsSemiBold text-xs">Apply:</Text>
-          <TouchableOpacity
-            onPress={() => Linking.openURL(item.apply!)}
-            style={{ marginLeft: 8 }}
-          >
-            <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-              {item.apply}
-            </Text>
-          </TouchableOpacity>
+        <Text className="font-PoppinsRegular text-xs mb-1">
+          <Text className="font-PoppinsSemiBold">Location:</Text>{" "}
+          {item.location}
+        </Text>
+        {item.duration && (
+          <Text className="font-PoppinsRegular text-xs mb-1">
+            <Text className="font-PoppinsSemiBold">Duration:</Text>{" "}
+            {item.duration}
+          </Text>
+        )}
+        {item.deadline && (
+          <Text className="font-PoppinsRegular text-xs mb-1">
+            <Text className="font-PoppinsSemiBold">Deadline:</Text>{" "}
+            {item.deadline}
+          </Text>
+        )}
+        {item.apply && (
+          <View className="flex-row flex-wrap items-center">
+            <Text className="font-PoppinsSemiBold text-xs">Apply:</Text>
+            <TouchableOpacity
+              onPress={() => Linking.openURL(item.apply!)}
+              style={{ marginLeft: 8 }}
+            >
+              <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
+                {item.apply}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        {item.top_3_reasons && item.top_3_reasons.length > 0 && (
+          <View className="mt-2">
+            <Text className="font-PoppinsSemiBold text-xs">Top Reasons:</Text>
+            {item.top_3_reasons.map((reason, index) => (
+              <Text key={index} className="font-PoppinsRegular text-xs">
+                - {reason}
+              </Text>
+            ))}
+          </View>
+        )}
+        <View className="flex-row justify-between mt-4">
+          <CustomButton
+            title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
+            onPress={() => handleSave(item)}
+            bgVariant="primary"
+            textVariant="default"
+            className={`px-4 py-2 rounded-lg flex-1 items-center ${
+              savedOpportunities.has(item.id) ? "bg-primary-900" : "bg-primary"
+            }`}
+          />
         </View>
-      )}
-      {item.top_3_reasons && item.top_3_reasons.length > 0 && (
-        <View className="mt-2">
-          <Text className="font-PoppinsSemiBold text-xs">Top Reasons:</Text>
-          {item.top_3_reasons.map((reason, index) => (
-            <Text key={index} className="font-PoppinsRegular text-xs">
-              - {reason}
-            </Text>
-          ))}
-        </View>
-      )}
-      <View className="flex-row justify-between mt-4">
-        <CustomButton
-          title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
-          onPress={() => handleSave(item)}
-          bgVariant="primary"
-          textVariant="default"
-          className={`px-4 py-2 rounded-lg flex-1 items-center ${
-            savedOpportunities.has(item.id) ? "bg-primary-900" : "bg-primary"
-          }`}
-        />
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   if (loading) {
