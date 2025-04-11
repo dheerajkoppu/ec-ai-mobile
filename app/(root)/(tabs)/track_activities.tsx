@@ -351,7 +351,7 @@ const TrackActivities = () => {
                 className="mr-4"
               >
                 <MaterialCommunityIcons
-                  name="format-list-checks"
+                  name="robot"
                   size={24}
                   color="#5b55f6"
                 />

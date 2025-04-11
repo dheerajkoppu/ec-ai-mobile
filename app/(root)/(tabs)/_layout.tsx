@@ -1,29 +1,26 @@
-import { useState, useEffect } from "react";
 import { Tabs } from "expo-router";
-import {
-  Image,
-  View,
-  ImageSourcePropType,
-  TouchableOpacity,
-} from "react-native";
+import { Image, View, TouchableOpacity } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
-import { icons } from "@/constants";
 import { useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-// TabIcon Component for custom icons
-const TabIcon = ({
-  source,
-  focused,
-  screenName,
-  isProfile,
-  profileImage,
-}: {
-  source: ImageSourcePropType;
+interface TabIconProps {
+  filledIconName: keyof typeof MaterialCommunityIcons.glyphMap;
+  outlineIconName: keyof typeof MaterialCommunityIcons.glyphMap;
   focused: boolean;
   screenName: string;
   isProfile?: boolean;
   profileImage?: string | null;
-}) => {
+}
+
+const TabIcon = ({
+  filledIconName,
+  outlineIconName,
+  focused,
+  screenName,
+  isProfile,
+  profileImage,
+}: TabIconProps) => {
   const navigation = useNavigation();
   return (
     <TouchableOpacity
@@ -32,22 +29,25 @@ const TabIcon = ({
       activeOpacity={1}
     >
       <View
-        className={`flex flex-row justify-center items-center rounded-full ${
-          focused ? "#F5F7FA" : ""
-        }`}
+        className={`flex flex-row justify-center items-center rounded-full ${focused ? "#F5F7FA" : ""}`}
       >
-        <View
-          className={`rounded-full w-14 h-14 items-center justify-center ${
-            focused ? "bg-primary-900" : ""
-          }`}
-        >
+        <View className="rounded-full w-14 h-14 items-center justify-center">
           {isProfile && profileImage ? (
-            <Image
-              source={{ uri: profileImage }}
-              className="w-10 h-10 rounded-full"
-            />
+            // When the profile icon is focused, add a black outline.
+            <View
+              className={`${focused ? "border-2 border-black rounded-full" : ""}`}
+            >
+              <Image
+                source={{ uri: profileImage }}
+                className="w-10 h-10 rounded-full"
+              />
+            </View>
           ) : (
-            <Image source={source} resizeMode="contain" className="w-7 h-7" />
+            <MaterialCommunityIcons
+              name={focused ? filledIconName : outlineIconName}
+              size={28}
+              color={focused ? "white" : "#F5F7FA"}
+            />
           )}
         </View>
       </View>
@@ -55,11 +55,8 @@ const TabIcon = ({
   );
 };
 
-// Layout Component for the tab bar
 const Layout = () => {
-  // Get the user object from Clerk
   const { user } = useUser();
-  // Use the user image URL directly for the profile icon
   const profileImage = user?.imageUrl;
 
   return (
@@ -90,7 +87,12 @@ const Layout = () => {
           title: "Home",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} source={icons.home1} screenName="home" />
+            <TabIcon
+              focused={focused}
+              filledIconName="home"
+              outlineIconName="home-outline"
+              screenName="home"
+            />
           ),
         }}
       />
@@ -102,7 +104,8 @@ const Layout = () => {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              source={icons.track_activities1}
+              filledIconName="clipboard-list"
+              outlineIconName="clipboard-list-outline"
               screenName="track_activities"
             />
           ),
@@ -116,7 +119,8 @@ const Layout = () => {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              source={icons.add_activity1}
+              filledIconName="plus-thick"
+              outlineIconName="plus-outline"
               screenName="add_activity"
             />
           ),
@@ -130,7 +134,8 @@ const Layout = () => {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              source={icons.new_opportunities1}
+              filledIconName="briefcase"
+              outlineIconName="briefcase-outline"
               screenName="new_opportunities"
             />
           ),
@@ -144,7 +149,8 @@ const Layout = () => {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              source={icons.profile1}
+              filledIconName="account"
+              outlineIconName="account-outline"
               screenName="profile"
               isProfile={true}
               profileImage={profileImage}
