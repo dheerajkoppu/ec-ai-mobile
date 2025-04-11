@@ -24,7 +24,7 @@ const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 const TrackActivities = () => {
   const { user } = useUser();
   const email = user?.primaryEmailAddress?.emailAddress;
-  const userId = user?.id; // Assuming user.id is available
+  const userId = user?.id;
   const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
@@ -33,15 +33,20 @@ const TrackActivities = () => {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
-
   const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  // New state for the activity logs modal
   const [logs, setLogs] = useState<any[]>([]);
   const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
 
-  // Helper function to format a timestamp into "YYYY-MM-DD"
+  // New state for the AI description modal
+  const [aiDescription, setAiDescription] = useState<string>("");
+  const [showAIDescriptionModal, setShowAIDescriptionModal] =
+    useState<boolean>(false);
+  const [
+    selectedActivityForAIDescription,
+    setSelectedActivityForAIDescription,
+  ] = useState<Activity | null>(null);
+
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
     if (isNaN(date.getTime())) return dateStr;
@@ -111,7 +116,6 @@ const TrackActivities = () => {
             description: updatedActivity.description,
           }),
         });
-
         await refetch();
         setEditingActivity(null);
         setShowEditModal(false);
@@ -131,9 +135,7 @@ const TrackActivities = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activityId: deleteTarget.id }),
       });
-
       if (!res.ok) throw new Error("Delete failed");
-
       setActivities((prev) => prev.filter((a) => a.id !== deleteTarget.id));
       setShowDeleteModal(false);
       setDeleteTarget(null);
@@ -175,7 +177,6 @@ const TrackActivities = () => {
     activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
-  // New function to fetch logs and open the logs modal for an activity
   const openLogs = async (activity: Activity) => {
     if (!userId) {
       Alert.alert("Error", "User not found");
@@ -198,6 +199,51 @@ const TrackActivities = () => {
     } catch (error) {
       console.error("Error fetching logs:", error);
       Alert.alert("Error", "Failed to fetch activity logs.");
+    }
+  };
+
+  // Updated function to call the getaidescription API route and show a modal popup.
+  const getAIDescription = async (activity: Activity) => {
+    if (!email) {
+      Alert.alert("Error", "No user email provided");
+      return;
+    }
+    try {
+      const response = await fetch("/(api)/getaidescription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, activity_id: activity.id }),
+      });
+      const result = await response.json();
+      setSelectedActivityForAIDescription(activity);
+      setAiDescription(result.description || "No description available.");
+      setShowAIDescriptionModal(true);
+    } catch (error) {
+      console.error("Error fetching AI generated description:", error);
+      Alert.alert("Error", "Failed to get AI generated description.");
+    }
+  };
+
+  // Function to call the new updatedescription+api endpoint when "Replace Current Description" is pushed.
+  const replaceAIDescription = async () => {
+    if (!selectedActivityForAIDescription) return;
+    try {
+      await fetchAPI("/(api)/updatedescription", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          activityId: selectedActivityForAIDescription.id,
+          description: aiDescription,
+        }),
+      });
+      await refetch();
+      setShowAIDescriptionModal(false);
+      setSelectedActivityForAIDescription(null);
+      setAiDescription("");
+      Alert.alert("Success", "Activity description replaced successfully.");
+    } catch (error) {
+      console.error("Error replacing description:", error);
+      Alert.alert("Error", "Failed to replace description.");
     }
   };
 
@@ -300,6 +346,19 @@ const TrackActivities = () => {
               <TouchableOpacity
                 onPress={(e) => {
                   e.stopPropagation();
+                  getAIDescription(item);
+                }}
+                className="mr-4"
+              >
+                <MaterialCommunityIcons
+                  name="format-list-checks"
+                  size={24}
+                  color="#5b55f6"
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={(e) => {
+                  e.stopPropagation();
                   setDeleteTarget(item);
                   setShowDeleteModal(true);
                 }}
@@ -361,7 +420,7 @@ const TrackActivities = () => {
           setShowEditModal(false);
         }}
       >
-        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md ">
+        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
           <TouchableOpacity
             onPress={() => {
               setEditingActivity(null);
@@ -542,6 +601,34 @@ const TrackActivities = () => {
             title="Close"
             onPress={() => setShowLogsModal(false)}
             className="mt-4"
+          />
+        </View>
+      </ReactNativeModal>
+
+      {/* AI Description Modal */}
+      <ReactNativeModal
+        isVisible={showAIDescriptionModal}
+        onBackdropPress={() => setShowAIDescriptionModal(false)}
+      >
+        <View className="bg-white px-7 py-9 rounded-2xl shadow-md">
+          <TouchableOpacity
+            onPress={() => setShowAIDescriptionModal(false)}
+            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+          >
+            <MaterialCommunityIcons name="close" size={24} color="#000" />
+          </TouchableOpacity>
+          <Text className="text-2xl font-PoppinsSemiBold text-gray-800 mb-4">
+            AI Activity Summary
+          </Text>
+          <Text
+            className="text-base font-PoppinsRegular text-gray-700 mb-6"
+            selectable={true}
+          >
+            {aiDescription}
+          </Text>
+          <CustomButton
+            title="Replace Current Description"
+            onPress={replaceAIDescription}
           />
         </View>
       </ReactNativeModal>

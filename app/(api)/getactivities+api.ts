@@ -21,7 +21,8 @@ export async function POST(request: Request) {
         a.grades
       FROM activities a
              JOIN users u ON a.user_id = u.id
-      WHERE u.email = ${email};
+      WHERE u.email = ${email}
+      ORDER BY a.id ASC;
     `;
 
     let totalHoursPerWeek = 0;

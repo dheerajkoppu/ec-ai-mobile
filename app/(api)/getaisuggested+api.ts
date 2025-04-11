@@ -92,7 +92,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
           Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
-          model: "gpt-4o-mini", // For testing, try "gpt-3.5-turbo" if needed
+          model: "gpt-4o-mini",
           messages: [{ role: "user", content: prompt }],
         }),
       },
