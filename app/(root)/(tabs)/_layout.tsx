@@ -45,7 +45,7 @@ const TabIcon = ({
           ) : (
             <MaterialCommunityIcons
               name={focused ? filledIconName : outlineIconName}
-              size={35}
+              size={28}
               color={focused ? "white" : "#F5F7FA"}
             />
           )}

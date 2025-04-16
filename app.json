@@ -33,7 +33,7 @@
       [
         "expo-router",
         {
-          "origin": "https://ec.ai/"
+          "origin": "https://ec-ai.vercel.app/"
         }
       ],
       [

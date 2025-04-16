@@ -202,7 +202,7 @@ export default function Home() {
             <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
               Saved Opportunities
             </Text>
-            <View style={{ maxHeight: 250 }}>
+            <View style={{ maxHeight: 200 }}>
               {savedOpportunities.length > 0 ? (
                 <FlatList
                   nestedScrollEnabled={true} // Enable nested scrolling

@@ -109,6 +109,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
 
     // Get and log the raw response text
     const rawResponse = await chatResponse.text();
+    console.log("Raw ChatGPT response text:", rawResponse);
 
     let chatData;
     try {
