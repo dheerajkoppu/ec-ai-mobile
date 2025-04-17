@@ -1,4 +1,6 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
   try {
@@ -8,16 +10,8 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing userEmail" }, { status: 400 });
     }
 
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.ADMIN_EMAIL,
-        pass: process.env.ADMIN_EMAIL_PASS,
-      },
-    });
-
-    await transporter.sendMail({
-      from: `"EC AI" <${process.env.ADMIN_EMAIL}>`,
+    await resend.emails.send({
+      from: "EC AI <onboarding@resend.dev>", // Use a domain you've verified
       to: "ask.ecai@gmail.com",
       subject: "User Data Request",
       text: `The user with email ${userEmail} has requested a copy of their user data. Please give their users table, activity table, and user saved opportunities table.`,
@@ -28,7 +22,7 @@ export async function POST(request: Request) {
       { status: 200 },
     );
   } catch (error) {
-    console.error("Error sending data request email:", error);
+    console.error("Error sending email via Resend:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

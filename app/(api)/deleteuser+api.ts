@@ -1,5 +1,7 @@
 import { neon } from "@neondatabase/serverless";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function DELETE(request: Request) {
   try {
@@ -10,42 +12,30 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "Missing userEmail" }, { status: 400 });
     }
 
-    // Step 1: Get user ID
-    const userIdResult = await sql`
-      SELECT id FROM users WHERE email = ${userEmail} LIMIT 1;
+    // One subrequest to fetch ID and delete records
+    const deletionResult = await sql`
+      WITH target_user AS (
+        SELECT id FROM users WHERE email = ${userEmail} LIMIT 1
+        ),
+        deleted_activities AS (
+      DELETE FROM activities WHERE user_id = (SELECT id FROM target_user)
+        )
+      DELETE FROM users
+      WHERE id = (SELECT id FROM target_user)
+        RETURNING id;
     `;
-    const userId = userIdResult[0]?.id;
 
-    if (!userId) {
+    if (deletionResult.length === 0) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Step 2 + 3: Delete activities and user in parallel
-    const deleteQueries = Promise.all([
-      sql`DELETE FROM activities WHERE user_id = ${userId};`,
-      sql`DELETE FROM users WHERE id = ${userId};`,
-    ]);
-
-    // Step 4: Send email notification (run in parallel too)
-    const sendEmail = (async () => {
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.ADMIN_EMAIL,
-          pass: process.env.ADMIN_EMAIL_PASS,
-        },
-      });
-
-      await transporter.sendMail({
-        from: `"EC AI" <${process.env.ADMIN_EMAIL}>`,
-        to: "ask.ecai@gmail.com",
-        subject: "User Deletion Request",
-        text: `The user with email ${userEmail} has requested account deletion.`,
-      });
-    })();
-
-    // Wait for both SQL deletions and email to complete
-    await Promise.all([deleteQueries, sendEmail]);
+    // Send email via Resend (Edge-compatible)
+    await resend.emails.send({
+      from: "EC AI <onboarding@resend.dev>", // still works even without your own domain
+      to: "ask.ecai@gmail.com",
+      subject: "User Deletion Request",
+      text: `The user with email ${userEmail} has requested account deletion.`,
+    });
 
     return new Response(
       JSON.stringify({ message: "User deleted and email sent." }),
