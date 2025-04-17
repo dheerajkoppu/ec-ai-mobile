@@ -574,6 +574,8 @@ const ProfileSetup: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
         });
+        console.log("dropdowns payload:", result);
+
         setDropdowns(result.data);
       } catch (err) {
         console.error("Error fetching dropdown data:", err);
