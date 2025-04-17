@@ -4,12 +4,11 @@ export async function POST(request: Request) {
   try {
     const sql = neon(`${process.env.DATABASE_URL}`);
     const { email } = await request.json();
-
     if (!email) {
       return Response.json({ error: "Missing user email" }, { status: 400 });
     }
 
-    // Get the user record
+    // 1) Fetch user
     const [user] = await sql`
             SELECT *
             FROM users
@@ -20,13 +19,13 @@ export async function POST(request: Request) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Get all extracurricular opportunities (for context in the prompt)
+    // 2) Fetch all opportunities in one go
     const opportunities = await sql`
             SELECT *
             FROM opportunities;
         `;
 
-    // Build the prompt using the user's details and the opportunities
+    // Build the prompt
     const prompt = `
 You are an experienced college and career advisor trained to match students with extracurricular activities that align with their personal story, ambitions, and goals.
 
@@ -107,113 +106,87 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
       );
     }
 
-    // Get and log the raw response text
+    // Parse the AI response
     const rawResponse = await chatResponse.text();
-    console.log("Raw ChatGPT response text:", rawResponse);
-
     let chatData;
     try {
       chatData = JSON.parse(rawResponse);
     } catch (err) {
-      console.error("Failed to parse JSON from raw response:", err);
+      console.error("Failed to parse JSON:", err);
       return Response.json(
         { error: "Failed to parse JSON from ChatGPT API" },
         { status: 500 },
       );
     }
-
-    // Validate that chatData has the expected structure
-    if (
-      !chatData ||
-      !chatData.choices ||
-      !Array.isArray(chatData.choices) ||
-      chatData.choices.length === 0
-    ) {
-      console.error("Invalid response structure from ChatGPT API:", chatData);
+    if (!chatData?.choices?.length) {
+      console.error("Invalid response structure:", chatData);
       return Response.json(
         { error: "Invalid response from ChatGPT API" },
         { status: 500 },
       );
     }
-
-    // Extract the response text from ChatGPT
-    const responseText = chatData.choices[0]?.message?.content?.trim();
+    const responseText = chatData.choices[0].message.content.trim();
     if (!responseText) {
-      console.error("No content found in ChatGPT response:", chatData);
+      console.error("No content in ChatGPT response");
       return Response.json(
         { error: "No content in ChatGPT response" },
         { status: 500 },
       );
     }
 
-    // Define the suggestion tuple type: [activity_id, reason1, reason2, reason3]
+    // Parse suggestions
     type Suggestion = [string, string, string, string];
-
-    // Parse the ChatGPT response into a JSON array of Suggestion tuples
     let suggestions: Suggestion[];
     try {
       suggestions = JSON.parse(responseText);
-    } catch (parseError) {
-      console.error(
-        "Error parsing ChatGPT suggestions:",
-        parseError,
-        responseText,
-      );
+    } catch (err) {
+      console.error("Error parsing suggestions:", err, responseText);
       return Response.json(
         { error: "Error parsing ChatGPT suggestions" },
         { status: 500 },
       );
     }
 
-    // Create a mapping of activity id to top 3 reasons and convert IDs to numbers
+    // Map IDs to reasons
     const suggestionMap: Record<number, [string, string, string]> = {};
-    const activityIds = suggestions.map((suggestion: Suggestion) => {
-      const id = parseInt(suggestion[0], 10);
-      suggestionMap[id] = [suggestion[1], suggestion[2], suggestion[3]];
-      return id;
+    const activityIds = suggestions.map(([id, r1, r2, r3]) => {
+      const num = parseInt(id, 10);
+      suggestionMap[num] = [r1, r2, r3];
+      return num;
     });
 
-    // Retrieve details for the recommended activities from the database using ANY
-    const recommendedActivities = await sql`
-            SELECT *
-            FROM opportunities
-            WHERE id = ANY(${activityIds})
-        `;
+    // Enrich results by filtering the already-fetched opportunities
+    const enrichedActivities = opportunities
+      .filter((op) => activityIds.includes(op.id))
+      .map((op) => ({
+        id: op.id,
+        school: op.school,
+        title: op.activity_name,
+        careerField: op.career_field,
+        activityType: op.activity_type,
+        location: op.location,
+        duration: op.duration,
+        deadline: op.deadline,
+        apply: op.application_link,
+        gradeRequirements: op.grade_requirements,
+        raceRequirements: op.race_requirements,
+        genderRequirements: op.gender_requirements,
+        ageRequirements: op.age_requirements,
+        primaryCity: op.primary_city,
+        onlyFRLStudents: op.only_frl_students,
+        onlyFirstGen: op.only_first_gen,
+        minGPA: op.min_gpa,
+        minSAT: op.min_sat,
+        minACT: op.min_act,
+        minPSAT: op.min_psat,
+        hasLeadershipRoles: op.has_leadership_roles,
+        selectivityLevel: op.selectivity_level,
+        outsideUS: op.outside_us,
+        hoursPerWeek: op.hours_per_week,
+        createdAt: op.created_at,
+        top_3_reasons: suggestionMap[op.id] || [],
+      }));
 
-    // Enrich each recommended activity with the top 3 reasons from suggestionMap
-    const enrichedActivities = recommendedActivities.map((activity: any) => {
-      const id = Number(activity.id);
-      return {
-        id: activity.id,
-        school: activity.school,
-        title: activity.activity_name, // mapping here
-        careerField: activity.career_field,
-        activityType: activity.activity_type,
-        location: activity.location,
-        duration: activity.duration,
-        deadline: activity.deadline,
-        apply: activity.application_link, // mapping here
-        gradeRequirements: activity.grade_requirements,
-        raceRequirements: activity.race_requirements,
-        genderRequirements: activity.gender_requirements,
-        ageRequirements: activity.age_requirements,
-        primaryCity: activity.primary_city,
-        onlyFRLStudents: activity.only_frl_students,
-        onlyFirstGen: activity.only_first_gen,
-        minGPA: activity.min_gpa,
-        minSAT: activity.min_sat,
-        minACT: activity.min_act,
-        minPSAT: activity.min_psat,
-        hasLeadershipRoles: activity.has_leadership_roles,
-        selectivityLevel: activity.selectivity_level,
-        outsideUS: activity.outside_us,
-        hoursPerWeek: activity.hours_per_week,
-        createdAt: activity.created_at,
-        top_3_reasons: suggestionMap[id] || [],
-      };
-    });
-
-    // Return the enriched activities
     return new Response(JSON.stringify({ enrichedActivities }), {
       status: 200,
     });
