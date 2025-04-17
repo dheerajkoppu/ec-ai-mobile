@@ -42,7 +42,7 @@ export default function Home() {
   const loadSavedOpportunities = async () => {
     if (!user) return;
     try {
-      const res = await fetch("/(api)/getsavedopportunities", {
+      const res = await fetch(`https://ec-ai.expo.app/getsavedopportunities`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
@@ -74,7 +74,7 @@ export default function Home() {
 
   const fetchRecentActivities = async () => {
     try {
-      const res = await fetch("/(api)/getloggedhours", {
+      const res = await fetch("https://ec-ai.expo.app/getloggedhours", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: user?.id }),
@@ -123,7 +123,7 @@ export default function Home() {
   const deleteOpportunity = async (id: string) => {
     if (!user) return;
     try {
-      const res = await fetch("/(api)/deletesavedopportunity", {
+      const res = await fetch("https://ec-ai.expo.app/deletesavedopportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id, opportunity_id: id }),

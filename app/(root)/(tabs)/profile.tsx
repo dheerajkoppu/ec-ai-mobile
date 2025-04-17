@@ -23,7 +23,7 @@ const Profile = () => {
   const updateNotificationStatus = async (value: boolean) => {
     try {
       setNotifications(value); // Optimistic UI
-      await fetch("/(api)/updatenotifications", {
+      await fetch("https://ec-ai.expo.app/updatenotifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -85,15 +85,18 @@ const Profile = () => {
       if (!user?.primaryEmailAddress?.emailAddress) return;
 
       try {
-        const response = await fetch("/(api)/getnotificationstatus", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
+        const response = await fetch(
+          "https://ec-ai.expo.app/getnotificationstatus",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              email: user.primaryEmailAddress.emailAddress,
+            }),
           },
-          body: JSON.stringify({
-            email: user.primaryEmailAddress.emailAddress,
-          }),
-        });
+        );
 
         const data = await response.json();
         if (response.ok && data?.wants_notifications !== undefined) {
@@ -130,7 +133,7 @@ const Profile = () => {
     }
 
     try {
-      const response = await fetch("/(api)/exportdata", {
+      const response = await fetch("https://ec-ai.expo.app/exportdata", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -163,7 +166,7 @@ const Profile = () => {
       return;
     }
     try {
-      const response = await fetch("/(api)/deleteuser", {
+      const response = await fetch("https://ec-ai.expo.app/deleteuser", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

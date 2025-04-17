@@ -33,7 +33,7 @@
       [
         "expo-router",
         {
-          "origin": "https://ec-ai.vercel.app/"
+          "origin": "https://ec-ai--tzxxglromv.expo.app"
         }
       ],
       [
@@ -56,9 +56,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {
-        "origin": "https://ec.ai/"
-      },
+      "API_ORIGIN": "https://ec-ai--tzxxglromv.expo.app",
       "eas": {
         "projectId": "a31952ea-e220-4629-8d9e-7efbbb3c8b30"
       }

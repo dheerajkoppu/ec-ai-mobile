@@ -84,7 +84,7 @@ const Sign_Up = () => {
 
       if (signUpAttempt.status === "complete") {
         // If verification is complete, create user and set the session to active
-        await fetchAPI("/(api)/user", {
+        await fetchAPI("https://ec-ai.expo.app/user", {
           method: "POST",
           body: JSON.stringify({
             name: form.name,

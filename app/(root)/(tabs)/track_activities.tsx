@@ -70,13 +70,18 @@ const TrackActivities = () => {
     loading,
     error,
     refetch,
-  } = useFetch<Activity[]>("/(api)/getactivities", requestOptions);
+  } = useFetch<Activity[]>(
+    "https://ec-ai.expo.app/getactivities",
+    requestOptions,
+  );
 
   const {
     data: careerFields = [],
     loading: loadingCareerFields,
     error: errorCareerFields,
-  } = useFetch<{ label: string; value: string }[]>("/(api)/activitytypes");
+  } = useFetch<{ label: string; value: string }[]>(
+    "https://ec-ai.expo.app/activitytypes",
+  );
 
   useEffect(() => {
     if (fetchedActivities && Array.isArray(fetchedActivities)) {
@@ -101,7 +106,7 @@ const TrackActivities = () => {
       };
 
       try {
-        await fetchAPI("/(api)/alteractivity", {
+        await fetchAPI("https://ec-ai.expo.app/alteractivity", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -130,7 +135,7 @@ const TrackActivities = () => {
   const deleteActivity = async () => {
     if (!deleteTarget) return;
     try {
-      const res = await fetch("/(api)/deleteactivity", {
+      const res = await fetch("https://ec-ai.expo.app/deleteactivity", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activityId: deleteTarget.id }),
@@ -183,7 +188,7 @@ const TrackActivities = () => {
       return;
     }
     try {
-      const response = await fetch("/(api)/getactivitylogs", {
+      const response = await fetch(`https://ec-ai.expo.app/getactivitylogs`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId, activity_id: activity.id }),
@@ -209,7 +214,7 @@ const TrackActivities = () => {
       return;
     }
     try {
-      const response = await fetch("/(api)/getaidescription", {
+      const response = await fetch("https://ec-ai.expo.app/getaidescription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, activity_id: activity.id }),
@@ -228,7 +233,7 @@ const TrackActivities = () => {
   const replaceAIDescription = async () => {
     if (!selectedActivityForAIDescription) return;
     try {
-      await fetchAPI("/(api)/updatedescription", {
+      await fetchAPI("https://ec-ai.expo.app/updatedescription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

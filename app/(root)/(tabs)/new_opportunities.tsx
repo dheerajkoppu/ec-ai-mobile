@@ -75,7 +75,7 @@ const Opportunities = () => {
   const fetchOpportunities = async () => {
     if (!user) return;
     try {
-      const response = await fetch("/(api)/getopportunities", {
+      const response = await fetch("https://ec-ai.expo.app/getopportunities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
@@ -139,7 +139,7 @@ const Opportunities = () => {
       const clerk_id = user.id;
       if (savedOpportunities.has(opportunity.id)) return;
       setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
-      const res = await fetch("/(api)/addsavedopportunity", {
+      const res = await fetch("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id, opportunity_id: opportunity.id }),
@@ -199,7 +199,7 @@ const Opportunities = () => {
     if (!user) return;
     try {
       setAiLoading(true);
-      const response = await fetch("/(api)/getaisuggested", {
+      const response = await fetch("https://ec-ai.expo.app/getaisuggested", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

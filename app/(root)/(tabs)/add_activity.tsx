@@ -37,7 +37,9 @@ const ActivityTabs = () => {
   const [logHours, setLogHours] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
-  const { data: activitiesRaw } = useFetch("/(api)/activitytypes");
+  const { data: activitiesRaw } = useFetch(
+    "https://ec-ai.expo.app/activitytypes",
+  );
   const activities: DropdownItem[] = Array.isArray(activitiesRaw)
     ? activitiesRaw
     : [];
@@ -53,7 +55,7 @@ const ActivityTabs = () => {
     : undefined;
 
   const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
-    "/(api)/getactivitynames",
+    "https://ec-ai.expo.app/getactivitynames",
     activityNamesRequestOptions,
   );
 
@@ -98,7 +100,7 @@ const ActivityTabs = () => {
 
     try {
       setIsSubmitting(true);
-      await fetchAPI("/(api)/adduseractivity", {
+      await fetchAPI("https://ec-ai.expo.app/adduseractivity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -151,7 +153,7 @@ const ActivityTabs = () => {
 
     try {
       setIsSubmitting(true);
-      await fetchAPI("/(api)/loghours", {
+      await fetchAPI("https://ec-ai.expo.app/loghours", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

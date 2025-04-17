@@ -377,7 +377,7 @@ const ProfileSetup: React.FC = () => {
     if (update === "true" && user?.primaryEmailAddress?.emailAddress) {
       const fetchUserData = async () => {
         try {
-          const response = await fetch("/(api)/getuserdata", {
+          const response = await fetch("https://ec-ai.expo.app/getuserdata", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -478,7 +478,7 @@ const ProfileSetup: React.FC = () => {
       ...formData,
     };
     try {
-      const response = await fetchAPI("/(api)/userdata", {
+      const response = await fetchAPI("https://ec-ai.expo.app/userdata", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -569,7 +569,7 @@ const ProfileSetup: React.FC = () => {
   useEffect(() => {
     const getDropdowns = async () => {
       try {
-        const result = await fetchAPI("/(api)/fetchdropdowns", {
+        const result = await fetchAPI("https://ec-ai.expo.app/fetchdropdowns", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
