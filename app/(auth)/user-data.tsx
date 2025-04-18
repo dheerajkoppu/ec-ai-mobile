@@ -457,7 +457,6 @@ const ProfileSetup: React.FC = () => {
               notifications: userData.wants_notifications ? "Yes" : "No",
               agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
             };
-            console.log("Transformed Data:", transformedData);
             setFormData(transformedData);
           }
         } catch (error) {
