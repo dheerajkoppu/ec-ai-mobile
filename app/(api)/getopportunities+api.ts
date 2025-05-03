@@ -37,6 +37,7 @@ export async function POST(request: Request) {
         selectivity_level,
         outside_us,
         hours_per_week,
+        description,
         created_at
       FROM opportunities
       WHERE id NOT IN (
@@ -79,6 +80,7 @@ export async function POST(request: Request) {
       selectivityLevel: op.selectivity_level,
       outsideUS: op.outside_us,
       hoursPerWeek: op.hours_per_week,
+      description: op.description,
       createdAt: op.created_at,
     }));
 
