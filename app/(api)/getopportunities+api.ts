@@ -38,6 +38,7 @@ export async function POST(request: Request) {
         outside_us,
         hours_per_week,
         description,
+        pictureurl,
         created_at
       FROM opportunities
       WHERE id NOT IN (
@@ -81,6 +82,7 @@ export async function POST(request: Request) {
       outsideUS: op.outside_us,
       hoursPerWeek: op.hours_per_week,
       description: op.description,
+      pictureurl: op.pictureurl,
       createdAt: op.created_at,
     }));
 

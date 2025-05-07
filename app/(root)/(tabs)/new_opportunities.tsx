@@ -1,31 +1,34 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
+  Image,
   Text,
   TouchableOpacity,
-  FlatList,
-  RefreshControl,
+  SafeAreaView,
   ActivityIndicator,
   ScrollView,
   Linking,
+  StyleSheet,
+  Dimensions,
+  ImageBackground,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
-import InputField from "@/components/InputField";
-import CustomButton from "@/components/CustomButton";
+import Swiper from "react-native-deck-swiper";
+import { useUser } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { useUser } from "@clerk/clerk-expo";
+import { images } from "@/constants";
+import { RefreshControl } from "react-native";
 
 interface Opportunity {
   id: string;
   school?: string;
-  title: string; // from activity_name
+  title: string;
   careerField?: string;
   activityType: string;
   location: string;
   duration?: string;
   deadline?: string;
-  apply?: string; // from application_link
+  apply?: string;
   gradeRequirements?: string;
   raceRequirements?: string;
   genderRequirements?: string;
@@ -41,37 +44,27 @@ interface Opportunity {
   selectivityLevel?: string;
   outsideUS?: boolean;
   hoursPerWeek?: number;
+  pictureurl?: string;
   createdAt?: string;
-  top_3_reasons?: string[]; // NEW: extra field from AI
+  description?: string;
 }
+const [refreshing, setRefreshing] = useState(false);
+
+const { width } = Dimensions.get("window");
+const CARD_WIDTH = width - 40;
+const CARD_HEIGHT = 520;
 
 const Opportunities = () => {
   const { user } = useUser();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [searchQuery, setSearchQuery] = useState<string>("");
-  const [refreshing, setRefreshing] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
     new Set(),
   );
-  const [addedOpportunities, setAddedOpportunities] = useState<Set<string>>(
-    new Set(),
-  );
-  const [removedOpportunities, setRemovedOpportunities] = useState<Set<string>>(
-    new Set(),
-  );
-  const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
 
-  // New state: store AI-suggested enriched opportunities
-  const [showAISuggestedModal, setShowAISuggestedModal] =
-    useState<boolean>(false);
-  const [aiOpportunities, setAiOpportunities] = useState<Opportunity[]>([]);
-  const [aiLoading, setAiLoading] = useState<boolean>(false);
-
-  // Fetch opportunities from the API and map fields accordingly
   const fetchOpportunities = async () => {
     if (!user) return;
     try {
@@ -80,22 +73,21 @@ const Opportunities = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
       });
-      if (!response.ok) {
-        throw new Error("Failed to fetch opportunities");
-      }
+      if (!response.ok) throw new Error("Failed to fetch opportunities");
       const json = await response.json();
-      const formatted = json.data.map((op: any) => ({
+      const formatted: Opportunity[] = json.data.map((op: any) => ({
         id: op.id,
         school: op.school,
-        title: op.activityName, // mapping API's activityName to title
+        title: op.activityName,
         careerField: op.careerField,
         activityType: op.activityType,
+        pictureurl: op.pictureurl,
         location: op.location,
         duration: op.duration,
         deadline: op.deadline
           ? new Date(op.deadline).toISOString().split("T")[0]
           : undefined,
-        apply: op.applicationLink, // mapping API's applicationLink to apply
+        apply: op.applicationLink,
         gradeRequirements: op.gradeRequirements,
         raceRequirements: op.raceRequirements,
         genderRequirements: op.genderRequirements,
@@ -112,11 +104,11 @@ const Opportunities = () => {
         outsideUS: op.outsideUS,
         hoursPerWeek: op.hoursPerWeek,
         createdAt: op.createdAt,
+        description: op.description,
       }));
       setOpportunities(formatted);
       setError(null);
     } catch (err: any) {
-      console.error("Error fetching opportunities:", err);
       setError(err.message || "Error fetching opportunities");
     } finally {
       setLoading(false);
@@ -124,179 +116,32 @@ const Opportunities = () => {
   };
 
   useEffect(() => {
-    if (user) {
-      fetchOpportunities();
-    }
+    if (user) fetchOpportunities();
   }, [user]);
-
-  // Save opportunity as before
-  const handleSave = async (opportunity: Opportunity) => {
-    try {
-      if (!user) {
-        console.error("User not logged in");
-        return;
-      }
-      const clerk_id = user.id;
-      if (savedOpportunities.has(opportunity.id)) return;
-      setSavedOpportunities((prev) => new Set([...prev, opportunity.id]));
-      const res = await fetch("https://ec-ai.expo.app/addsavedopportunity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id, opportunity_id: opportunity.id }),
-      });
-      if (!res.ok) {
-        console.error("Failed to add saved opportunity to backend");
-      }
-    } catch (error) {
-      console.error("Error saving opportunity:", error);
-    }
-  };
-
-  const handleAutoAdd = (id: string) => {
-    setAddedOpportunities((prev) => new Set([...prev, id]));
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    try {
-      await fetchOpportunities();
-      setRemovedOpportunities(
-        new Set([...savedOpportunities, ...addedOpportunities]),
-      );
-      setSavedOpportunities(new Set());
-      setAddedOpportunities(new Set());
-    } catch (error) {
-      console.error("Error on refresh:", error);
-    } finally {
-      setRefreshing(false);
-    }
+    await fetchOpportunities();
+    setRefreshing(false);
   };
 
-  const filteredOpportunities = opportunities
-    .filter((opportunity) => !removedOpportunities.has(opportunity.id))
-    .filter(
-      (opportunity) =>
-        opportunity.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        opportunity.activityType
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-    );
-
-  const sortOpportunities = () => {
-    const sortedOpportunities = [...opportunities].sort((a, b) => {
-      if (!a.deadline && !b.deadline) return 0;
-      if (!a.deadline) return 1;
-      if (!b.deadline) return -1;
-      return a.deadline.localeCompare(b.deadline);
-    });
-    setOpportunities(sortedOpportunities);
-    setShowSortDropdown(false);
-  };
-
-  // Updated: Fetch AI suggestions from API route,
-  // which returns { enrichedActivities } where each activity includes a top_3_reasons property.
-  const fetchAISuggestions = async () => {
-    if (!user) return;
+  const handleSave = async (op: Opportunity) => {
+    if (!user || savedOpportunities.has(op.id)) return;
+    setSavedOpportunities((prev) => new Set(prev).add(op.id));
     try {
-      setAiLoading(true);
-      const response = await fetch("https://ec-ai.expo.app/getaisuggested", {
+      await fetch("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user?.primaryEmailAddress?.emailAddress,
-        }),
+        body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
       });
-      if (!response.ok) {
-        throw new Error("Failed to fetch AI suggestions");
-      }
-      const json = await response.json();
-      if (json.enrichedActivities) {
-        setAiOpportunities(json.enrichedActivities);
-      } else {
-        setAiOpportunities([]);
-      }
-    } catch (error) {
-      console.error("Error fetching AI suggestions:", error);
-      setAiOpportunities([]);
-    } finally {
-      setAiLoading(false);
+    } catch {
+      // ignore
     }
   };
-
-  // Handler for AI Suggested button click
-  const handleAISuggestions = async () => {
-    await fetchAISuggestions();
-    setShowAISuggestedModal(true);
-  };
-
-  // Render a card for a single opportunity (same as normal, with extra reasons if available)
-  const renderOpportunityCard = (item: Opportunity) => (
-    <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
-      <View className="bg-white p-4 mb-4 rounded-lg shadow">
-        <Text className="font-PoppinsSemiBold text-base mb-2">
-          {item.title}
-        </Text>
-        <Text className="font-PoppinsRegular text-xs mb-1">
-          <Text className="font-PoppinsSemiBold">Activity Type:</Text>{" "}
-          {item.activityType}
-        </Text>
-        <Text className="font-PoppinsRegular text-xs mb-1">
-          <Text className="font-PoppinsSemiBold">Location:</Text>{" "}
-          {item.location}
-        </Text>
-        {item.duration && (
-          <Text className="font-PoppinsRegular text-xs mb-1">
-            <Text className="font-PoppinsSemiBold">Duration:</Text>{" "}
-            {item.duration}
-          </Text>
-        )}
-        {item.deadline && (
-          <Text className="font-PoppinsRegular text-xs mb-1">
-            <Text className="font-PoppinsSemiBold">Deadline:</Text>{" "}
-            {item.deadline}
-          </Text>
-        )}
-        {item.apply && (
-          <View className="flex-row flex-wrap items-center">
-            <Text className="font-PoppinsSemiBold text-xs">Apply:</Text>
-            <TouchableOpacity
-              onPress={() => Linking.openURL(item.apply!)}
-              style={{ marginLeft: 8 }}
-            >
-              <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-                {item.apply}
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
-        {item.top_3_reasons && item.top_3_reasons.length > 0 && (
-          <View className="mt-2">
-            <Text className="font-PoppinsSemiBold text-xs">Top Reasons:</Text>
-            {item.top_3_reasons.map((reason, index) => (
-              <Text key={index} className="font-PoppinsRegular text-xs">
-                - {reason}
-              </Text>
-            ))}
-          </View>
-        )}
-        <View className="flex-row justify-between mt-4">
-          <CustomButton
-            title={savedOpportunities.has(item.id) ? "Saved" : "Save"}
-            onPress={() => handleSave(item)}
-            bgVariant="primary"
-            textVariant="default"
-            className={`px-4 py-2 rounded-lg flex-1 items-center ${
-              savedOpportunities.has(item.id) ? "bg-primary-900" : "bg-primary"
-            }`}
-          />
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+      <SafeAreaView style={styles.container}>
         <ActivityIndicator size="large" color="#5b55f6" />
       </SafeAreaView>
     );
@@ -304,274 +149,307 @@ const Opportunities = () => {
 
   if (error) {
     return (
-      <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
-        <Text className="text-red-500">{error}</Text>
+      <SafeAreaView style={styles.container}>
+        <Text style={styles.errorText}>{error}</Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
-      <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
-        New Opportunities
-      </Text>
-
-      {/* Search Bar */}
-      <View className="mb-4">
-        <InputField
-          label=""
-          keyboardShouldPersistTaps="never"
-          placeholder="Search Opportunities"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-      </View>
-
-      {/* Sorting and AI Suggested Options */}
-      <View className="flex-row mb-4 items-center justify-between relative z-10">
-        <TouchableOpacity
-          onPress={() => setShowSortDropdown(!showSortDropdown)}
-        >
-          <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
-        </TouchableOpacity>
-        <TouchableOpacity onPress={handleAISuggestions}>
-          <Text className="text-general-400 font-PoppinsBold">
-            AI Suggested ✨
-          </Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Inline Sort Dropdown */}
-      {showSortDropdown && (
-        <>
+    <SafeAreaView style={styles.container}>
+      <Image
+        source={images.icon}
+        className="self-center"
+        style={{ width: 280, height: 70, resizeMode: "contain" }}
+      />
+      <Swiper
+        cards={opportunities}
+        onSwipedRight={(i) => handleSave(opportunities[i])}
+        onSwipedLeft={() => {}}
+        infinite={true}
+        stackSize={3}
+        verticalSwipe={false}
+        cardVerticalMargin={20}
+        backgroundColor="transparent"
+        containerStyle={{ flex: 1, marginTop: 150 }}
+        renderCard={(item: Opportunity) => (
           <TouchableOpacity
-            onPress={() => setShowSortDropdown(false)}
-            activeOpacity={1}
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              zIndex: 10,
-            }}
-          />
-          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-60 py-3 z-20">
-            <TouchableOpacity onPress={sortOpportunities}>
-              <Text className="text-general-400 font-PoppinsSemiBold">
-                Deadline
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </>
-      )}
-
-      {/* List of Opportunities */}
-      <FlatList
-        data={filteredOpportunities}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={{ paddingBottom: 80 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        ListEmptyComponent={
-          <View style={{ alignItems: "center", marginTop: 20 }}>
-            <Text className="text-gray-500 text-base">
-              No opportunities available.
-            </Text>
-          </View>
-        }
-        renderItem={({ item }) => renderOpportunityCard(item)}
+            activeOpacity={0.9}
+            onPress={() => setSelectedOpportunity(item)}
+          >
+            <ImageBackground
+              source={{ uri: item.pictureurl }}
+              style={styles.card}
+              imageStyle={{ borderRadius: 12 }}
+            >
+              <View style={styles.footerOverlay}>
+                <Text style={styles.cardTitle}>{item.title}</Text>
+                <Text style={styles.cardMeta}>
+                  Activity Type: {item.activityType}
+                </Text>
+                {item.description && (
+                  <Text style={styles.cardMeta}>
+                    Description: {item.description}
+                  </Text>
+                )}
+              </View>
+            </ImageBackground>
+          </TouchableOpacity>
+        )}
       />
 
-      {/* Detailed Opportunity Modal */}
       <ReactNativeModal
         isVisible={selectedOpportunity !== null}
         onBackdropPress={() => setSelectedOpportunity(null)}
         style={{ marginTop: 60, marginHorizontal: 10 }}
       >
-        <View className="bg-white p-6 rounded-lg max-h-full">
+        <View style={styles.modalContainer}>
           <TouchableOpacity
             onPress={() => setSelectedOpportunity(null)}
-            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+            style={styles.modalClose}
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold mb-2">
-            {selectedOpportunity?.title}
-          </Text>
+          <Text style={styles.modalTitle}>{selectedOpportunity?.title}</Text>
           <ScrollView>
-            <Text className="mb-1">
-              <Text className="font-semibold">School:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>School:</Text>{" "}
               {selectedOpportunity?.school}
             </Text>
-            <Text className="mb-1">
-              <Text className="font-semibold">Career Field:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Career Field:</Text>{" "}
               {selectedOpportunity?.careerField}
             </Text>
-            <Text className="mb-1">
-              <Text className="font-semibold">Activity Type:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Activity Type:</Text>{" "}
               {selectedOpportunity?.activityType}
             </Text>
-            <Text className="mb-1">
-              <Text className="font-semibold">Location:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Location:</Text>{" "}
               {selectedOpportunity?.location}
             </Text>
             {selectedOpportunity?.duration && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Duration:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Duration:</Text>{" "}
                 {selectedOpportunity.duration}
               </Text>
             )}
             {selectedOpportunity?.deadline && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Deadline:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Deadline:</Text>{" "}
                 {selectedOpportunity.deadline}
               </Text>
             )}
             {selectedOpportunity?.apply && (
-              <View className="mb-1 flex-row flex-wrap">
-                <Text className="font-semibold">Apply:</Text>
+              <View style={[styles.modalText, { flexDirection: "row" }]}>
+                <Text style={styles.modalLabel}>Apply:</Text>
                 <TouchableOpacity
-                  onPress={() => Linking.openURL(selectedOpportunity!.apply!)}
+                  onPress={() => Linking.openURL(selectedOpportunity.apply!)}
                   style={{ marginLeft: 8 }}
                 >
-                  <Text className="text-blue-500 underline">
+                  <Text style={styles.applyText}>
                     {selectedOpportunity.apply}
                   </Text>
                 </TouchableOpacity>
               </View>
             )}
             {selectedOpportunity?.gradeRequirements && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Grade Requirements:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Grade Requirements:</Text>{" "}
                 {selectedOpportunity.gradeRequirements}
               </Text>
             )}
             {selectedOpportunity?.raceRequirements && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Race Requirements:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Race Requirements:</Text>{" "}
                 {selectedOpportunity.raceRequirements}
               </Text>
             )}
             {selectedOpportunity?.genderRequirements && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Gender Requirements:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Gender Requirements:</Text>{" "}
                 {selectedOpportunity.genderRequirements}
               </Text>
             )}
             {selectedOpportunity?.ageRequirements && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Age Requirements:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Age Requirements:</Text>{" "}
                 {selectedOpportunity.ageRequirements}
               </Text>
             )}
             {selectedOpportunity?.primaryCity && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Primary City:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Primary City:</Text>{" "}
                 {selectedOpportunity.primaryCity}
               </Text>
             )}
-            <Text className="mb-1">
-              <Text className="font-semibold">Only FRL Students:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Only FRL Students:</Text>{" "}
               {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
             </Text>
-            <Text className="mb-1">
-              <Text className="font-semibold">Only First Gen:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Only First Gen:</Text>{" "}
               {selectedOpportunity?.onlyFirstGen ? "Yes" : "No"}
             </Text>
             {selectedOpportunity?.minGPA !== undefined && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Min GPA:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Min GPA:</Text>{" "}
                 {selectedOpportunity.minGPA}
               </Text>
             )}
             {selectedOpportunity?.minSAT !== undefined && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Min SAT:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Min SAT:</Text>{" "}
                 {selectedOpportunity.minSAT}
               </Text>
             )}
             {selectedOpportunity?.minACT !== undefined && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Min ACT:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Min ACT:</Text>{" "}
                 {selectedOpportunity.minACT}
               </Text>
             )}
             {selectedOpportunity?.minPSAT !== undefined && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Min PSAT:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Min PSAT:</Text>{" "}
                 {selectedOpportunity.minPSAT}
               </Text>
             )}
-            <Text className="mb-1">
-              <Text className="font-semibold">Has Leadership Roles:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Has Leadership Roles:</Text>{" "}
               {selectedOpportunity?.hasLeadershipRoles ? "Yes" : "No"}
             </Text>
             {selectedOpportunity?.selectivityLevel && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Selectivity Level:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Selectivity Level:</Text>{" "}
                 {selectedOpportunity.selectivityLevel}
               </Text>
             )}
-            <Text className="mb-1">
-              <Text className="font-semibold">Outside US:</Text>{" "}
+            <Text style={styles.modalText}>
+              <Text style={styles.modalLabel}>Outside US:</Text>{" "}
               {selectedOpportunity?.outsideUS ? "Yes" : "No"}
             </Text>
             {selectedOpportunity?.hoursPerWeek !== undefined && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Hours per Week:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Hours per Week:</Text>{" "}
                 {selectedOpportunity.hoursPerWeek}
               </Text>
             )}
             {selectedOpportunity?.createdAt && (
-              <Text className="mb-1">
-                <Text className="font-semibold">Added On:</Text>{" "}
+              <Text style={styles.modalText}>
+                <Text style={styles.modalLabel}>Added On:</Text>{" "}
                 {selectedOpportunity.createdAt}
               </Text>
             )}
           </ScrollView>
         </View>
       </ReactNativeModal>
-
-      {/* AI Suggested Modal */}
-      <ReactNativeModal
-        isVisible={showAISuggestedModal}
-        style={{
-          justifyContent: "flex-start",
-          marginTop: 60,
-          marginHorizontal: 10,
-        }}
-        onBackdropPress={() => setShowAISuggestedModal(false)}
-        onBackButtonPress={() => setShowAISuggestedModal(false)}
-      >
-        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
-          <TouchableOpacity
-            onPress={() => setShowAISuggestedModal(false)}
-            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
-          >
-            <MaterialCommunityIcons name="close" size={24} color="#000" />
-          </TouchableOpacity>
-          <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center">
-            AI Suggested Opportunities
-          </Text>
-          {aiLoading ? (
-            <ActivityIndicator size="large" color="#5b55f6" />
-          ) : aiOpportunities && aiOpportunities.length > 0 ? (
-            <FlatList
-              data={aiOpportunities}
-              keyExtractor={(item) => item.id}
-              renderItem={({ item }) => renderOpportunityCard(item)}
-            />
-          ) : (
-            <Text className="text-gray-500 text-base text-center">
-              No AI suggestions available.
-            </Text>
-          )}
-        </View>
-      </ReactNativeModal>
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: "#E5E7EB",
+  },
+  errorText: {
+    color: "red",
+    textAlign: "center",
+    marginTop: 20,
+  },
+  headerContainer: {
+    alignItems: "center",
+    marginVertical: 16,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: "700",
+    color: "#5B55F6",
+  },
+  headerSubtitle: {
+    fontSize: 16,
+    color: "#333",
+    marginTop: 4,
+  },
+  card: {
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    alignSelf: "center",
+  },
+  cardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  cardLabel: {
+    fontWeight: "600",
+  },
+  cardText: {
+    fontSize: 14,
+    marginBottom: 6,
+  },
+  applyContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  applyLink: {
+    marginLeft: 6,
+  },
+  applyText: {
+    color: "#3B82F6",
+    textDecorationLine: "underline",
+    fontSize: 14,
+  },
+  modalContainer: {
+    backgroundColor: "#FFF",
+    borderRadius: 12,
+    padding: 16,
+    maxHeight: "80%",
+  },
+  modalClose: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    zIndex: 1,
+  },
+  modalLabel: {
+    fontWeight: "600",
+  },
+  modalText: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  footerOverlay: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 16,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+  },
+
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+
+  cardMeta: {
+    fontSize: 14,
+    color: "#FFFFFF",
+  },
+});
 
 export default Opportunities;
