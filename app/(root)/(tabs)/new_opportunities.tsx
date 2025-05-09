@@ -48,13 +48,13 @@ interface Opportunity {
   createdAt?: string;
   description?: string;
 }
-const [refreshing, setRefreshing] = useState(false);
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 520;
 
 const Opportunities = () => {
+  const [refreshing, setRefreshing] = useState(false);
   const { user } = useUser();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -157,11 +157,14 @@ const Opportunities = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <Image
-        source={images.icon}
-        className="self-center"
-        style={{ width: 280, height: 70, resizeMode: "contain" }}
-      />
+      <View style={styles.headerContainer}>
+        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+          Opportunity Match
+        </Text>
+        <Text className="text-gray-500 font-PoppinsRegular">
+          Swipe RIGHT to Save an Opportunity. Swipe left to skip.
+        </Text>
+      </View>
       <Swiper
         cards={opportunities}
         onSwipedRight={(i) => handleSave(opportunities[i])}
@@ -210,7 +213,7 @@ const Opportunities = () => {
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.modalTitle}>{selectedOpportunity?.title}</Text>
+          <Text style={styles.cardTitle}>{selectedOpportunity?.title}</Text>
           <ScrollView>
             <Text style={styles.modalText}>
               <Text style={styles.modalLabel}>School:</Text>{" "}
@@ -351,7 +354,7 @@ const Opportunities = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#E5E7EB",
+    backgroundColor: "#F5F7FA",
   },
   errorText: {
     color: "red",
@@ -386,9 +389,10 @@ const styles = StyleSheet.create({
     alignSelf: "center",
   },
   cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    marginBottom: 8,
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#FFFFFF",
+    marginBottom: 4,
   },
   cardLabel: {
     fontWeight: "600",
@@ -437,13 +441,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
-  },
-
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 4,
   },
 
   cardMeta: {

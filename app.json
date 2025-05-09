@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "EC AI",
+    "name": "EC-AI",
     "slug": "ec-ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.dheerajkoppu.ecai",
+      "bundleIdentifier": "com.dheerajkoppu.ec-ai",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }

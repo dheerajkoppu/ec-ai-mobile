@@ -31,6 +31,7 @@ import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import icon from "@/assets/images/icon.png";
+import logo from "@/assets/images/logo.png";
 import signUpCar from "@/assets/images/signup-car.png";
 import add_activity1 from "@/assets/icons/add_activity1.png";
 import add_activity2 from "@/assets/icons/add_activity2.png";
@@ -59,6 +60,7 @@ export const icons = {
   arrowDown,
   arrowUp,
   backArrow,
+  logo,
   chat,
   checkmark,
   close,

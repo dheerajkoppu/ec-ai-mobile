@@ -11,7 +11,7 @@ export async function POST(request: Request) {
     }
 
     await resend.emails.send({
-      from: "EC AI <onboarding@resend.dev>", // Use a domain you've verified
+      from: "EC-AI <onboarding@resend.dev>", // Use a domain you've verified
       to: "ask.ecai@gmail.com",
       subject: "User Data Request",
       text: `The user with email ${userEmail} has requested a copy of their user data. Please give their users table, activity table, and user saved opportunities table.`,

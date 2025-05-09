@@ -31,7 +31,7 @@ export async function DELETE(request: Request) {
 
     // Send email via Resend (Edge-compatible)
     await resend.emails.send({
-      from: "EC AI <onboarding@resend.dev>", // still works even without your own domain
+      from: "EC-AI <onboarding@resend.dev>", // still works even without your own domain
       to: "ask.ecai@gmail.com",
       subject: "User Deletion Request",
       text: `The user with email ${userEmail} has requested account deletion.`,

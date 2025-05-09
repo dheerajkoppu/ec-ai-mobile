@@ -484,9 +484,9 @@ const ProfileSetup: React.FC = () => {
       });
       console.log("API result:", response);
       if (response.ok) {
-        router.push("/(root)/(tabs)/home");
+        router.push("/(root)/(tabs)/new_opportunities");
       } else {
-        router.push("/(root)/(tabs)/home");
+        router.push("/(root)/(tabs)/new_opportunities");
       }
     } catch (err) {
       console.error("Error submitting profile data:", err);

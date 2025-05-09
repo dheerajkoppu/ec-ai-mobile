@@ -22,6 +22,10 @@ const TabIcon = ({
   profileImage,
 }: TabIconProps) => {
   const navigation = useNavigation();
+  const icon = focused ? filledIconName : outlineIconName;
+  const purple = "#5b55f6";
+  const size = 53;
+
   return (
     <TouchableOpacity
       onPress={() => navigation.navigate(screenName as never)}
@@ -29,27 +33,36 @@ const TabIcon = ({
       activeOpacity={1}
     >
       <View
-        className={`flex flex-row justify-center items-center rounded-full ${focused ? "#F5F7FA" : ""}`}
+        style={{
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: "white",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <View className="rounded-full w-14 h-14 items-center justify-center">
-          {isProfile && profileImage ? (
-            // When the profile icon is focused, add a black outline.
-            <View
-              className={`${focused ? "border-2 border-black rounded-full" : ""}`}
-            >
-              <Image
-                source={{ uri: profileImage }}
-                className="w-10 h-10 rounded-full"
-              />
-            </View>
-          ) : (
-            <MaterialCommunityIcons
-              name={focused ? filledIconName : outlineIconName}
-              size={28}
-              color={focused ? "white" : "#F5F7FA"}
+        {isProfile && profileImage ? (
+          <View
+            style={{
+              borderWidth: focused ? 2 : 0,
+              borderColor: "#5b55f6",
+              borderRadius: size / 2,
+              padding: focused ? 2 : 0,
+            }}
+          >
+            <Image
+              source={{ uri: profileImage }}
+              style={{
+                width: size - 16,
+                height: size - 16,
+                borderRadius: (size - 16) / 2,
+              }}
             />
-          )}
-        </View>
+          </View>
+        ) : (
+          <MaterialCommunityIcons name={icon} size={28} color={purple} />
+        )}
       </View>
     </TouchableOpacity>
   );
@@ -63,11 +76,9 @@ const Layout = () => {
     <Tabs
       initialRouteName="home"
       screenOptions={{
-        tabBarActiveTintColor: "white",
-        tabBarInactiveTintColor: "#F5F7FA",
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: "#5b55f6",
+          backgroundColor: "#F5F7FA",
           paddingBottom: 50,
           height: 100,
           display: "flex",
@@ -84,7 +95,6 @@ const Layout = () => {
       <Tabs.Screen
         name="home"
         options={{
-          title: "Home",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
@@ -99,7 +109,6 @@ const Layout = () => {
       <Tabs.Screen
         name="track_activities"
         options={{
-          title: "Track Activities",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
@@ -114,7 +123,6 @@ const Layout = () => {
       <Tabs.Screen
         name="add_activity"
         options={{
-          title: "Add Activity",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
@@ -129,7 +137,6 @@ const Layout = () => {
       <Tabs.Screen
         name="new_opportunities"
         options={{
-          title: "New Opportunities",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
@@ -144,7 +151,6 @@ const Layout = () => {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
           headerShown: false,
           tabBarIcon: ({ focused }) => (
             <TabIcon
@@ -152,7 +158,7 @@ const Layout = () => {
               filledIconName="account"
               outlineIconName="account-outline"
               screenName="profile"
-              isProfile={true}
+              isProfile
               profileImage={profileImage}
             />
           ),
