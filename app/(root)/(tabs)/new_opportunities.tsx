@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   ScrollView,
   Linking,
-  StyleSheet,
   Dimensions,
   ImageBackground,
 } from "react-native";
@@ -141,7 +140,7 @@ const Opportunities = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.container}>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
         <ActivityIndicator size="large" color="#5b55f6" />
       </SafeAreaView>
     );
@@ -149,27 +148,29 @@ const Opportunities = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={styles.container}>
-        <Text style={styles.errorText}>{error}</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+        <Text style={{ color: "red", textAlign: "center", marginTop: 20 }}>
+          {error}
+        </Text>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.headerContainer}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+      <View style={{ alignItems: "center", marginVertical: 16 }}>
         <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Opportunity Match
         </Text>
         <Text className="text-gray-500 font-PoppinsRegular">
-          Swipe RIGHT to Save an Opportunity. Swipe left to skip.
+          Swipe RIGHT to Save an opportunity. Swipe left to skip.
         </Text>
       </View>
       <Swiper
         cards={opportunities}
         onSwipedRight={(i) => handleSave(opportunities[i])}
         onSwipedLeft={() => {}}
-        infinite={true}
+        infinite
         stackSize={3}
         verticalSwipe={false}
         cardVerticalMargin={20}
@@ -182,16 +183,48 @@ const Opportunities = () => {
           >
             <ImageBackground
               source={{ uri: item.pictureurl }}
-              style={styles.card}
+              style={{
+                width: CARD_WIDTH,
+                height: CARD_HEIGHT,
+                backgroundColor: "#FFF",
+                borderRadius: 12,
+                padding: 16,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 4,
+                alignSelf: "center",
+              }}
               imageStyle={{ borderRadius: 12 }}
             >
-              <View style={styles.footerOverlay}>
-                <Text style={styles.cardTitle}>{item.title}</Text>
-                <Text style={styles.cardMeta}>
+              <View
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: 16,
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  borderBottomLeftRadius: 12,
+                  borderBottomRightRadius: 12,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 22,
+                    fontWeight: "700",
+                    color: "#FFFFFF",
+                    marginBottom: 4,
+                  }}
+                >
+                  {item.title}
+                </Text>
+                <Text style={{ fontSize: 14, color: "#FFFFFF" }}>
                   Activity Type: {item.activityType}
                 </Text>
                 {item.description && (
-                  <Text style={styles.cardMeta}>
+                  <Text style={{ fontSize: 14, color: "#FFFFFF" }}>
                     Description: {item.description}
                   </Text>
                 )}
@@ -206,143 +239,98 @@ const Opportunities = () => {
         onBackdropPress={() => setSelectedOpportunity(null)}
         style={{ marginTop: 60, marginHorizontal: 10 }}
       >
-        <View style={styles.modalContainer}>
+        <View
+          style={{
+            backgroundColor: "#FFF",
+            borderRadius: 12,
+            padding: 16,
+            maxHeight: "80%",
+          }}
+        >
           <TouchableOpacity
             onPress={() => setSelectedOpportunity(null)}
-            style={styles.modalClose}
+            style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
           >
             <MaterialCommunityIcons name="close" size={24} color="#000" />
           </TouchableOpacity>
-          <Text style={styles.cardTitle}>{selectedOpportunity?.title}</Text>
+          <Text
+            style={{
+              fontSize: 22,
+              fontWeight: "700",
+              color: "#000",
+              marginBottom: 12,
+            }}
+          >
+            {selectedOpportunity?.title}
+          </Text>
           <ScrollView>
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>School:</Text>{" "}
-              {selectedOpportunity?.school}
-            </Text>
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Career Field:</Text>{" "}
-              {selectedOpportunity?.careerField}
-            </Text>
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Activity Type:</Text>{" "}
-              {selectedOpportunity?.activityType}
-            </Text>
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Location:</Text>{" "}
-              {selectedOpportunity?.location}
-            </Text>
-            {selectedOpportunity?.duration && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Duration:</Text>{" "}
-                {selectedOpportunity.duration}
-              </Text>
+            {[
+              ["School", selectedOpportunity?.school],
+              ["Career Field", selectedOpportunity?.careerField],
+              ["Activity Type", selectedOpportunity?.activityType],
+              ["Location", selectedOpportunity?.location],
+              ["Duration", selectedOpportunity?.duration],
+              ["Deadline", selectedOpportunity?.deadline],
+              ["Grade Requirements", selectedOpportunity?.gradeRequirements],
+              ["Race Requirements", selectedOpportunity?.raceRequirements],
+              ["Gender Requirements", selectedOpportunity?.genderRequirements],
+              ["Age Requirements", selectedOpportunity?.ageRequirements],
+              ["Primary City", selectedOpportunity?.primaryCity],
+              ["Min GPA", selectedOpportunity?.minGPA],
+              ["Min SAT", selectedOpportunity?.minSAT],
+              ["Min ACT", selectedOpportunity?.minACT],
+              ["Min PSAT", selectedOpportunity?.minPSAT],
+              ["Selectivity Level", selectedOpportunity?.selectivityLevel],
+              ["Hours per Week", selectedOpportunity?.hoursPerWeek],
+              ["Added On", selectedOpportunity?.createdAt],
+            ].map(
+              ([label, value], idx) =>
+                value !== undefined && (
+                  <Text key={idx} style={{ fontSize: 14, marginBottom: 8 }}>
+                    <Text style={{ fontWeight: "600" }}>{label}:</Text> {value}
+                  </Text>
+                ),
             )}
-            {selectedOpportunity?.deadline && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Deadline:</Text>{" "}
-                {selectedOpportunity.deadline}
-              </Text>
-            )}
+            <Text style={{ fontSize: 14, marginBottom: 8 }}>
+              <Text style={{ fontWeight: "600" }}>Only FRL Students:</Text>{" "}
+              {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
+            </Text>
+            <Text style={{ fontSize: 14, marginBottom: 8 }}>
+              <Text style={{ fontWeight: "600" }}>Only First Gen:</Text>{" "}
+              {selectedOpportunity?.onlyFirstGen ? "Yes" : "No"}
+            </Text>
+            <Text style={{ fontSize: 14, marginBottom: 8 }}>
+              <Text style={{ fontWeight: "600" }}>Has Leadership Roles:</Text>{" "}
+              {selectedOpportunity?.hasLeadershipRoles ? "Yes" : "No"}
+            </Text>
+            <Text style={{ fontSize: 14, marginBottom: 8 }}>
+              <Text style={{ fontWeight: "600" }}>Outside US:</Text>{" "}
+              {selectedOpportunity?.outsideUS ? "Yes" : "No"}
+            </Text>
             {selectedOpportunity?.apply && (
-              <View style={[styles.modalText, { flexDirection: "row" }]}>
-                <Text style={styles.modalLabel}>Apply:</Text>
+              <View
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  marginBottom: 8,
+                }}
+              >
+                <Text style={{ fontWeight: "600" }}>Apply:</Text>
                 <TouchableOpacity
                   onPress={() => Linking.openURL(selectedOpportunity.apply!)}
                   style={{ marginLeft: 8 }}
                 >
-                  <Text style={styles.applyText}>
+                  <Text
+                    style={{
+                      color: "#3B82F6",
+                      textDecorationLine: "underline",
+                      fontSize: 14,
+                    }}
+                  >
                     {selectedOpportunity.apply}
                   </Text>
                 </TouchableOpacity>
               </View>
-            )}
-            {selectedOpportunity?.gradeRequirements && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Grade Requirements:</Text>{" "}
-                {selectedOpportunity.gradeRequirements}
-              </Text>
-            )}
-            {selectedOpportunity?.raceRequirements && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Race Requirements:</Text>{" "}
-                {selectedOpportunity.raceRequirements}
-              </Text>
-            )}
-            {selectedOpportunity?.genderRequirements && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Gender Requirements:</Text>{" "}
-                {selectedOpportunity.genderRequirements}
-              </Text>
-            )}
-            {selectedOpportunity?.ageRequirements && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Age Requirements:</Text>{" "}
-                {selectedOpportunity.ageRequirements}
-              </Text>
-            )}
-            {selectedOpportunity?.primaryCity && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Primary City:</Text>{" "}
-                {selectedOpportunity.primaryCity}
-              </Text>
-            )}
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Only FRL Students:</Text>{" "}
-              {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
-            </Text>
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Only First Gen:</Text>{" "}
-              {selectedOpportunity?.onlyFirstGen ? "Yes" : "No"}
-            </Text>
-            {selectedOpportunity?.minGPA !== undefined && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Min GPA:</Text>{" "}
-                {selectedOpportunity.minGPA}
-              </Text>
-            )}
-            {selectedOpportunity?.minSAT !== undefined && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Min SAT:</Text>{" "}
-                {selectedOpportunity.minSAT}
-              </Text>
-            )}
-            {selectedOpportunity?.minACT !== undefined && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Min ACT:</Text>{" "}
-                {selectedOpportunity.minACT}
-              </Text>
-            )}
-            {selectedOpportunity?.minPSAT !== undefined && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Min PSAT:</Text>{" "}
-                {selectedOpportunity.minPSAT}
-              </Text>
-            )}
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Has Leadership Roles:</Text>{" "}
-              {selectedOpportunity?.hasLeadershipRoles ? "Yes" : "No"}
-            </Text>
-            {selectedOpportunity?.selectivityLevel && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Selectivity Level:</Text>{" "}
-                {selectedOpportunity.selectivityLevel}
-              </Text>
-            )}
-            <Text style={styles.modalText}>
-              <Text style={styles.modalLabel}>Outside US:</Text>{" "}
-              {selectedOpportunity?.outsideUS ? "Yes" : "No"}
-            </Text>
-            {selectedOpportunity?.hoursPerWeek !== undefined && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Hours per Week:</Text>{" "}
-                {selectedOpportunity.hoursPerWeek}
-              </Text>
-            )}
-            {selectedOpportunity?.createdAt && (
-              <Text style={styles.modalText}>
-                <Text style={styles.modalLabel}>Added On:</Text>{" "}
-                {selectedOpportunity.createdAt}
-              </Text>
             )}
           </ScrollView>
         </View>
@@ -350,103 +338,5 @@ const Opportunities = () => {
     </SafeAreaView>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#F5F7FA",
-  },
-  errorText: {
-    color: "red",
-    textAlign: "center",
-    marginTop: 20,
-  },
-  headerContainer: {
-    alignItems: "center",
-    marginVertical: 16,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: "700",
-    color: "#5B55F6",
-  },
-  headerSubtitle: {
-    fontSize: 16,
-    color: "#333",
-    marginTop: 4,
-  },
-  card: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-    alignSelf: "center",
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 4,
-  },
-  cardLabel: {
-    fontWeight: "600",
-  },
-  cardText: {
-    fontSize: 14,
-    marginBottom: 6,
-  },
-  applyContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  applyLink: {
-    marginLeft: 6,
-  },
-  applyText: {
-    color: "#3B82F6",
-    textDecorationLine: "underline",
-    fontSize: 14,
-  },
-  modalContainer: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    padding: 16,
-    maxHeight: "80%",
-  },
-  modalClose: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    zIndex: 1,
-  },
-  modalLabel: {
-    fontWeight: "600",
-  },
-  modalText: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  footerOverlay: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 16,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    borderBottomLeftRadius: 12,
-    borderBottomRightRadius: 12,
-  },
-
-  cardMeta: {
-    fontSize: 14,
-    color: "#FFFFFF",
-  },
-});
 
 export default Opportunities;

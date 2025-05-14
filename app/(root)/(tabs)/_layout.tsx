@@ -141,8 +141,8 @@ const Layout = () => {
           tabBarIcon: ({ focused }) => (
             <TabIcon
               focused={focused}
-              filledIconName="briefcase"
-              outlineIconName="briefcase-outline"
+              filledIconName="star"
+              outlineIconName="star-outline"
               screenName="new_opportunities"
             />
           ),
