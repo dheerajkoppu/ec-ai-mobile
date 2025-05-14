@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import {
   View,
-  Image,
   Text,
   TouchableOpacity,
   SafeAreaView,
@@ -15,8 +14,8 @@ import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { images } from "@/constants";
 import { RefreshControl } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Opportunity {
   id: string;
@@ -105,13 +104,52 @@ const Opportunities = () => {
         createdAt: op.createdAt,
         description: op.description,
       }));
-      setOpportunities(formatted);
+
+      // Filter out already swiped
+      const swiped = await AsyncStorage.getItem("swipedOpportunities");
+      const swipedSet = swiped ? new Set(JSON.parse(swiped)) : new Set();
+      const filtered = formatted.filter((op) => !swipedSet.has(op.id));
+
+      setOpportunities(filtered);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Error fetching opportunities");
     } finally {
       setLoading(false);
     }
+  };
+
+  const markOpportunityAsSwiped = async (id: string) => {
+    try {
+      const swiped = await AsyncStorage.getItem("swipedOpportunities");
+      const swipedSet = swiped ? new Set(JSON.parse(swiped)) : new Set();
+      swipedSet.add(id);
+      await AsyncStorage.setItem(
+        "swipedOpportunities",
+        JSON.stringify(Array.from(swipedSet)),
+      );
+    } catch (err) {
+      console.log("Failed to save swiped opportunity", err);
+    }
+  };
+
+  const handleSave = async (op: Opportunity) => {
+    if (!user || savedOpportunities.has(op.id)) return;
+    setSavedOpportunities((prev) => new Set(prev).add(op.id));
+    await markOpportunityAsSwiped(op.id);
+    try {
+      await fetch("https://ec-ai.expo.app/addsavedopportunity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
+      });
+    } catch {
+      // ignore
+    }
+  };
+
+  const handleSkip = async (op: Opportunity) => {
+    await markOpportunityAsSwiped(op.id);
   };
 
   useEffect(() => {
@@ -122,20 +160,6 @@ const Opportunities = () => {
     setRefreshing(true);
     await fetchOpportunities();
     setRefreshing(false);
-  };
-
-  const handleSave = async (op: Opportunity) => {
-    if (!user || savedOpportunities.has(op.id)) return;
-    setSavedOpportunities((prev) => new Set(prev).add(op.id));
-    try {
-      await fetch("https://ec-ai.expo.app/addsavedopportunity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
-      });
-    } catch {
-      // ignore
-    }
   };
 
   if (loading) {
@@ -166,10 +190,11 @@ const Opportunities = () => {
           Swipe RIGHT to Save an opportunity. Swipe left to skip.
         </Text>
       </View>
+
       <Swiper
         cards={opportunities}
         onSwipedRight={(i) => handleSave(opportunities[i])}
-        onSwipedLeft={() => {}}
+        onSwipedLeft={(i) => handleSkip(opportunities[i])}
         infinite
         stackSize={3}
         verticalSwipe={false}
