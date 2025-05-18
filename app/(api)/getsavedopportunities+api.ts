@@ -37,6 +37,7 @@ export async function POST(request: Request) {
         selectivity_level,
         outside_us,
         hours_per_week,
+        description,
         created_at
       FROM opportunities
       WHERE id IN (
@@ -67,6 +68,7 @@ export async function POST(request: Request) {
       minSAT: op.min_sat,
       minACT: op.min_act,
       minPSAT: op.min_psat,
+      description: op.description,
       hasLeadershipRoles: op.has_leadership_roles,
       selectivityLevel: op.selectivity_level,
       outsideUS: op.outside_us,

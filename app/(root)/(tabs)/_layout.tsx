@@ -4,18 +4,11 @@ import { useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-interface TabIconProps {
-  filledIconName: keyof typeof MaterialCommunityIcons.glyphMap;
-  outlineIconName: keyof typeof MaterialCommunityIcons.glyphMap;
-  focused: boolean;
-  screenName: string;
-  isProfile?: boolean;
-  profileImage?: string | null;
-}
-
 const TabIcon = ({
   filledIconName,
   outlineIconName,
+  filledImageSource, // <-- ADD
+  outlineImageSource, // <-- ADD
   focused,
   screenName,
   isProfile,
@@ -60,6 +53,15 @@ const TabIcon = ({
               }}
             />
           </View>
+        ) : filledImageSource && outlineImageSource ? (
+          <Image
+            source={focused ? filledImageSource : outlineImageSource}
+            style={{
+              width: 28,
+              height: 28,
+              resizeMode: "contain",
+            }}
+          />
         ) : (
           <MaterialCommunityIcons name={icon} size={28} color={purple} />
         )}
@@ -93,7 +95,7 @@ const Layout = () => {
       }}
     >
       <Tabs.Screen
-        name="home"
+        name="new_opportunities"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -101,11 +103,12 @@ const Layout = () => {
               focused={focused}
               filledIconName="home"
               outlineIconName="home-outline"
-              screenName="home"
+              screenName="new_opportunities"
             />
           ),
         }}
       />
+
       <Tabs.Screen
         name="track_activities"
         options={{
@@ -135,7 +138,7 @@ const Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="new_opportunities"
+        name="home"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -143,11 +146,12 @@ const Layout = () => {
               focused={focused}
               filledIconName="star"
               outlineIconName="star-outline"
-              screenName="new_opportunities"
+              screenName="home"
             />
           ),
         }}
       />
+
       <Tabs.Screen
         name="profile"
         options={{

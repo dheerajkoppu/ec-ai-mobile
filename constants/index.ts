@@ -4,7 +4,6 @@ import backArrow from "@/assets/icons/back-arrow.png";
 import chat from "@/assets/icons/chat.png";
 import checkmark from "@/assets/icons/check.png";
 import close from "@/assets/icons/close.png";
-import dollar from "@/assets/icons/dollar.png";
 import email from "@/assets/icons/email.png";
 import eyecross from "@/assets/icons/eyecross.png";
 import google from "@/assets/icons/google.png";
@@ -24,14 +23,12 @@ import star from "@/assets/icons/star.png";
 import target from "@/assets/icons/target.png";
 import to from "@/assets/icons/to.png";
 import check from "@/assets/images/check.png";
-import getStarted from "@/assets/images/get-started.png";
-import message from "@/assets/images/message.png";
-import noResult from "@/assets/images/no-result.png";
 import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
 import icon from "@/assets/images/icon.png";
 import logo from "@/assets/images/logo.png";
+import logo_outline from "@/assets/images/logo_outline.png";
 import signUpCar from "@/assets/images/signup-car.png";
 import add_activity1 from "@/assets/icons/add_activity1.png";
 import add_activity2 from "@/assets/icons/add_activity2.png";
@@ -48,11 +45,8 @@ export const images = {
   onboarding1,
   onboarding2,
   onboarding3,
-  getStarted,
   signUpCar,
   check,
-  noResult,
-  message,
   icon,
 };
 
@@ -61,6 +55,7 @@ export const icons = {
   arrowUp,
   backArrow,
   logo,
+  logo_outline,
   chat,
   checkmark,
   close,
@@ -88,7 +83,6 @@ export const icons = {
   track_activities2,
   home1,
   home2,
-  dollar,
   email,
   eyecross,
   home,

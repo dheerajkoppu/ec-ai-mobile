@@ -2,19 +2,20 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  Image,
-  ScrollView,
-  TouchableOpacity,
-  FlatList,
   Linking,
+  FlatList,
+  TouchableOpacity,
   RefreshControl,
+  Alert,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
-import { FontAwesome } from "@expo/vector-icons";
-
-import { LogBox } from "react-native";
+import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
+import ReactNativeModal from "react-native-modal";
+import InputField from "@/components/InputField";
+import CustomButton from "@/components/CustomButton";
 
 interface Opportunity {
   id: string;
@@ -24,21 +25,21 @@ interface Opportunity {
   duration?: string;
   deadline?: string;
   apply: string;
+  description?: string;
 }
 
 export default function Home() {
   const { user } = useUser();
-  const [recentActivities, setRecentActivities] = useState<
-    { name: string; timestamp: string }[]
-  >([]);
-  const [totalHoursLogged, setTotalHoursLogged] = useState(0);
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
   const [refreshing, setRefreshing] = useState(false);
-  LogBox.ignoreLogs(["VirtualizedLists should never be nested"]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
-  // Fetch saved opportunities from API using the user's clerk_id
+  const [aiReasons, setAiReasons] = useState<string>("");
+  const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
+  const [loadingReason, setLoadingReason] = useState(false);
+
   const loadSavedOpportunities = async () => {
     if (!user) return;
     try {
@@ -49,7 +50,6 @@ export default function Home() {
       });
       const json = await res.json();
       if (res.ok) {
-        // Map API response: activityName -> title, applicationLink -> apply
         const mapped = json.data.map((item: any) => ({
           id: item.id,
           title: item.activityName || "No Title",
@@ -60,6 +60,7 @@ export default function Home() {
             ? new Date(item.deadline).toISOString().split("T")[0]
             : undefined,
           apply: item.applicationLink,
+          description: item.description,
         }));
         setSavedOpportunities(mapped);
       } else {
@@ -72,54 +73,25 @@ export default function Home() {
     }
   };
 
-  const fetchRecentActivities = async () => {
+  const getAIReasons = async (opportunity: Opportunity) => {
     try {
-      const res = await fetch("https://ec-ai.expo.app/getloggedhours", {
+      setLoadingReason(true);
+      const response = await fetch("https://ec-ai.expo.app/getaireasons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user?.id }),
+        body: JSON.stringify({ activity_id: opportunity.id }),
       });
-      const json = await res.json();
-      if (res.ok) {
-        const formatted = json.data.map((item: any) => ({
-          name: item.description || "No description",
-          timestamp: formatDateDifference(new Date(item.date_of_activity)),
-        }));
-        setRecentActivities(formatted);
-        setTotalHoursLogged(json.total_hours || 0);
-      } else {
-        console.error("Error fetching activities:", json.error);
-      }
-    } catch (err) {
-      console.error("Failed to fetch logged hours:", err);
+      const result = await response.json();
+      setAiReasons(result.reasons || "No reasons available.");
+      setShowAIReasonsModal(true);
+    } catch (error) {
+      console.error("Error fetching AI reasons:", error);
+      Alert.alert("Error", "Failed to get AI-generated reasons.");
+    } finally {
+      setLoadingReason(false);
     }
   };
 
-  const formatDateDifference = (date: Date) => {
-    const now = new Date();
-    const diff = Math.floor(
-      (now.getTime() - date.getTime()) / (1000 * 3600 * 24),
-    );
-    if (diff === 0) return "Today";
-    if (diff === 1) return "1 day ago";
-    return `${diff} days ago`;
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchRecentActivities();
-    await loadSavedOpportunities();
-    setRefreshing(false);
-  };
-
-  useEffect(() => {
-    if (user?.id) {
-      fetchRecentActivities();
-      loadSavedOpportunities();
-    }
-  }, [user]);
-
-  // Delete a saved opportunity by calling the API route, then update local state.
   const deleteOpportunity = async (id: string) => {
     if (!user) return;
     try {
@@ -128,18 +100,22 @@ export default function Home() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id, opportunity_id: id }),
       });
-      if (!res.ok) {
-        console.error("Failed to remove saved opportunity from backend");
-        return;
-      }
-      const updatedOpportunities = savedOpportunities.filter(
-        (opp) => opp.id !== id,
-      );
-      setSavedOpportunities(updatedOpportunities);
+      if (!res.ok) throw new Error("Delete failed");
+      setSavedOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     } catch (error) {
-      console.error("Error removing saved opportunity:", error);
+      console.error("Error deleting opportunity:", error);
     }
   };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadSavedOpportunities();
+    setRefreshing(false);
+  };
+
+  useEffect(() => {
+    if (user?.id) loadSavedOpportunities();
+  }, [user]);
 
   useFocusEffect(
     useCallback(() => {
@@ -147,133 +123,128 @@ export default function Home() {
     }, [user]),
   );
 
-  return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6 font-PoppinsBlack">
-      <SignedIn>
-        <ScrollView
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-          }
-        >
-          {/* Profile & Total Hours */}
-          <View className="flex-row items-center mb-4">
-            <Image
-              source={{ uri: user?.imageUrl }}
-              className="w-16 h-16 rounded-full"
-            />
-            <View className="ml-4">
-              <Text className="text-lg font-PoppinsSemiBold">
-                Hello, {user?.fullName}!
-              </Text>
-              <Text className="text-gray-500 font-PoppinsRegular">
-                Total Hours Logged: {totalHoursLogged}
-              </Text>
-            </View>
-          </View>
+  const filteredSavedOpportunities = savedOpportunities.filter((opportunity) =>
+    `${opportunity.title} ${opportunity.activityType} ${opportunity.location}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase()),
+  );
 
-          {/* Recent Activities Section */}
-          <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
-            <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
-              Recent
-            </Text>
-            {recentActivities.length > 0 ? (
-              recentActivities.map((activity, index) => (
-                <View
-                  key={index}
-                  className="flex-row justify-between font-PoppinsRegular items-center py-3 border-b border-gray-200 last:border-b-0"
-                >
-                  <Text className="text-base text-gray-800">
-                    {activity.name}
-                  </Text>
-                  <Text className="text-sm text-gray-500">
-                    {activity.timestamp}
-                  </Text>
+  return (
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+      <SignedIn>
+        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+          Saved Opportunities
+        </Text>
+
+        <InputField
+          label=""
+          placeholder="Search Opportunities"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+
+        {filteredSavedOpportunities.length === 0 ? (
+          <Text className="text-center text-gray-500 font-PoppinsRegular mt-10">
+            No saved opportunities found.
+          </Text>
+        ) : (
+          <FlatList
+            data={filteredSavedOpportunities}
+            keyExtractor={(item) => item.id}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+            }
+            contentContainerStyle={{ paddingBottom: 120 }}
+            renderItem={({ item }) => (
+              <View className="bg-white p-4 mb-4 rounded-lg shadow">
+                <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
+                  {item.activityType}
+                </Text>
+                <View className="flex-row">
+                  <View className="w-28">
+                    <Text className="font-PoppinsRegular text-xs mb-1">
+                      Location: {item.location}
+                    </Text>
+                    {item.duration && (
+                      <Text className="font-PoppinsRegular text-xs mb-1">
+                        Duration: {item.duration}
+                      </Text>
+                    )}
+                    {item.deadline && (
+                      <Text className="font-PoppinsRegular text-xs mb-1">
+                        Deadline: {item.deadline}
+                      </Text>
+                    )}
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="font-PoppinsSemiBold mb-1 text-sm">
+                      {item.title}
+                    </Text>
+                    <Text className="font-PoppinsRegular text-xs text-gray-800 mb-2">
+                      Description: {item.description}
+                    </Text>
+                    {item.apply && (
+                      <TouchableOpacity
+                        onPress={() => Linking.openURL(item.apply)}
+                      >
+                        <Text className="text-blue-500 underline text-xs">
+                          Apply Here
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
                 </View>
-              ))
+                <View className="flex-row justify-end mt-2">
+                  <TouchableOpacity
+                    className="mr-4"
+                    onPress={() => getAIReasons(item)}
+                  >
+                    <MaterialCommunityIcons
+                      name="robot"
+                      size={24}
+                      color="#5b55f6"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={() => deleteOpportunity(item.id)}>
+                    <FontAwesome name="trash" size={22} color="#f56565" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+          />
+        )}
+
+        {/* AI Reasons Modal */}
+        <ReactNativeModal
+          isVisible={showAIReasonsModal}
+          onBackdropPress={() => setShowAIReasonsModal(false)}
+        >
+          <View className="bg-white px-7 py-9 rounded-2xl shadow-md">
+            <TouchableOpacity
+              onPress={() => setShowAIReasonsModal(false)}
+              style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+            >
+              <MaterialCommunityIcons name="close" size={24} color="#000" />
+            </TouchableOpacity>
+            <Text className="text-2xl font-PoppinsSemiBold text-gray-800 mb-4">
+              Top 3 Reasons to Join
+            </Text>
+            {loadingReason ? (
+              <ActivityIndicator size="large" color="#5b55f6" />
             ) : (
-              <Text className="text-base text-gray-500">
-                No recent activities found.
+              <Text
+                className="text-base font-PoppinsRegular text-gray-700 mb-6"
+                selectable={true}
+              >
+                {aiReasons}
               </Text>
             )}
+            <CustomButton
+              title="Close"
+              onPress={() => setShowAIReasonsModal(false)}
+            />
           </View>
-
-          {/* Saved Opportunities Section */}
-          <View className="bg-white p-6 rounded-xl shadow-lg mb-4">
-            <Text className="text-xl font-PoppinsBold text-gray-900 mb-4">
-              Saved Opportunities
-            </Text>
-            <View style={{ maxHeight: 200 }}>
-              {savedOpportunities.length > 0 ? (
-                <FlatList
-                  nestedScrollEnabled={true} // Enable nested scrolling
-                  data={savedOpportunities}
-                  keyExtractor={(item) => item.id}
-                  ItemSeparatorComponent={() => (
-                    <View
-                      style={{
-                        height: 1,
-                        backgroundColor: "#ccc",
-                        marginVertical: 8,
-                      }}
-                    />
-                  )}
-                  renderItem={({ item }) => (
-                    <View className="bg-white p-4 rounded-lg flex-row justify-between items-center">
-                      <View>
-                        <Text className="text-lg font-PoppinsSemiBold text-gray-900">
-                          {item.title}
-                        </Text>
-                        <Text className="text-sm text-gray-500">
-                          {item.activityType} | {item.location}
-                        </Text>
-                        {item.duration && (
-                          <Text className="text-sm text-gray-500">
-                            Duration: {item.duration}
-                          </Text>
-                        )}
-                        {item.deadline && (
-                          <Text className="text-sm text-gray-500">
-                            Deadline: {item.deadline}
-                          </Text>
-                        )}
-                        {item.apply && (
-                          <View className="flex-row flex-wrap items-center">
-                            <Text className="font-PoppinsSemiBold text-xs">
-                              Apply:{" "}
-                            </Text>
-                            <TouchableOpacity
-                              onPress={() => Linking.openURL(item.apply)}
-                            >
-                              <Text className="text-blue-500 underline font-PoppinsRegular text-xs">
-                                {item.apply}
-                              </Text>
-                            </TouchableOpacity>
-                          </View>
-                        )}
-                      </View>
-                      <TouchableOpacity
-                        onPress={() => deleteOpportunity(item.id)}
-                      >
-                        <FontAwesome name="trash" size={22} color="red" />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                  ListEmptyComponent={
-                    <View style={{ alignItems: "center", marginTop: 20 }}>
-                      <Text className="text-gray-500 text-base text-center">
-                        No saved opportunities yet.
-                      </Text>
-                    </View>
-                  }
-                />
-              ) : (
-                <Text className="text-gray-500 text-base text-center">
-                  No saved opportunities yet.
-                </Text>
-              )}
-            </View>
-          </View>
-        </ScrollView>
+        </ReactNativeModal>
       </SignedIn>
     </SafeAreaView>
   );

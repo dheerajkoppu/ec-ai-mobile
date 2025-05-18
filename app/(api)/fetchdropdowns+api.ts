@@ -11,9 +11,6 @@ export async function POST(request: Request) {
                  'careerInterest',
                  (SELECT json_agg(json_build_object('value', career_interest, 'label', career_interest))
                   FROM career_interest),
-                 'cities',
-                 (SELECT json_agg(json_build_object('value', city_name, 'label', city_name))
-                  FROM cities),
                  'extracurricularFormat',
                  (SELECT json_agg(json_build_object('value', format, 'label', format))
                   FROM extracurricular_format),
@@ -39,9 +36,6 @@ export async function POST(request: Request) {
                  'referralSource',
                  (SELECT json_agg(json_build_object('value', source, 'label', source))
                   FROM referral_source),
-                 'schoolName',
-                 (SELECT json_agg(json_build_object('value', school_name, 'label', school_name))
-                  FROM school_name),
                  'satRange',
                  (SELECT json_agg(json_build_object('value', range_text, 'label', range_text))
                   FROM sat_range),

@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       SELECT
         a.id,
         a.name,
-        a.activity_type as category,
+        INITCAP(a.activity_type) as category,
         a.hours_per_week,
         a.weeks_per_year,
         a.roles,

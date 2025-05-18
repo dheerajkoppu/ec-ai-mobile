@@ -32,9 +32,7 @@ interface IDropdowns {
   yesNo: DropdownOption[];
   grades: DropdownOption[];
   raceEthnicity: DropdownOption[];
-  schoolName: DropdownOption[];
   gender: DropdownOption[];
-  cities: DropdownOption[];
   extracurricularReasons: DropdownOption[];
   satRange: DropdownOption[];
   actRange: DropdownOption[];
@@ -50,10 +48,8 @@ interface IDropdowns {
 interface IFormData {
   gradeLevel?: string;
   race?: string;
-  schoolName?: string;
   gender?: string;
   age?: string;
-  location?: string;
   lunch?: string;
   firstGen?: string;
   gpaWeighted?: string;
@@ -423,10 +419,8 @@ const ProfileSetup: React.FC = () => {
             const transformedData: IFormData = {
               gradeLevel: userData.grade_level,
               race: userData.race_ethnicity,
-              schoolName: userData.school_name,
               gender: userData.gender,
               age: String(userData.age),
-              location: userData.city,
               lunch: userData.free_reduced_lunch ? "Yes" : "No",
               firstGen: userData.first_gen_college ? "Yes" : "No",
               gpaWeighted: userData.gpa_weighted,
@@ -503,13 +497,11 @@ const ProfileSetup: React.FC = () => {
         return !!(
           formData.gradeLevel?.trim() &&
           formData.race?.trim() &&
-          formData.schoolName?.trim() &&
           formData.gender?.trim() &&
           formData.age?.trim()
         );
       case 1:
         return !!(
-          formData.location?.trim() &&
           formData.lunch?.trim() &&
           formData.firstGen?.trim() &&
           formData.gpaWeighted?.trim() &&
@@ -667,17 +659,6 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                School Name <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.schoolName}
-            value={formData.schoolName || ""}
-            placeholder="Select school"
-            onChange={(item) => handleChange("schoolName", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
                 Gender <Text className="text-red-500">*</Text>
               </Text>
             }
@@ -706,17 +687,6 @@ const ProfileSetup: React.FC = () => {
 
         {/* Slide 2 */}
         <SlideWrapper showBack onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                City <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.cities}
-            value={formData.location || ""}
-            placeholder="Select location"
-            onChange={(item) => handleChange("location", item.value)}
-          />
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
