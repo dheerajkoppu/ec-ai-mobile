@@ -181,7 +181,7 @@ export default function Home() {
                       {item.title}
                     </Text>
                     <Text className="font-PoppinsRegular text-xs text-gray-800 mb-2">
-                      Description: {item.description}
+                      {item.description}
                     </Text>
                     {item.apply && (
                       <TouchableOpacity
