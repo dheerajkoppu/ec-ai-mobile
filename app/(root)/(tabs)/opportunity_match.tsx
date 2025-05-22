@@ -235,22 +235,22 @@ const Opportunities = () => {
                   borderBottomRightRadius: 12,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 22,
-                    fontWeight: "700",
-                    color: "#FFFFFF",
-                    marginBottom: 4,
-                  }}
-                >
+                <Text className="text-white text-xl font-PoppinsBold mb-0.5">
                   {item.title}
                 </Text>
-                <Text style={{ fontSize: 14, color: "#FFFFFF" }}>
-                  Activity Type: {item.activityType}
+                <Text className="text-white text-md font-PoppinsRegular">
+                  <Text className=" text-white text-md font-PoppinsSemiBold">
+                    Activity Type:{" "}
+                  </Text>
+                  {item.activityType}
                 </Text>
+
                 {item.description && (
-                  <Text style={{ fontSize: 14, color: "#FFFFFF" }}>
-                    Description: {item.description}
+                  <Text className="text-white text-md font-PoppinsRegular">
+                    <Text className=" text-white text-md font-PoppinsSemiBold">
+                      Description:{" "}
+                    </Text>
+                    {item.description}
                   </Text>
                 )}
               </View>
