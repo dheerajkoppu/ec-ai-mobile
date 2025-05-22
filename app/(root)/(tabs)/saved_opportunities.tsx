@@ -187,7 +187,7 @@ export default function Saved_opportunities() {
                       <TouchableOpacity
                         onPress={() => Linking.openURL(item.apply)}
                       >
-                        <Text className="text-blue-500 underline text-xs">
+                        <Text className="text-blue-500 underline text-sm">
                           Apply Here
                         </Text>
                       </TouchableOpacity>
