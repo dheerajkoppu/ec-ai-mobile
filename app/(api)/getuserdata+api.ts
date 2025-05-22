@@ -56,7 +56,6 @@ export async function POST(request: Request) {
     }
 
     const user = userData[0];
-    console.log(user);
     return new Response(JSON.stringify({ user }), { status: 200 });
   } catch (error) {
     console.error("Error fetching user data:", error);
