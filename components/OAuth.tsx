@@ -16,9 +16,9 @@ const OAuth = () => {
       if (result.date) {
         const timeSinceSignIn = Date.now() - result.date;
 
-        // If account is new (within 5 seconds), go to user-data
+        // If account is new (within 5 seconds), go to profile-setup
         if (timeSinceSignIn < 5000) {
-          router.push("/(auth)/user-data");
+          router.push("/(auth)/profile-setup");
           Alert.alert("Success", "Welcome! Let’s finish setting things up.");
           return;
         }

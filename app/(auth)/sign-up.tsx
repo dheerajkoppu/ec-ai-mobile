@@ -299,7 +299,7 @@ const Sign_Up = () => {
                 title="Add Additional Details"
                 onPress={() => {
                   setShowSuccessModal(false);
-                  router.push("/(auth)/user-data");
+                  router.push("/(auth)/profile-setup");
                 }}
                 className="mt-5"
               />

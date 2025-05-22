@@ -223,7 +223,7 @@ const Profile = () => {
           </Text>
           <CustomButton
             title="Update User Data"
-            onPress={() => router.push("/(auth)/user-data?update=true")}
+            onPress={() => router.push("/(auth)/profile-setup?update=true")}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
         </View>
