@@ -24,7 +24,7 @@ const OAuth = () => {
         }
       }
 
-      router.push("/(root)/(tabs)/home");
+      router.push("/(root)/(tabs)/opportunity_match");
       Alert.alert("Success", result.message);
       return;
     }

@@ -76,7 +76,7 @@ const Layout = () => {
 
   return (
     <Tabs
-      initialRouteName="home"
+      initialRouteName="saved_opportunities"
       screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
@@ -95,7 +95,7 @@ const Layout = () => {
       }}
     >
       <Tabs.Screen
-        name="new_opportunities"
+        name="opportunity_match"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -103,7 +103,7 @@ const Layout = () => {
               focused={focused}
               filledIconName="home"
               outlineIconName="home-outline"
-              screenName="new_opportunities"
+              screenName="opportunity_match"
             />
           ),
         }}
@@ -138,7 +138,7 @@ const Layout = () => {
         }}
       />
       <Tabs.Screen
-        name="home"
+        name="saved_opportunities"
         options={{
           headerShown: false,
           tabBarIcon: ({ focused }) => (
@@ -146,7 +146,7 @@ const Layout = () => {
               focused={focused}
               filledIconName="star"
               outlineIconName="star-outline"
-              screenName="home"
+              screenName="saved_opportunities"
             />
           ),
         }}

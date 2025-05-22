@@ -44,7 +44,7 @@ const Sign_In = () => {
 
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
-        router.replace("/(root)/(tabs)/new_opportunities");
+        router.replace("/(root)/(tabs)/opportunity_match");
       } else {
         // See https://clerk.com/docs/custom-flows/error-handling for more info on error handling
         console.log(JSON.stringify(signInAttempt, null, 2));

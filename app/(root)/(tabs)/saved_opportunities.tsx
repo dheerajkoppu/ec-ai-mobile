@@ -28,7 +28,7 @@ interface Opportunity {
   description?: string;
 }
 
-export default function Home() {
+export default function Saved_opportunities() {
   const { user } = useUser();
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
