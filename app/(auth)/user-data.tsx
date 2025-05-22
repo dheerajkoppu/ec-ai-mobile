@@ -498,31 +498,28 @@ const ProfileSetup: React.FC = () => {
           formData.gradeLevel?.trim() &&
           formData.race?.trim() &&
           formData.gender?.trim() &&
-          formData.age?.trim()
+          formData.age?.trim() &&
+          formData.lunch?.trim()
         );
       case 1:
         return !!(
-          formData.lunch?.trim() &&
           formData.firstGen?.trim() &&
           formData.gpaWeighted?.trim() &&
-          formData.gpaUnweighted?.trim()
+          formData.gpaUnweighted?.trim() &&
+          formData.satScore?.trim() &&
+          formData.actScore?.trim()
         );
       case 2:
         return !!(
-          formData.satScore?.trim() &&
-          formData.actScore?.trim() &&
           formData.psatScore?.trim() &&
-          formData.careerInterest &&
-          formData.careerInterest.length > 0 &&
-          formData.entrepreneur?.trim()
+          formData.careerInterest?.length &&
+          formData.entrepreneur?.trim() &&
+          formData.research?.trim()
         );
       case 3:
         return !!(
-          formData.research?.trim() &&
-          formData.ecReason &&
-          formData.ecReason.length > 0 &&
-          formData.ecLevel &&
-          formData.ecLevel.length > 0 &&
+          formData.ecReason?.length &&
+          formData.ecLevel?.length &&
           formData.leadership?.trim() &&
           formData.createOwn?.trim()
         );
@@ -530,9 +527,9 @@ const ProfileSetup: React.FC = () => {
         return !!(
           formData.selectivity?.trim() &&
           formData.paid?.trim() &&
-          formData.travel?.trim() &&
+          formData.ecType?.trim() &&
           formData.timeWeekly?.trim() &&
-          formData.ecType?.trim()
+          formData.travel?.trim()
         );
       case 5:
         return !!(
@@ -678,15 +675,6 @@ const ProfileSetup: React.FC = () => {
             value={formData.age}
             onChangeText={(val) => handleChange("age", val)}
           />
-          <CustomButton
-            title="Next"
-            onPress={goToNextSlide}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 2 */}
-        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -698,6 +686,15 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("lunch", item.value)}
           />
+          <CustomButton
+            title="Next"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+        </SlideWrapper>
+
+        {/* Slide 2 */}
+        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -731,15 +728,6 @@ const ProfileSetup: React.FC = () => {
             value={formData.gpaUnweighted}
             onChangeText={(val) => handleChange("gpaUnweighted", val)}
           />
-          <CustomButton
-            title="Next"
-            onPress={goToNextSlide}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 3 */}
-        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -762,6 +750,15 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select ACT range"
             onChange={(item) => handleChange("actScore", item.value)}
           />
+          <CustomButton
+            title="Next"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+        </SlideWrapper>
+
+        {/* Slide 3 */}
+        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -803,15 +800,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("entrepreneur", item.value)}
           />
-          <CustomButton
-            title="Next"
-            onPress={goToNextSlide}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 4 */}
-        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -823,6 +811,15 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("research", item.value)}
           />
+          <CustomButton
+            title="Next"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+        </SlideWrapper>
+
+        {/* Slide 4 */}
+        <SlideWrapper showBack onBack={handleBack}>
           <Text
             style={{
               fontSize: 18,

@@ -4,6 +4,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
+// @ts-ignore
 const TabIcon = ({
   filledIconName,
   outlineIconName,
