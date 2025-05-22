@@ -80,7 +80,7 @@ const TrackActivities = () => {
     loading: loadingCareerFields,
     error: errorCareerFields,
   } = useFetch<{ label: string; value: string }[]>(
-    "https://ec-ai.expo.app/activitytypes",
+    "https://ec-ai.expo.app/getactivitytypes",
   );
 
   useEffect(() => {

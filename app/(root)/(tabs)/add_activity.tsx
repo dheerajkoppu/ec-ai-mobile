@@ -38,7 +38,7 @@ const ActivityTabs = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { data: activitiesRaw } = useFetch(
-    "https://ec-ai.expo.app/activitytypes",
+    "https://ec-ai.expo.app/getactivitytypes",
   );
   const activities: DropdownItem[] = Array.isArray(activitiesRaw)
     ? activitiesRaw
