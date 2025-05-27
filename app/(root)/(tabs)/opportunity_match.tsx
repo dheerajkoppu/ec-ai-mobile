@@ -73,11 +73,14 @@ const Opportunities = () => {
   const fetchOpportunities = async () => {
     if (!user) return;
     try {
-      const response = await fetch("/(api)/getopportunities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id }),
-      });
+      const response = await fetch(
+        "https://ec-ai.expo.app/getsavedopportunities",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clerk_id: user.id }),
+        },
+      );
       if (!response.ok) throw new Error("Failed to fetch opportunities");
       const json = await response.json();
       const formatted: Opportunity[] = json.data.map((op: any) => ({
