@@ -50,7 +50,6 @@ interface IFormData {
   race?: string;
   gender?: string;
   age?: string;
-  lunch?: string;
   firstGen?: string;
   gpaWeighted?: string;
   gpaUnweighted?: string;
@@ -63,7 +62,6 @@ interface IFormData {
   ecReason?: string[];
   ecLevel?: string[];
   leadership?: string;
-  createOwn?: string;
   selectivity?: string;
   paid?: string;
   travel?: string;
@@ -296,16 +294,24 @@ const SlideWrapper: React.FC<{
       {showBack && (
         <TouchableOpacity
           onPress={onBack}
-          style={{ position: "absolute", top: 3, left: 10, zIndex: 10 }}
+          style={{
+            marginBottom: 7, // <- Large margin before bold header content
+            paddingVertical: 10,
+            paddingHorizontal: 14,
+            backgroundColor: "#5b55f7",
+            alignSelf: "flex-start",
+            borderRadius: 8,
+          }}
         >
-          <Text>{"< Back"}</Text>
+          <Text style={{ fontSize: 16, color: "white", fontWeight: "600" }}>
+            ← Back
+          </Text>
         </TouchableOpacity>
       )}
       {children}
     </View>
   </KeyboardAwareScrollView>
 );
-
 // ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
@@ -421,7 +427,6 @@ const ProfileSetup: React.FC = () => {
               race: userData.race_ethnicity,
               gender: userData.gender,
               age: String(userData.age),
-              lunch: userData.free_reduced_lunch ? "Yes" : "No",
               firstGen: userData.first_gen_college ? "Yes" : "No",
               gpaWeighted: userData.gpa_weighted,
               gpaUnweighted: userData.gpa_unweighted,
@@ -440,7 +445,6 @@ const ProfileSetup: React.FC = () => {
               ecReason: ecReasonArr,
               ecLevel: ecLevelArr,
               leadership: userData.seeking_leadership ? "Yes" : "No",
-              createOwn: userData.open_to_own_project ? "Yes" : "No",
               selectivity: userData.opportunity_selectivity,
               paid: userData.interested_in_paid_opportunities ? "Yes" : "No",
               travel: userData.interested_in_travel ? "Yes" : "No",
@@ -498,9 +502,9 @@ const ProfileSetup: React.FC = () => {
           formData.gradeLevel?.trim() &&
           formData.race?.trim() &&
           formData.gender?.trim() &&
-          formData.age?.trim() &&
-          formData.lunch?.trim()
+          formData.age?.trim()
         );
+
       case 1:
         return !!(
           formData.firstGen?.trim() &&
@@ -521,11 +525,10 @@ const ProfileSetup: React.FC = () => {
           formData.ecReason?.length &&
           formData.ecLevel?.length &&
           formData.leadership?.trim() &&
-          formData.createOwn?.trim()
+          formData.selectivity?.trim()
         );
       case 4:
         return !!(
-          formData.selectivity?.trim() &&
           formData.paid?.trim() &&
           formData.ecType?.trim() &&
           formData.timeWeekly?.trim() &&
@@ -674,17 +677,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Enter your age"
             value={formData.age}
             onChangeText={(val) => handleChange("age", val)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Free/Reduced Lunch? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.lunch || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("lunch", item.value)}
           />
           <CustomButton
             title="Next"
@@ -868,14 +860,14 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                Open to starting your own club/project?{" "}
+                Opportunity Selectiveness{" "}
                 <Text className="text-red-500">*</Text>
               </Text>
             }
-            data={yesNo}
-            value={formData.createOwn || ""}
+            data={dropdowns.opportunitySelectivity}
+            value={formData.selectivity || ""}
             placeholder="Select"
-            onChange={(item) => handleChange("createOwn", item.value)}
+            onChange={(item) => handleChange("selectivity", item.value)}
           />
           <CustomButton
             title="Next"
@@ -886,18 +878,6 @@ const ProfileSetup: React.FC = () => {
 
         {/* Slide 5 */}
         <SlideWrapper showBack onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Opportunity Selectiveness{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.opportunitySelectivity}
-            value={formData.selectivity || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("selectivity", item.value)}
-          />
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">

@@ -4,15 +4,12 @@ export async function POST(request: Request) {
   try {
     const sql = neon(process.env.DATABASE_URL as string);
     const {
-      userEmail, // from authentication context
-      name, // optional – defaults to userEmail if not provided
+      userEmail,
+      name,
       gradeLevel,
       race,
-      schoolName,
       gender,
       age,
-      location, // now expected to be just the city
-      lunch,
       firstGen,
       gpaWeighted,
       gpaUnweighted,
@@ -25,7 +22,6 @@ export async function POST(request: Request) {
       ecReason,
       ecLevel,
       leadership,
-      createOwn,
       selectivity,
       paid,
       travel,
@@ -48,10 +44,6 @@ export async function POST(request: Request) {
     // Use a fallback for name if not provided
     const finalName = name || userEmail;
 
-    // Process the location: we only get a city from the UI.
-    const city = location ? location.trim() : null;
-    const state = null; // since state is not provided
-
     // Convert string numeric values.
     const ageInt = age ? parseInt(age) : null;
     const gpaWeightedNum = gpaWeighted ? parseFloat(gpaWeighted) : null;
@@ -63,12 +55,10 @@ export async function POST(request: Request) {
     // Utility: Convert "yes"/"no" strings to booleans.
     const toBool = (val: string | undefined) =>
       val && val.toLowerCase() === "yes";
-    const freeReducedLunch = toBool(lunch);
     const firstGenCollege = toBool(firstGen);
     const wantsToStartBusiness = toBool(entrepreneur);
     const interestedInResearch = toBool(research);
     const seekingLeadership = toBool(leadership);
-    const openToOwnProject = toBool(createOwn);
     const interestedInPaidOpportunities = toBool(paid);
     const interestedInTravel = toBool(travel);
     const usedOtherECFinders = toBool(usedOtherApps);
@@ -87,10 +77,6 @@ export async function POST(request: Request) {
         grade_level = ${gradeLevel},
         gender = ${gender},
         race_ethnicity = ${race},
-        school_name = ${schoolName},
-        city = ${city},
-        state = ${state},
-        free_reduced_lunch = ${freeReducedLunch},
         first_gen_college = ${firstGenCollege},
         gpa_weighted = ${gpaWeightedNum},
         gpa_unweighted = ${gpaUnweightedNum},
@@ -103,7 +89,6 @@ export async function POST(request: Request) {
         extracurricular_motivation = ${extracurricularMotivation},
         field_goal = ${ecLevel},
         seeking_leadership = ${seekingLeadership},
-        open_to_own_project = ${openToOwnProject},
         opportunity_selectivity = ${selectivity},
         interested_in_paid_opportunities = ${interestedInPaidOpportunities},
         interested_in_travel = ${interestedInTravel},
