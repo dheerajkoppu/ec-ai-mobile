@@ -480,7 +480,6 @@ const ProfileSetup: React.FC = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      console.log("API result:", response);
       if (response.ok) {
         router.push("/(root)/(tabs)/opportunity_match");
       } else {
