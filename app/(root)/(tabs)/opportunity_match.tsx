@@ -45,11 +45,18 @@ interface Opportunity {
   pictureurl?: string;
   createdAt?: string;
   description?: string;
+  prestige?: number;
 }
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 520;
+
+const renderStars = (rating?: number) => {
+  if (rating === undefined || rating === null) return "N/A";
+  const fullStars = Math.round(rating);
+  return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
+};
 
 const Opportunities = () => {
   const [refreshing, setRefreshing] = useState(false);
@@ -66,7 +73,7 @@ const Opportunities = () => {
   const fetchOpportunities = async () => {
     if (!user) return;
     try {
-      const response = await fetch("https://ec-ai.expo.app/getopportunities", {
+      const response = await fetch("/(api)/getopportunities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
@@ -103,6 +110,7 @@ const Opportunities = () => {
         hoursPerWeek: op.hoursPerWeek,
         createdAt: op.createdAt,
         description: op.description,
+        prestige: op.prestige,
       }));
 
       // Filter out already swiped
@@ -238,6 +246,13 @@ const Opportunities = () => {
                 <Text className="text-white text-xl font-PoppinsBold mb-0.5">
                   {item.title}
                 </Text>
+                <Text className="text-white text-md font-PoppinsRegular mb-1">
+                  <Text className="text-white text-md font-PoppinsSemiBold">
+                    Prestige:{" "}
+                  </Text>
+                  {renderStars(item.prestige)}
+                </Text>
+
                 <Text className="text-white text-md font-PoppinsRegular">
                   <Text className=" text-white text-md font-PoppinsSemiBold">
                     Activity Type:{" "}
@@ -316,6 +331,13 @@ const Opportunities = () => {
                   </Text>
                 ),
             )}
+
+            {/* ⭐ Prestige field rendered as stars */}
+            <Text style={{ fontSize: 14, marginBottom: 8 }}>
+              <Text style={{ fontWeight: "600" }}>Prestige:</Text>{" "}
+              {renderStars(selectedOpportunity?.prestige)}
+            </Text>
+
             <Text style={{ fontSize: 14, marginBottom: 8 }}>
               <Text style={{ fontWeight: "600" }}>Only FRL Students:</Text>{" "}
               {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
@@ -332,6 +354,7 @@ const Opportunities = () => {
               <Text style={{ fontWeight: "600" }}>Outside US:</Text>{" "}
               {selectedOpportunity?.outsideUS ? "Yes" : "No"}
             </Text>
+
             {selectedOpportunity?.apply && (
               <View
                 style={{
