@@ -4,11 +4,13 @@ export async function POST(request: Request) {
   try {
     const sql = neon(process.env.DATABASE_URL!);
     const { email } = await request.json();
+
     if (!email) {
-      return Response.json({ error: "Missing user email" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing user email" }), {
+        status: 400,
+      });
     }
 
-    // Single query: fetch user and all opportunities
     const [row] = await sql`
             SELECT
                 u.*,
@@ -22,15 +24,15 @@ export async function POST(request: Request) {
         `;
 
     if (!row) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+      });
     }
 
     const user = {
       name: row.name,
       age: row.age,
       grade_level: row.grade_level,
-      school_name: row.school_name,
-      city: row.city,
       race_ethnicity: row.race_ethnicity,
       gender: row.gender,
       free_reduced_lunch: row.free_reduced_lunch,
@@ -43,7 +45,6 @@ export async function POST(request: Request) {
       extracurricular_motivation: row.extracurricular_motivation,
       field_goal: row.field_goal,
       seeking_leadership: row.seeking_leadership,
-      open_to_own_project: row.open_to_own_project,
       extracurricular_format: row.extracurricular_format,
       weekly_commitment: row.weekly_commitment,
       interested_in_travel: row.interested_in_travel,
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
     const prompt = `
 You are an experienced college and career advisor trained to match students with extracurricular activities that align with their personal story, ambitions, and goals.
 
-Meet ${user.name}, a ${user.age}-year-old student in ${user.grade_level} at ${user.school_name} in ${user.city}. As a ${user.race_ethnicity}, ${user.gender} student, ${user.name} has already overcome unique challenges. ${
+Meet ${user.name}, a ${user.age}-year-old student in ${user.grade_level}. As a ${user.race_ethnicity}, ${user.gender} student, ${user.name} has already overcome unique challenges. ${
       user.free_reduced_lunch && user.first_gen_college
         ? "They receive free or reduced lunch and are the first in their family to pursue college."
         : "They are determined to make the most of the opportunities available to them."
@@ -81,9 +82,9 @@ ${user.name} is ${
         ? "actively seeking leadership roles"
         : "more focused on learning and exploring"
     }, and ${
-      user.open_to_own_project
-        ? "is even open to launching a personal project"
-        : "prefers structured programs and mentorship"
+      user.extracurricular_format
+        ? "prefers structured programs and mentorship"
+        : "has no preference for format"
     }. They prefer activities that are ${user.extracurricular_format} with a weekly commitment of around ${user.weekly_commitment}. They ${
       user.interested_in_travel
         ? "are open to traveling for the right experience"
@@ -123,8 +124,8 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     if (!chatResponse.ok) {
       const errorText = await chatResponse.text();
       console.error("Error calling OpenAI API:", errorText);
-      return Response.json(
-        { error: "Error calling OpenAI API" },
+      return new Response(
+        JSON.stringify({ error: "Error calling OpenAI API" }),
         { status: 500 },
       );
     }
@@ -134,16 +135,16 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     try {
       chatData = JSON.parse(rawResponse);
     } catch {
-      return Response.json(
-        { error: "Failed to parse JSON from ChatGPT API" },
+      return new Response(
+        JSON.stringify({ error: "Failed to parse JSON from ChatGPT API" }),
         { status: 500 },
       );
     }
 
     const responseText = chatData.choices?.[0]?.message?.content?.trim();
     if (!responseText) {
-      return Response.json(
-        { error: "No content in ChatGPT response" },
+      return new Response(
+        JSON.stringify({ error: "No content in ChatGPT response" }),
         { status: 500 },
       );
     }
@@ -153,8 +154,8 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     try {
       suggestions = JSON.parse(responseText);
     } catch {
-      return Response.json(
-        { error: "Error parsing ChatGPT suggestions" },
+      return new Response(
+        JSON.stringify({ error: "Error parsing ChatGPT suggestions" }),
         { status: 500 },
       );
     }
@@ -167,7 +168,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     });
 
     const enrichedActivities = opportunities
-      .filter((op) => activityIds.includes(op.id))
+      .filter((op) => activityIds.includes(Number(op.id)))
       .map((op) => ({
         id: op.id,
         school: op.school,
@@ -194,7 +195,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
         outsideUS: op.outside_us,
         hoursPerWeek: op.hours_per_week,
         createdAt: op.created_at,
-        top_3_reasons: suggestionMap[op.id] || [],
+        top_3_reasons: suggestionMap[Number(op.id)] || [],
       }));
 
     return new Response(JSON.stringify({ enrichedActivities }), {
@@ -202,6 +203,8 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     });
   } catch (error) {
     console.error("Error in API route:", error);
-    return Response.json({ error: "Internal Server Error" }, { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }
