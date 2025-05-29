@@ -16,6 +16,8 @@ import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReactNativeModal from "react-native-modal";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
+import Purchases from "react-native-purchases";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 interface Opportunity {
   id: string;
@@ -76,11 +78,32 @@ export default function Saved_opportunities() {
   const getAIReasons = async (opportunity: Opportunity) => {
     try {
       setLoadingReason(true);
+
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremium =
+        customerInfo.entitlements.active["premium"] !== undefined;
+
+      if (!isPremium) {
+        const result = await RevenueCatUI.presentPaywallIfNeeded({
+          requiredEntitlementIdentifier: "premium",
+        });
+
+        if (result === "PURCHASED" || result === "RESTORED") {
+          // Retry after purchase/restore
+          return await getAIReasons(opportunity);
+        } else {
+          // Paywall was dismissed, errored, or cancelled
+          return;
+        }
+      }
+
+      // Premium access confirmed, fetch AI-generated reasons
       const response = await fetch("https://ec-ai.expo.app/getaireasons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activity_id: opportunity.id }),
       });
+
       const result = await response.json();
       setAiReasons(result.reasons || "No reasons available.");
       setShowAIReasonsModal(true);

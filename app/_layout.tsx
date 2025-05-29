@@ -4,11 +4,18 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { tokenCache } from "@/lib/auth";
+import RevenueCatInit from "@/components/RevenueCatInit";
 
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 
-const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+import Purchases, { LOG_LEVEL } from "react-native-purchases";
+import { Platform } from "react-native";
 
+const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
+const revenuecatApiKey = Platform.select({
+  ios: process.env.EXPO_PUBLIC_APPLE_API_KEY,
+  android: process.env.EXPO_PUBLIC_ANDROID_API_KEY,
+});
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
@@ -43,6 +50,12 @@ export default function RootLayout() {
     if (loaded) {
       SplashScreen.hideAsync();
     }
+
+    // RevenueCat Initialization
+    if (revenuecatApiKey) {
+      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+      Purchases.configure({ apiKey: revenuecatApiKey });
+    }
   }, [loaded]);
 
   if (!loaded) {
@@ -52,6 +65,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
+        <RevenueCatInit />
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />

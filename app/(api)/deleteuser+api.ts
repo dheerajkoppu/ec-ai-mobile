@@ -34,7 +34,7 @@ export async function DELETE(request: Request) {
       from: "EC-AI <onboarding@resend.dev>", // still works even without your own domain
       to: "ask.ecai@gmail.com",
       subject: "User Deletion Request",
-      text: `The user with email ${userEmail} has requested account deletion.`,
+      text: `The user with email ${userEmail} has requested account deletion. Please delete the user from both Clerk and RevenueCat`,
     });
 
     return new Response(

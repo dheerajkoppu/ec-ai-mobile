@@ -15,7 +15,8 @@ import { useUser } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { RefreshControl } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import Purchases from "react-native-purchases";
 
 interface Opportunity {
   id: string;
@@ -64,9 +65,6 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [savedOpportunities, setSavedOpportunities] = useState<Set<string>>(
-    new Set(),
-  );
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
 
@@ -78,7 +76,6 @@ const Opportunities = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
       });
-      if (!response.ok) throw new Error("Failed to fetch opportunities");
       const json = await response.json();
       const formatted: Opportunity[] = json.data.map((op: any) => ({
         id: op.id,
@@ -112,13 +109,7 @@ const Opportunities = () => {
         description: op.description,
         prestige: op.prestige,
       }));
-
-      // Filter out already swiped
-      const swiped = await AsyncStorage.getItem("swipedOpportunities");
-      const swipedSet = swiped ? new Set(JSON.parse(swiped)) : new Set();
-      const filtered = formatted.filter((op) => !swipedSet.has(op.id));
-
-      setOpportunities(filtered);
+      setOpportunities(formatted);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Error fetching opportunities");
@@ -127,37 +118,45 @@ const Opportunities = () => {
     }
   };
 
-  const markOpportunityAsSwiped = async (id: string) => {
-    try {
-      const swiped = await AsyncStorage.getItem("swipedOpportunities");
-      const swipedSet = swiped ? new Set(JSON.parse(swiped)) : new Set();
-      swipedSet.add(id);
-      await AsyncStorage.setItem(
-        "swipedOpportunities",
-        JSON.stringify(Array.from(swipedSet)),
-      );
-    } catch (err) {
-      console.log("Failed to save swiped opportunity", err);
-    }
-  };
-
   const handleSave = async (op: Opportunity) => {
-    if (!user || savedOpportunities.has(op.id)) return;
-    setSavedOpportunities((prev) => new Set(prev).add(op.id));
-    await markOpportunityAsSwiped(op.id);
+    if (!user) return;
     try {
+      const res = await fetch("https://ec-ai.expo.app/getsavedopportunities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ clerk_id: user.id }),
+      });
+      const json = await res.json();
+      const savedIds = new Set(json?.data?.map((item: any) => item.id));
+      if (savedIds.has(op.id)) return;
+
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremium =
+        customerInfo.entitlements.active["premium"] !== undefined;
+
+      if (savedIds.size >= 3 && !isPremium) {
+        const result = await RevenueCatUI.presentPaywallIfNeeded({
+          requiredEntitlementIdentifier: "premium",
+        });
+        if (
+          result !== PAYWALL_RESULT.PURCHASED &&
+          result !== PAYWALL_RESULT.RESTORED
+        )
+          return;
+      }
+
       await fetch("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
       });
-    } catch {
-      // ignore
+    } catch (err) {
+      console.error("Error saving opportunity or presenting paywall:", err);
     }
   };
 
   const handleSkip = async (op: Opportunity) => {
-    await markOpportunityAsSwiped(op.id);
+    console.log("Skipped:", op.id);
   };
 
   useEffect(() => {

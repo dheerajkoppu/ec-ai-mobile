@@ -21,6 +21,8 @@ import CustomButton from "@/components/CustomButton";
 import { fetchAPI } from "@/lib/fetch";
 import { router, useLocalSearchParams } from "expo-router";
 import ReactNativeModal from "react-native-modal";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import Purchases from "react-native-purchases";
 
 // Interfaces
 interface DropdownOption {
@@ -697,28 +699,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("firstGen", item.value)}
           />
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Weighted GPA <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter weighted GPA"
-            value={formData.gpaWeighted}
-            onChangeText={(val) => handleChange("gpaWeighted", val)}
-          />
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Unweighted GPA <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter unweighted GPA"
-            value={formData.gpaUnweighted}
-            onChangeText={(val) => handleChange("gpaUnweighted", val)}
-          />
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -741,6 +721,29 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select ACT range"
             onChange={(item) => handleChange("actScore", item.value)}
           />
+          <InputField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Weighted GPA <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            keyboardType="numeric"
+            placeholder="Enter weighted GPA"
+            value={formData.gpaWeighted}
+            onChangeText={(val) => handleChange("gpaWeighted", val)}
+          />
+          <InputField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Unweighted GPA <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            keyboardType="numeric"
+            placeholder="Enter unweighted GPA"
+            value={formData.gpaUnweighted}
+            onChangeText={(val) => handleChange("gpaUnweighted", val)}
+          />
+
           <CustomButton
             title="Next"
             onPress={goToNextSlide}

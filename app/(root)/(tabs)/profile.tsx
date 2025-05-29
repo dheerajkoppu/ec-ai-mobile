@@ -15,8 +15,10 @@ import * as Linking from "expo-linking";
 import * as ImagePicker from "expo-image-picker";
 import CustomButton from "@/components/CustomButton";
 import { Ionicons } from "@expo/vector-icons";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
+import Purchases from "react-native-purchases";
 
 const Profile = () => {
   const { user, signOut } = useClerk();
@@ -119,11 +121,12 @@ const Profile = () => {
   // Local sign out function replicating SignOutButton logic
   const handleSignOut = async () => {
     try {
-      await signOut();
-      // Redirect to home page
-      Linking.openURL(Linking.createURL("/"));
+      await AsyncStorage.clear(); // Clear all local storage
+      await Purchases.logOut(); // RevenueCat logout
+      await signOut(); // Clerk logout
+      Linking.openURL(Linking.createURL("/")); // Redirect to home
     } catch (err) {
-      console.error(JSON.stringify(err, null, 2));
+      console.error("Error during logout:", err);
     }
   };
   const requestDataExport = async () => {
@@ -177,6 +180,7 @@ const Profile = () => {
       });
 
       if (response.ok) {
+        await Purchases.logOut();
         await signOut(); // Sign out the user after successful deletion
         Linking.openURL(Linking.createURL("/"));
       } else {

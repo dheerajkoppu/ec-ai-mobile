@@ -18,6 +18,8 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import CustomButton from "@/components/CustomButton";
 import { useFetch, fetchAPI } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
+import Purchases from "react-native-purchases";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -207,25 +209,49 @@ const TrackActivities = () => {
     }
   };
 
-  // Updated function to call the getaidescription API route and show a modal popup.
   const getAIDescription = async (activity: Activity) => {
     if (!email) {
       Alert.alert("Error", "No user email provided");
       return;
     }
+
     try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremium =
+        customerInfo.entitlements.active["premium"] !== undefined;
+
+      if (!isPremium) {
+        const result = await RevenueCatUI.presentPaywallIfNeeded({
+          requiredEntitlementIdentifier: "premium",
+        });
+
+        if (
+          result === PAYWALL_RESULT.PURCHASED ||
+          result === PAYWALL_RESULT.RESTORED
+        ) {
+          // retry after purchase or restore
+          return await getAIDescription(activity);
+        } else {
+          // Paywall dismissed or failed
+          return;
+        }
+      }
+
+      // If already premium or newly purchased, proceed
       const response = await fetch("https://ec-ai.expo.app/getaidescription", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, activity_id: activity.id }),
       });
+
       const result = await response.json();
+
       setSelectedActivityForAIDescription(activity);
       setAiDescription(result.description || "No description available.");
       setShowAIDescriptionModal(true);
     } catch (error) {
-      console.error("Error fetching AI generated description:", error);
-      Alert.alert("Error", "Failed to get AI generated description.");
+      console.error("Error in getAIDescription:", error);
+      Alert.alert("Error", "Something went wrong. Please try again.");
     }
   };
 

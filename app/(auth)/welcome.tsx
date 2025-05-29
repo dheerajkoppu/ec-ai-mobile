@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { onboarding } from "@/constants";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 const Home = () => {
   const swiperRef = useRef<Swiper>(null);
