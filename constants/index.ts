@@ -29,7 +29,6 @@ import onboarding3 from "@/assets/images/onboarding3.png";
 import icon from "@/assets/images/icon.png";
 import logo from "@/assets/images/logo.png";
 import logo_outline from "@/assets/images/logo_outline.png";
-import signUpCar from "@/assets/images/signup-car.png";
 import add_activity1 from "@/assets/icons/add_activity1.png";
 import add_activity2 from "@/assets/icons/add_activity2.png";
 import new_opportunities1 from "@/assets/icons/new_opportunities1.png";
@@ -45,7 +44,6 @@ export const images = {
   onboarding1,
   onboarding2,
   onboarding3,
-  signUpCar,
   check,
   icon,
 };
