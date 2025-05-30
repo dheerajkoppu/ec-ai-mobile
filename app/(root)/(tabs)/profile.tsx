@@ -19,6 +19,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import Purchases from "react-native-purchases";
+import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 const Profile = () => {
   const { user, signOut } = useClerk();
@@ -38,7 +39,18 @@ const Profile = () => {
       Alert.alert("Error", "Failed to update notification setting.");
     }
   };
-
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      try {
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasPremium = !!customerInfo.entitlements.active["premium"];
+        setIsPremium(hasPremium);
+      } catch (error) {
+        console.error("Failed to check premium status:", error);
+      }
+    };
+    checkPremiumStatus();
+  }, []);
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const router = useRouter();
@@ -117,6 +129,7 @@ const Profile = () => {
   // Modal visibility states for logout and delete account
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isPremium, setIsPremium] = useState(false);
 
   // Local sign out function replicating SignOutButton logic
   const handleSignOut = async () => {
@@ -218,6 +231,28 @@ const Profile = () => {
           <Text className="text-primary-900 text-base font-PoppinsRegular">
             {user?.primaryEmailAddress?.emailAddress}
           </Text>
+        </View>
+        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
+          <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
+            Subscription
+          </Text>
+          <CustomButton
+            title={isPremium ? "Premium" : "Subscribe to Premium"}
+            onPress={async () => {
+              if (!isPremium) {
+                const result = await RevenueCatUI.presentPaywallIfNeeded({
+                  requiredEntitlementIdentifier: "premium",
+                });
+                if (
+                  result === PAYWALL_RESULT.PURCHASED ||
+                  result === PAYWALL_RESULT.RESTORED
+                ) {
+                  setIsPremium(true);
+                }
+              }
+            }}
+            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+          />
         </View>
 
         {/* Customization Section */}
