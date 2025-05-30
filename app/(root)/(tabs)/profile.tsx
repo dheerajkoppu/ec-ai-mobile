@@ -234,7 +234,7 @@ const Profile = () => {
         </View>
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
-            Subscription
+            Subscription Status
           </Text>
           <CustomButton
             title={isPremium ? "Premium" : "Subscribe to Premium"}
