@@ -7,15 +7,9 @@ export default function RevenueCatInit() {
 
   useEffect(() => {
     if (isLoaded && user) {
-      const appUserId = user.id;
-
-      Purchases.logIn(appUserId)
-        .then(({ customerInfo, created }) => {
-          console.log("✅ RevenueCat logged in", { created, customerInfo });
-        })
-        .catch((err) => {
-          console.error("❌ RevenueCat login error", err);
-        });
+      Purchases.logIn(user.id).catch((err) => {
+        console.error("❌ RevenueCat login error", err);
+      });
     }
   }, [isLoaded, user]);
 
