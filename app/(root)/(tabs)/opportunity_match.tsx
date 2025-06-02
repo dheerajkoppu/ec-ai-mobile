@@ -188,13 +188,13 @@ const Opportunities = () => {
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View style={{ alignItems: "center", marginVertical: 16 }}>
         <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
           Opportunity Match
         </Text>
         <Text className="text-gray-500 font-PoppinsRegular">
-          Swipe RIGHT to Save an opportunity. Swipe left to skip.
+          Swipe RIGHT to save an opportunity, left to skip.{" "}
         </Text>
       </View>
 
