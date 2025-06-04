@@ -974,12 +974,23 @@ const ProfileSetup: React.FC = () => {
                 <Text
                   onPress={async () =>
                     await WebBrowser.openBrowserAsync(
+                      "https://ec-aiweb.vercel.app/terms-of-use",
+                    )
+                  }
+                  style={{ color: "#5b55f7", textDecorationLine: "underline" }}
+                >
+                  the Terms
+                </Text>
+                {" & "}
+                <Text
+                  onPress={async () =>
+                    await WebBrowser.openBrowserAsync(
                       "https://ec-aiweb.vercel.app/privacy-policy",
                     )
                   }
                   style={{ color: "#5b55f7", textDecorationLine: "underline" }}
                 >
-                  The Terms & Privacy Policy
+                  Privacy Policy
                 </Text>
                 ? <Text className="text-red-500">*</Text>
               </Text>

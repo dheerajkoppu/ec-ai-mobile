@@ -23,10 +23,11 @@ import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 const Profile = () => {
-  const { user, signOut } = useClerk();
+  const { user } = useUser();
+  const { signOut } = useClerk();
   const updateNotificationStatus = async (value: boolean) => {
     try {
-      setNotifications(value); // Optimistic UI
+      setNotifications(value);
       await fetch("https://ec-ai.expo.app/updatenotifications", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -40,6 +41,7 @@ const Profile = () => {
       Alert.alert("Error", "Failed to update notification setting.");
     }
   };
+
   useEffect(() => {
     const checkPremiumStatus = async () => {
       try {
@@ -52,6 +54,7 @@ const Profile = () => {
     };
     checkPremiumStatus();
   }, []);
+
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const router = useRouter();
 
@@ -69,29 +72,19 @@ const Profile = () => {
 
     if (!result.canceled) {
       const localUri = result.assets[0].uri;
-
-      // Read the selected image file as a base64 string.
       const base64Img = await FileSystem.readAsStringAsync(localUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
-
-      // Create a valid data URL for a JPEG image.
       const dataUrl = `data:image/jpeg;base64,${base64Img}`;
 
-      // Update Clerk with the new profile image by passing the base64 string.
       try {
         const updatedImage = await user?.setProfileImage({ file: dataUrl });
-        console.log("Updated image:", updatedImage);
-        // Update state using the publicUrl returned by Clerk if available,
-        // otherwise fall back to the base64 dataUrl.
         setImageUri(updatedImage?.publicUrl || dataUrl);
       } catch (error) {
         console.error("Error updating profile image:", error);
       }
     }
   };
-
-  // Remove the imgbb upload function as it's no longer needed.
 
   const [notifications, setNotifications] = useState(true);
   useEffect(() => {
@@ -103,9 +96,7 @@ const Profile = () => {
           "https://ec-ai.expo.app/getnotificationstatus",
           {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               email: user.primaryEmailAddress.emailAddress,
             }),
@@ -126,67 +117,53 @@ const Profile = () => {
     fetchNotificationStatus();
   }, [user?.primaryEmailAddress?.emailAddress]);
 
-  // Modal visibility states for logout and delete account
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
 
-  // Local sign out function replicating SignOutButton logic
   const handleSignOut = async () => {
     try {
-      await AsyncStorage.clear(); // Clear all local storage
-      await Purchases.logOut(); // RevenueCat logout
-      await signOut(); // Clerk logout
-      Linking.openURL(Linking.createURL("/")); // Redirect to home
+      await AsyncStorage.clear();
+      await Purchases.logOut();
+      await signOut();
+      Linking.openURL(Linking.createURL("/"));
     } catch (err) {
       console.error("Error during logout:", err);
     }
   };
+
   const requestDataExport = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) {
-      console.log("User email is missing.");
-      return;
-    }
+    if (!user?.primaryEmailAddress?.emailAddress) return;
 
     try {
       const response = await fetch("https://ec-ai.expo.app/exportdata", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.primaryEmailAddress.emailAddress,
         }),
       });
 
       const data = await response.json();
-
       if (response.ok) {
         Alert.alert(
           "Request Sent",
           "Your data request has been sent successfully.",
         );
       } else {
-        console.error("Failed to send export request:", data);
-        Alert.alert("Error", "Your data request has been sent successfully.");
+        Alert.alert("Error", "Failed to send export request.");
       }
     } catch (error) {
-      console.error("Export data error:", error);
       Alert.alert("Error", "An unexpected error occurred.");
     }
   };
 
   const deleteAccount = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) {
-      console.log("Error", "User email is missing.");
-      return;
-    }
+    if (!user?.primaryEmailAddress?.emailAddress) return;
     try {
       const response = await fetch("https://ec-ai.expo.app/deleteuser", {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userEmail: user.primaryEmailAddress.emailAddress,
         }),
@@ -194,7 +171,7 @@ const Profile = () => {
 
       if (response.ok) {
         await Purchases.logOut();
-        await signOut(); // Sign out the user after successful deletion
+        await signOut();
         Linking.openURL(Linking.createURL("/"));
       } else {
         const error = await response.json();
@@ -211,7 +188,6 @@ const Profile = () => {
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Information */}
         <View className="items-center mb-6 relative">
           <View className="relative">
             <Image
@@ -232,6 +208,7 @@ const Profile = () => {
             {user?.primaryEmailAddress?.emailAddress}
           </Text>
         </View>
+
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
             Subscription Status
@@ -244,18 +221,17 @@ const Profile = () => {
                   requiredEntitlementIdentifier: "premium",
                 });
                 if (
-                  result === PAYWALL_RESULT.PURCHASED ||
-                  result === PAYWALL_RESULT.RESTORED
-                ) {
+                  [PAYWALL_RESULT.PURCHASED, PAYWALL_RESULT.RESTORED].includes(
+                    result,
+                  )
+                )
                   setIsPremium(true);
-                }
               }
             }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
         </View>
 
-        {/* Customization Section */}
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
             Customization
@@ -267,7 +243,6 @@ const Profile = () => {
           />
         </View>
 
-        {/* Account Settings Section */}
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
             Account Settings
@@ -282,33 +257,21 @@ const Profile = () => {
             />
           </View>
           <CustomButton
-            title="Privacy Policy"
-            onPress={async () => {
-              await WebBrowser.openBrowserAsync(
-                "https://ec-aiweb.vercel.app/privacy-policy",
-              );
-            }}
-            className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
-          />
-
-          <CustomButton
             title="Export Data"
             onPress={requestDataExport}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
         </View>
 
-        {/* Help & Support Section */}
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <Text className="text-xl font-semibold mb-3 font-PoppinsBold">
             Help & Support
           </Text>
-
           <CustomButton
             title="Contact Support"
             onPress={() =>
               Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Support%20Inquiry&body=Enter%20your%20inquiry...",
+                "mailto:ask.ecai@gmail.com?subject=Support%20Inquiry",
               )
             }
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
@@ -316,15 +279,37 @@ const Profile = () => {
           <CustomButton
             title="Submit Feedback"
             onPress={() =>
-              Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Feedback&body=Enter%20your%20feedback...",
+              Linking.openURL("mailto:ask.ecai@gmail.com?subject=Feedback")
+            }
+            className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
+          />
+        </View>
+
+        {/* Legal Section */}
+        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
+          <Text className="text-xl font-semibold mb-3 font-PoppinsBold">
+            Legal
+          </Text>
+          <CustomButton
+            title="Privacy Policy"
+            onPress={() =>
+              WebBrowser.openBrowserAsync(
+                "https://ec-aiweb.vercel.app/privacy-policy",
+              )
+            }
+            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+          />
+          <CustomButton
+            title="Terms of Use"
+            onPress={() =>
+              WebBrowser.openBrowserAsync(
+                "https://ec-aiweb.vercel.app/terms-of-use",
               )
             }
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
         </View>
 
-        {/* Log Out and Delete Account Section */}
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <CustomButton
             title="Log Out"
