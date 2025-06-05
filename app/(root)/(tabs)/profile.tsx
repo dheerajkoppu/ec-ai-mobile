@@ -145,7 +145,7 @@ const Profile = () => {
   const downloadPDF = async () => {
     if (email) {
       try {
-        await fetchAPI("/(api)/activities-pdf", {
+        await fetchAPI("https://ec-ai.expo.app/activities-pdf", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email }),
