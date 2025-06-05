@@ -123,6 +123,7 @@ const TrackActivities = () => {
             description: updatedActivity.description,
           }),
         });
+
         await refetch();
         setEditingActivity(null);
         setShowEditModal(false);
@@ -307,6 +308,7 @@ const TrackActivities = () => {
         >
           <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
         </TouchableOpacity>
+
         {showSortDropdown && (
           <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-3 z-20">
             <TouchableOpacity onPress={() => sortActivities("hours")}>

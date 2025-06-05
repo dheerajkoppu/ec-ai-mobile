@@ -23,6 +23,7 @@ import * as FileSystem from "expo-file-system";
 import { useRouter } from "expo-router";
 import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import { fetchAPI } from "@/lib/fetch";
 
 const Profile = () => {
   const { user } = useUser();
@@ -138,9 +139,28 @@ const Profile = () => {
   }, [user?.primaryEmailAddress?.emailAddress]);
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const email = user?.primaryEmailAddress?.emailAddress;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-
+  const downloadPDF = async () => {
+    if (email) {
+      try {
+        await fetchAPI("/(api)/activities-pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+      } catch (error) {
+        console.error("PDF download error:", error);
+        Alert.alert(
+          "Error",
+          "Failed to generate and send your activities PDF.",
+        );
+      }
+    } else {
+      Alert.alert("Missing Email", "We couldn't find your account email.");
+    }
+  };
   const handleSignOut = async () => {
     try {
       await AsyncStorage.clear();
@@ -279,6 +299,34 @@ const Profile = () => {
           <CustomButton
             title="Export Data"
             onPress={requestDataExport}
+            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+          />
+          <CustomButton
+            title="Download Activities PDF"
+            onPress={async () => {
+              if (isPremium) {
+                Alert.alert(
+                  "Sending PDF...",
+                  "We're sending your activities PDF to your email now.",
+                );
+                downloadPDF();
+              } else {
+                const result = await RevenueCatUI.presentPaywallIfNeeded({
+                  requiredEntitlementIdentifier: "premium",
+                });
+                if (
+                  result === PAYWALL_RESULT.PURCHASED ||
+                  result === PAYWALL_RESULT.RESTORED
+                ) {
+                  setIsPremium(true);
+                  Alert.alert(
+                    "Sending PDF...",
+                    "We're sending your activities PDF to your email now.",
+                  );
+                  downloadPDF();
+                }
+              }
+            }}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
         </View>
