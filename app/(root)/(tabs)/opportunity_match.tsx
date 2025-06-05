@@ -10,6 +10,8 @@ import {
   Dimensions,
   ImageBackground,
 } from "react-native";
+import { Alert } from "react-native";
+
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
@@ -61,12 +63,23 @@ const renderStars = (rating?: number) => {
 
 const Opportunities = () => {
   const [refreshing, setRefreshing] = useState(false);
+  const [swipeCount, setSwipeCount] = useState(0);
+  const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
   const { user } = useUser();
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
+  const [canSwipe, setCanSwipe] = useState(true);
+
+  useEffect(() => {
+    const today = new Date().toISOString().split("T")[0];
+    if (lastSwipeDate !== today) {
+      setSwipeCount(0);
+      setLastSwipeDate(today);
+    }
+  }, []);
 
   const fetchOpportunities = async () => {
     if (!user) return;
@@ -200,9 +213,81 @@ const Opportunities = () => {
 
       <Swiper
         cards={opportunities}
-        onSwipedRight={(i) => handleSave(opportunities[i])}
-        onSwipedLeft={(i) => handleSkip(opportunities[i])}
+        onSwipedRight={async (i) => {
+          if (!canSwipe) return;
+
+          const today = new Date().toISOString().split("T")[0];
+          const customerInfo = await Purchases.getCustomerInfo();
+          const isPremium =
+            customerInfo.entitlements.active["premium"] !== undefined;
+
+          if (lastSwipeDate !== today) {
+            setSwipeCount(1);
+            setLastSwipeDate(today);
+            handleSave(opportunities[i]);
+          } else if (swipeCount < 5 || isPremium) {
+            setSwipeCount((prev) => prev + 1);
+            handleSave(opportunities[i]);
+          } else {
+            const result = await RevenueCatUI.presentPaywallIfNeeded({
+              requiredEntitlementIdentifier: "premium",
+            });
+            if (
+              result === PAYWALL_RESULT.PURCHASED ||
+              result === PAYWALL_RESULT.RESTORED
+            ) {
+              setSwipeCount((prev) => prev + 1);
+              handleSave(opportunities[i]);
+            } else {
+              Alert.alert(
+                "Swipe Limit Reached",
+                "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
+                [{ text: "OK" }],
+              );
+              setCanSwipe(false);
+            }
+          }
+        }}
+        onSwipedLeft={async (i) => {
+          if (!canSwipe) return;
+
+          const today = new Date().toISOString().split("T")[0];
+          const customerInfo = await Purchases.getCustomerInfo();
+          const isPremium =
+            customerInfo.entitlements.active["premium"] !== undefined;
+
+          if (lastSwipeDate !== today) {
+            setSwipeCount(1);
+            setLastSwipeDate(today);
+            handleSkip(opportunities[i]);
+          } else if (swipeCount < 5 || isPremium) {
+            setSwipeCount((prev) => prev + 1);
+            handleSkip(opportunities[i]);
+          } else {
+            const result = await RevenueCatUI.presentPaywallIfNeeded({
+              requiredEntitlementIdentifier: "premium",
+            });
+            if (
+              result === PAYWALL_RESULT.PURCHASED ||
+              result === PAYWALL_RESULT.RESTORED
+            ) {
+              setSwipeCount((prev) => prev + 1);
+              handleSkip(opportunities[i]);
+            } else {
+              Alert.alert(
+                "Swipe Limit Reached",
+                "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
+                [{ text: "OK" }],
+              );
+              setCanSwipe(false);
+            }
+          }
+        }}
         infinite
+        disableTopSwipe
+        disableBottomSwipe
+        disableLeftSwipe={!canSwipe}
+        disableRightSwipe={!canSwipe}
         stackSize={3}
         verticalSwipe={false}
         cardVerticalMargin={20}
