@@ -11,6 +11,7 @@ import {
   ImageBackground,
 } from "react-native";
 import { Alert } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
 
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
@@ -80,6 +81,30 @@ const Opportunities = () => {
       setLastSwipeDate(today);
     }
   }, []);
+  useEffect(() => {
+    const checkPremiumAndUnlock = async () => {
+      const info = await Purchases.getCustomerInfo();
+      const isPremium = info.entitlements.active["premium"] !== undefined;
+      if (isPremium) {
+        setCanSwipe(true); // ✅ Unlock swiping if user is premium
+      }
+    };
+
+    checkPremiumAndUnlock();
+  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkPremiumAndUnlock = async () => {
+        const info = await Purchases.getCustomerInfo();
+        const isPremium = info.entitlements.active["premium"] !== undefined;
+        if (isPremium) {
+          setCanSwipe(true);
+        }
+      };
+
+      checkPremiumAndUnlock();
+    }, []),
+  );
 
   const fetchOpportunities = async () => {
     if (!user) return;
@@ -166,10 +191,6 @@ const Opportunities = () => {
     } catch (err) {
       console.error("Error saving opportunity or presenting paywall:", err);
     }
-  };
-
-  const handleSkip = async (op: Opportunity) => {
-    console.log("Skipped:", op.id);
   };
 
   useEffect(() => {

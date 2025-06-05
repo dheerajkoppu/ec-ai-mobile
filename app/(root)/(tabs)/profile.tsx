@@ -10,6 +10,8 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
 import ReactNativeModal from "react-native-modal";
 import * as Linking from "expo-linking";
@@ -54,6 +56,24 @@ const Profile = () => {
     };
     checkPremiumStatus();
   }, []);
+  useFocusEffect(
+    useCallback(() => {
+      const checkPremiumStatus = async () => {
+        try {
+          const customerInfo = await Purchases.getCustomerInfo();
+          const hasPremium = !!customerInfo.entitlements.active["premium"];
+          setIsPremium(hasPremium);
+        } catch (error) {
+          console.error(
+            "Failed to check premium status (on screen focus):",
+            error,
+          );
+        }
+      };
+
+      checkPremiumStatus();
+    }, []),
+  );
 
   const [imageUri, setImageUri] = useState(user?.imageUrl);
   const router = useRouter();
