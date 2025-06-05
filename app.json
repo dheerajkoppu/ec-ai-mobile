@@ -10,10 +10,10 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "CFBundleDisplayName": "EC-AI",
       "bundleIdentifier": "com.dheerajkoppu.ec-ai",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleDisplayName": "EC-AI"
       }
     },
     "android": {
