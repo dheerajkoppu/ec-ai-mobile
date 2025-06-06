@@ -40,7 +40,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "The app accesses your photos to let you add a profile picture."
+          "photosPermission": "We need access to your photos so you can choose a profile picture."
         }
       ],
       [
