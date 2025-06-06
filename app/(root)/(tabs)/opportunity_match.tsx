@@ -280,10 +280,8 @@ const Opportunities = () => {
           if (lastSwipeDate !== today) {
             setSwipeCount(1);
             setLastSwipeDate(today);
-            handleSkip(opportunities[i]);
           } else if (swipeCount < 5 || isPremium) {
             setSwipeCount((prev) => prev + 1);
-            handleSkip(opportunities[i]);
           } else {
             const result = await RevenueCatUI.presentPaywallIfNeeded({
               requiredEntitlementIdentifier: "premium",
@@ -293,7 +291,6 @@ const Opportunities = () => {
               result === PAYWALL_RESULT.RESTORED
             ) {
               setSwipeCount((prev) => prev + 1);
-              handleSkip(opportunities[i]);
             } else {
               Alert.alert(
                 "Swipe Limit Reached",
