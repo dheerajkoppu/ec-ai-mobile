@@ -178,7 +178,7 @@ const multiSelectStyles = StyleSheet.create({
   modalContainer: {
     width: 300,
     maxHeight: "70%",
-    backgroundColor: "#f5f7fa",
+    backgroundColor: "white",
     borderRadius: 12,
     padding: 15,
     shadowColor: "#000",
@@ -318,6 +318,8 @@ const SlideWrapper: React.FC<{
 // ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
+  const [isPremium, setIsPremium] = useState(false);
+  const [hasShownPaywall, setHasShownPaywall] = useState(false);
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
@@ -335,6 +337,18 @@ const ProfileSetup: React.FC = () => {
     },
     [],
   );
+  useEffect(() => {
+    const checkPremiumStatus = async () => {
+      try {
+        const customerInfo = await Purchases.getCustomerInfo();
+        const hasPremium = !!customerInfo.entitlements.active["premium"];
+        setIsPremium(hasPremium);
+      } catch (error) {
+        console.error("Failed to check premium status:", error);
+      }
+    };
+    checkPremiumStatus();
+  }, []);
 
   const handleBack = () => {
     if (step > 0) {
@@ -1003,15 +1017,35 @@ const ProfileSetup: React.FC = () => {
 
           <CustomButton
             title="Submit"
-            onPress={() => {
-              if (validateSlide(step)) {
-                handleSubmit();
-              } else {
+            onPress={async () => {
+              if (!validateSlide(step)) {
                 Alert.alert(
                   "Incomplete",
                   "Please fill out all required fields on this page.",
                 );
+                return;
               }
+
+              // Only show paywall if NOT in update mode
+              if (update !== "true" && !isPremium && !hasShownPaywall) {
+                const result = await RevenueCatUI.presentPaywallIfNeeded({
+                  requiredEntitlementIdentifier: "premium",
+                });
+
+                setHasShownPaywall(true); // Mark as shown regardless of result
+
+                if (
+                  result === PAYWALL_RESULT.PURCHASED ||
+                  result === PAYWALL_RESULT.RESTORED
+                ) {
+                  setIsPremium(true);
+                  await handleSubmit();
+                }
+
+                return; // Cancel if closed/cancelled
+              }
+
+              await handleSubmit();
             }}
             style={{ marginTop: 16 }}
           />
