@@ -106,14 +106,35 @@ const Opportunities = () => {
     }, []),
   );
 
+  const logSwipe = async (opportunityId: string, liked: boolean) => {
+    if (!user?.id) return;
+    try {
+      await fetch("https://ec-ai.expo.app/logswipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userClerkId: user.id,
+          opportunityId,
+          liked,
+        }),
+      });
+    } catch (err) {
+      console.error("Swipe log failed:", err);
+    }
+  };
+
   const fetchOpportunities = async () => {
     if (!user) return;
     try {
-      const response = await fetch("https://ec-ai.expo.app/getopportunities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id }),
-      });
+      const response = await fetch(
+        "https://ec-ai.expo.app/getrecommendations",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ clerk_id: user.id }),
+        },
+      );
+
       const json = await response.json();
       const formatted: Opportunity[] = json.data.map((op: any) => ({
         id: op.id,
@@ -242,32 +263,43 @@ const Opportunities = () => {
           const isPremium =
             customerInfo.entitlements.active["premium"] !== undefined;
 
+          const opportunity = opportunities[i];
+
           if (lastSwipeDate !== today) {
             setSwipeCount(1);
             setLastSwipeDate(today);
-            handleSave(opportunities[i]);
+            fetchOpportunities();
           } else if (swipeCount < 5 || isPremium) {
-            setSwipeCount((prev) => prev + 1);
-            handleSave(opportunities[i]);
+            setSwipeCount((prev) => {
+              const updated = prev + 1;
+              if (updated % 5 === 0) fetchOpportunities();
+              return updated;
+            });
           } else {
             const result = await RevenueCatUI.presentPaywallIfNeeded({
               requiredEntitlementIdentifier: "premium",
             });
             if (
-              result === PAYWALL_RESULT.PURCHASED ||
-              result === PAYWALL_RESULT.RESTORED
+              result !== PAYWALL_RESULT.PURCHASED &&
+              result !== PAYWALL_RESULT.RESTORED
             ) {
-              setSwipeCount((prev) => prev + 1);
-              handleSave(opportunities[i]);
-            } else {
               Alert.alert(
                 "Swipe Limit Reached",
                 "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
                 [{ text: "OK" }],
               );
               setCanSwipe(false);
+              return;
             }
+            setSwipeCount((prev) => {
+              const updated = prev + 1;
+              if (updated % 5 === 0) fetchOpportunities();
+              return updated;
+            });
           }
+
+          handleSave(opportunity);
+          await logSwipe(opportunity.id, true);
         }}
         onSwipedLeft={async (i) => {
           if (!canSwipe) return;
@@ -277,29 +309,42 @@ const Opportunities = () => {
           const isPremium =
             customerInfo.entitlements.active["premium"] !== undefined;
 
+          const opportunity = opportunities[i];
+
           if (lastSwipeDate !== today) {
             setSwipeCount(1);
             setLastSwipeDate(today);
+            fetchOpportunities();
           } else if (swipeCount < 5 || isPremium) {
-            setSwipeCount((prev) => prev + 1);
+            setSwipeCount((prev) => {
+              const updated = prev + 1;
+              if (updated % 5 === 0) fetchOpportunities();
+              return updated;
+            });
           } else {
             const result = await RevenueCatUI.presentPaywallIfNeeded({
               requiredEntitlementIdentifier: "premium",
             });
             if (
-              result === PAYWALL_RESULT.PURCHASED ||
-              result === PAYWALL_RESULT.RESTORED
+              result !== PAYWALL_RESULT.PURCHASED &&
+              result !== PAYWALL_RESULT.RESTORED
             ) {
-              setSwipeCount((prev) => prev + 1);
-            } else {
               Alert.alert(
                 "Swipe Limit Reached",
                 "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
                 [{ text: "OK" }],
               );
               setCanSwipe(false);
+              return;
             }
+            setSwipeCount((prev) => {
+              const updated = prev + 1;
+              if (updated % 5 === 0) fetchOpportunities();
+              return updated;
+            });
           }
+
+          await logSwipe(opportunity.id, false);
         }}
         infinite
         disableTopSwipe
