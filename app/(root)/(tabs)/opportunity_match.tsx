@@ -276,21 +276,33 @@ const Opportunities = () => {
               return updated;
             });
           } else {
-            const result = await RevenueCatUI.presentPaywallIfNeeded({
-              requiredEntitlementIdentifier: "premium",
-            });
-            if (
-              result !== PAYWALL_RESULT.PURCHASED &&
-              result !== PAYWALL_RESULT.RESTORED
-            ) {
-              Alert.alert(
-                "Swipe Limit Reached",
-                "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
-                [{ text: "OK" }],
-              );
-              setCanSwipe(false);
-              return;
-            }
+            Alert.alert(
+              "Swipe Limit Reached",
+              "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
+              [
+                {
+                  text: "OK",
+                  onPress: async () => {
+                    const result = await RevenueCatUI.presentPaywallIfNeeded({
+                      requiredEntitlementIdentifier: "premium",
+                    });
+
+                    if (
+                      result !== PAYWALL_RESULT.PURCHASED &&
+                      result !== PAYWALL_RESULT.RESTORED
+                    ) {
+                      setCanSwipe(false);
+                    } else {
+                      setSwipeCount((prev) => {
+                        const updated = prev + 1;
+                        if (updated % 5 === 0) fetchOpportunities();
+                        return updated;
+                      });
+                    }
+                  },
+                },
+              ],
+            );
             setSwipeCount((prev) => {
               const updated = prev + 1;
               if (updated % 5 === 0) fetchOpportunities();
@@ -322,21 +334,34 @@ const Opportunities = () => {
               return updated;
             });
           } else {
-            const result = await RevenueCatUI.presentPaywallIfNeeded({
-              requiredEntitlementIdentifier: "premium",
-            });
-            if (
-              result !== PAYWALL_RESULT.PURCHASED &&
-              result !== PAYWALL_RESULT.RESTORED
-            ) {
-              Alert.alert(
-                "Swipe Limit Reached",
-                "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
-                [{ text: "OK" }],
-              );
-              setCanSwipe(false);
-              return;
-            }
+            Alert.alert(
+              "Swipe Limit Reached",
+              "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
+              [
+                {
+                  text: "OK",
+                  onPress: async () => {
+                    const result = await RevenueCatUI.presentPaywallIfNeeded({
+                      requiredEntitlementIdentifier: "premium",
+                    });
+
+                    if (
+                      result !== PAYWALL_RESULT.PURCHASED &&
+                      result !== PAYWALL_RESULT.RESTORED
+                    ) {
+                      setCanSwipe(false);
+                    } else {
+                      setSwipeCount((prev) => {
+                        const updated = prev + 1;
+                        if (updated % 5 === 0) fetchOpportunities();
+                        return updated;
+                      });
+                    }
+                  },
+                },
+              ],
+            );
+
             setSwipeCount((prev) => {
               const updated = prev + 1;
               if (updated % 5 === 0) fetchOpportunities();
