@@ -74,23 +74,23 @@ export const icons = {
 export const onboarding = [
   {
     id: 1,
-    title: "Optimize extracurricular tracking",
+    title: "Track in college-ready format",
     description:
-      "Simplify finding, adding, and tracking extracurricular activities, all in one place.",
+      "Log hours, roles, and milestones in a format tailored for college applications.",
     image: images.onboarding1,
   },
   {
     id: 2,
-    title: "Get matched with the activities perfect for you",
+    title: "Discover personalized opportunities",
     description:
-      "Our algorithm matches you to activities for you based on goals, qualifications, and location. ",
+      "Swipe through curated programs based on your goals, interests, and eligibility.",
     image: images.onboarding2,
   },
   {
     id: 3,
-    title: "Unlock your full extracurricular potential",
+    title: "Get AI-optimized summaries",
     description:
-      "Maximize your extracurricular portfolio with seamless matching, tracking, and analyzing.",
+      "Instantly generate standout activity descriptions perfect for apps and resumes.",
     image: images.onboarding3,
   },
 ];

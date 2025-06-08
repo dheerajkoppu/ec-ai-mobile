@@ -5,7 +5,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { onboarding } from "@/constants";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 
 const Home = () => {
   const swiperRef = useRef<Swiper>(null);
@@ -14,7 +13,7 @@ const Home = () => {
   const isLastSlide = activeIndex === onboarding.length - 1;
 
   return (
-    <SafeAreaView className="flex h-full items-center justify-between bg-[#E2E8F0]">
+    <SafeAreaView className="flex h-full items-center justify-between bg-[#F5F7FA]">
       <TouchableOpacity
         onPress={() => {
           router.replace("/(auth)/sign-up");
@@ -42,11 +41,11 @@ const Home = () => {
             />
 
             <View className="flex flex-row items-center justify-center w-full mt-100">
-              <Text className="text-black text-3xl font-bold mx-10 text-center">
+              <Text className="text-black text-4xl font-bold mx-10 text-center">
                 {item.title}
               </Text>
             </View>
-            <Text className="text-md font-PoppinsRegular text-center text-[#858585] mx-10 mt-3">
+            <Text className="text-xl font-PoppinsRegular text-center text-[#858585] mx-10 mt-3">
               {item.description}
             </Text>
           </View>

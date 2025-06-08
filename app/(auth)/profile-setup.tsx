@@ -261,7 +261,7 @@ const SlideWrapper: React.FC<{
             borderRadius: 8,
           }}
         >
-          <Text style={{ fontSize: 16, color: "white", fontWeight: "600" }}>
+          <Text style={{ fontSize: 14, color: "white", fontWeight: "600" }}>
             ← Back
           </Text>
         </TouchableOpacity>
@@ -493,18 +493,18 @@ const ProfileSetup: React.FC = () => {
         return !!(
           formData.ecReason?.length &&
           formData.ecLevel?.length &&
-          formData.leadership?.trim() &&
-          formData.selectivity?.trim()
+          formData.leadership?.trim()
         );
       case 4:
         return !!(
           formData.paid?.trim() &&
           formData.ecType?.trim() &&
           formData.timeWeekly?.trim() &&
-          formData.travel?.trim()
+          formData.selectivity?.trim()
         );
       case 5:
         return !!(
+          formData.travel?.trim() &&
           formData.source?.trim() &&
           formData.usedOtherApps?.trim() &&
           formData.agreeTerms?.trim()
@@ -576,6 +576,7 @@ const ProfileSetup: React.FC = () => {
     <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
       <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 }}>
         <Text
+          allowFontScaling={false}
           style={{
             fontSize: 24,
             fontWeight: "bold",
@@ -586,6 +587,7 @@ const ProfileSetup: React.FC = () => {
           Profile Setup
         </Text>
         <Text
+          allowFontScaling={false}
           style={{ fontSize: 16, color: "#555", fontFamily: "Poppins-Regular" }}
         >
           Step {step + 1} of 6
@@ -817,18 +819,6 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                Opportunity Selectiveness{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.opportunitySelectivity}
-            value={formData.selectivity || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("selectivity", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
                 Looking for leadership? <Text className="text-red-500">*</Text>
               </Text>
             }
@@ -847,6 +837,18 @@ const ProfileSetup: React.FC = () => {
 
         {/* Slide 5 */}
         <SlideWrapper showBack onBack={handleBack}>
+          <DropdownField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Opportunity Selectiveness{" "}
+                <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            data={dropdowns.opportunitySelectivity}
+            value={formData.selectivity || ""}
+            placeholder="Select"
+            onChange={(item) => handleChange("selectivity", item.value)}
+          />
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -881,6 +883,16 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("timeWeekly", item.value)}
           />
+
+          <CustomButton
+            title="Next"
+            onPress={goToNextSlide}
+            style={{ marginTop: 16, marginBottom: 16 }}
+          />
+        </SlideWrapper>
+
+        {/* Slide 6 */}
+        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -893,15 +905,6 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("travel", item.value)}
           />
-          <CustomButton
-            title="Next"
-            onPress={goToNextSlide}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 6 */}
-        <SlideWrapper showBack onBack={handleBack}>
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
