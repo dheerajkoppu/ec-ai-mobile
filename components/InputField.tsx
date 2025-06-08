@@ -1,3 +1,4 @@
+import React, { forwardRef, useState, useEffect } from "react";
 import {
   TextInput,
   View,
@@ -7,7 +8,6 @@ import {
   Keyboard,
 } from "react-native";
 import { InputFieldProps } from "@/types/type";
-import React, { forwardRef } from "react";
 
 const InputField = forwardRef<TextInput, InputFieldProps>(
   (
@@ -19,10 +19,22 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
       containerStyle,
       inputStyle,
       iconStyle,
+      value,
+      onChangeText,
       ...props
     },
     ref,
   ) => {
+    // 1. Local state for immediate typing
+    const [local, setLocal] = useState<string>(value ?? "");
+
+    // 2. Sync local if parent value changes externally
+    useEffect(() => {
+      if (value !== undefined && value !== local) {
+        setLocal(value);
+      }
+    }, [value]);
+
     return (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="my-2 w-full">
@@ -39,6 +51,13 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             )}
             <TextInput
               ref={ref}
+              // 3. Render local state for snappy typing
+              value={local}
+              onChangeText={setLocal}
+              // 4. Only propagate to parent on blur
+              onEndEditing={() => {
+                onChangeText?.(local);
+              }}
               className={`text-[15px] flex-1 font-Poppins text-left ${inputStyle}`}
               placeholderTextColor="#A0A3BD"
               secureTextEntry={secureTextEntry}
