@@ -18,13 +18,13 @@ const OAuth = () => {
 
         // If account is new (within 5 seconds), go to profile-setup
         if (timeSinceSignIn < 5000) {
-          router.push("/(auth)/profile-setup");
+          router.replace("/(auth)/profile-setup");
           Alert.alert("Success", "Welcome! Let’s finish setting things up.");
           return;
         }
       }
 
-      router.push("/(root)/(tabs)/opportunity_match");
+      router.replace("/(root)/(tabs)/opportunity_match");
       Alert.alert("Success", result.message);
       return;
     }

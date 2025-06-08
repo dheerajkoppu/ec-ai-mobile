@@ -14,6 +14,7 @@ import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 import { fetchAPI, useFetch } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
+import { router } from "expo-router";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -114,7 +115,6 @@ const ActivityTabs = () => {
           grades: selectedGrades.join(","),
         }),
       });
-      Alert.alert("Success", "Your activity was added successfully!");
       setActivityName("");
       setActivityType("");
       setTimeSpent("");
@@ -123,6 +123,14 @@ const ActivityTabs = () => {
       setDescription("");
       setMilestone("");
       setSelectedGrades([]);
+      Alert.alert("Success", "Your activity was added successfully!", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace("/(root)/(tabs)/track_activities");
+          },
+        },
+      ]);
     } catch (error) {
       console.error("Error adding activity:", error);
       Alert.alert("Error", "Something went wrong while adding your activity.");
@@ -165,11 +173,18 @@ const ActivityTabs = () => {
         }),
       });
 
-      Alert.alert("Success", "Your hours were logged successfully!");
       setActivityName("");
       setLogDate(new Date());
       setLogHours("");
       setMilestone("");
+      Alert.alert("Success", "Your hours were logged successfully!", [
+        {
+          text: "OK",
+          onPress: () => {
+            router.replace("/(root)/(tabs)/track_activities");
+          },
+        },
+      ]);
     } catch (error) {
       console.error("Error logging hours:", error);
       Alert.alert("Error", "Something went wrong while logging your hours.");

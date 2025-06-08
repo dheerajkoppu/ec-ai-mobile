@@ -497,9 +497,9 @@ const ProfileSetup: React.FC = () => {
         body: JSON.stringify(payload),
       });
       if (response.ok) {
-        router.push("/(root)/(tabs)/opportunity_match");
+        router.replace("/(root)/(tabs)/opportunity_match");
       } else {
-        router.push("/(root)/(tabs)/opportunity_match");
+        router.replace("/(root)/(tabs)/opportunity_match");
       }
     } catch (err) {
       console.error("Error submitting profile data:", err);
