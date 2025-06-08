@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
@@ -17,7 +17,6 @@ import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
 import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { RefreshControl } from "react-native";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
 
@@ -63,7 +62,6 @@ const renderStars = (rating?: number) => {
 };
 
 const Opportunities = () => {
-  const [refreshing, setRefreshing] = useState(false);
   const [swipeCount, setSwipeCount] = useState(0);
   const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
   const { user } = useUser();
@@ -80,50 +78,31 @@ const Opportunities = () => {
       setSwipeCount(0);
       setLastSwipeDate(today);
     }
-  }, []);
-  useEffect(() => {
-    const checkPremiumAndUnlock = async () => {
+  }, [lastSwipeDate]);
+
+  const checkPremiumAndUnlock = async () => {
+    try {
       const info = await Purchases.getCustomerInfo();
       const isPremium = info.entitlements.active["premium"] !== undefined;
       if (isPremium) {
-        setCanSwipe(true); // ✅ Unlock swiping if user is premium
+        setCanSwipe(true);
       }
-    };
-
-    checkPremiumAndUnlock();
-  }, []);
-  useFocusEffect(
-    React.useCallback(() => {
-      const checkPremiumAndUnlock = async () => {
-        const info = await Purchases.getCustomerInfo();
-        const isPremium = info.entitlements.active["premium"] !== undefined;
-        if (isPremium) {
-          setCanSwipe(true);
-        }
-      };
-
-      checkPremiumAndUnlock();
-    }, []),
-  );
-
-  const logSwipe = async (opportunityId: string, liked: boolean) => {
-    if (!user?.id) return;
-    try {
-      await fetch("https://ec-ai.expo.app/logswipe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userClerkId: user.id,
-          opportunityId,
-          liked,
-        }),
-      });
-    } catch (err) {
-      console.error("Swipe log failed:", err);
+    } catch (error) {
+      console.error("Failed to check premium status:", error);
     }
   };
 
-  const fetchOpportunities = async () => {
+  useEffect(() => {
+    (async () => await checkPremiumAndUnlock())();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      (async () => await checkPremiumAndUnlock())();
+    }, []),
+  );
+
+  const fetchOpportunities = useCallback(async () => {
     if (!user) return;
     try {
       const response = await fetch(
@@ -175,6 +154,88 @@ const Opportunities = () => {
     } finally {
       setLoading(false);
     }
+  }, [user]);
+  useEffect(() => {
+    if (!user) return;
+
+    (async () => {
+      await fetchOpportunities();
+    })();
+  }, [user, fetchOpportunities]);
+
+  const handleSwipe = async (i: number, liked: boolean) => {
+    if (!canSwipe) return;
+
+    const today = new Date().toISOString().split("T")[0];
+    const opportunity = opportunities[i];
+
+    try {
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremium =
+        customerInfo.entitlements.active["premium"] !== undefined;
+
+      if (lastSwipeDate !== today) {
+        setSwipeCount(1);
+        setLastSwipeDate(today);
+        await fetchOpportunities();
+      } else if (swipeCount < 5 || isPremium) {
+        const updated = swipeCount + 1;
+        setSwipeCount(updated);
+        if (updated % 5 === 0) await fetchOpportunities();
+      } else {
+        Alert.alert(
+          "Swipe Limit Reached",
+          "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
+          [
+            {
+              text: "OK",
+              onPress: async () => {
+                const result = await RevenueCatUI.presentPaywallIfNeeded({
+                  requiredEntitlementIdentifier: "premium",
+                });
+
+                if (
+                  result !== PAYWALL_RESULT.PURCHASED &&
+                  result !== PAYWALL_RESULT.RESTORED
+                ) {
+                  setCanSwipe(false);
+                } else {
+                  const updated = swipeCount + 1;
+                  setSwipeCount(updated);
+                  if (updated % 5 === 0) await fetchOpportunities();
+                }
+              },
+            },
+          ],
+        );
+
+        const updated = swipeCount + 1;
+        setSwipeCount(updated);
+        if (updated % 5 === 0) await fetchOpportunities();
+      }
+
+      if (liked) await handleSave(opportunity);
+      await logSwipe(opportunity.id, liked);
+    } catch (err) {
+      console.error("Error during swipe handling:", err);
+    }
+  };
+
+  const logSwipe = async (opportunityId: string, liked: boolean) => {
+    if (!user?.id) return;
+    try {
+      await fetch("https://ec-ai.expo.app/logswipe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userClerkId: user.id,
+          opportunityId,
+          liked,
+        }),
+      });
+    } catch (err) {
+      console.error("Swipe log failed:", err);
+    }
   };
 
   const handleSave = async (op: Opportunity) => {
@@ -214,16 +275,6 @@ const Opportunities = () => {
     }
   };
 
-  useEffect(() => {
-    if (user) fetchOpportunities();
-  }, [user]);
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchOpportunities();
-    setRefreshing(false);
-  };
-
   if (loading) {
     return (
       <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
@@ -255,122 +306,8 @@ const Opportunities = () => {
 
       <Swiper
         cards={opportunities}
-        onSwipedRight={async (i) => {
-          if (!canSwipe) return;
-
-          const today = new Date().toISOString().split("T")[0];
-          const customerInfo = await Purchases.getCustomerInfo();
-          const isPremium =
-            customerInfo.entitlements.active["premium"] !== undefined;
-
-          const opportunity = opportunities[i];
-
-          if (lastSwipeDate !== today) {
-            setSwipeCount(1);
-            setLastSwipeDate(today);
-            fetchOpportunities();
-          } else if (swipeCount < 5 || isPremium) {
-            setSwipeCount((prev) => {
-              const updated = prev + 1;
-              if (updated % 5 === 0) fetchOpportunities();
-              return updated;
-            });
-          } else {
-            Alert.alert(
-              "Swipe Limit Reached",
-              "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
-              [
-                {
-                  text: "OK",
-                  onPress: async () => {
-                    const result = await RevenueCatUI.presentPaywallIfNeeded({
-                      requiredEntitlementIdentifier: "premium",
-                    });
-
-                    if (
-                      result !== PAYWALL_RESULT.PURCHASED &&
-                      result !== PAYWALL_RESULT.RESTORED
-                    ) {
-                      setCanSwipe(false);
-                    } else {
-                      setSwipeCount((prev) => {
-                        const updated = prev + 1;
-                        if (updated % 5 === 0) fetchOpportunities();
-                        return updated;
-                      });
-                    }
-                  },
-                },
-              ],
-            );
-            setSwipeCount((prev) => {
-              const updated = prev + 1;
-              if (updated % 5 === 0) fetchOpportunities();
-              return updated;
-            });
-          }
-
-          handleSave(opportunity);
-          await logSwipe(opportunity.id, true);
-        }}
-        onSwipedLeft={async (i) => {
-          if (!canSwipe) return;
-
-          const today = new Date().toISOString().split("T")[0];
-          const customerInfo = await Purchases.getCustomerInfo();
-          const isPremium =
-            customerInfo.entitlements.active["premium"] !== undefined;
-
-          const opportunity = opportunities[i];
-
-          if (lastSwipeDate !== today) {
-            setSwipeCount(1);
-            setLastSwipeDate(today);
-            fetchOpportunities();
-          } else if (swipeCount < 5 || isPremium) {
-            setSwipeCount((prev) => {
-              const updated = prev + 1;
-              if (updated % 5 === 0) fetchOpportunities();
-              return updated;
-            });
-          } else {
-            Alert.alert(
-              "Swipe Limit Reached",
-              "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
-              [
-                {
-                  text: "OK",
-                  onPress: async () => {
-                    const result = await RevenueCatUI.presentPaywallIfNeeded({
-                      requiredEntitlementIdentifier: "premium",
-                    });
-
-                    if (
-                      result !== PAYWALL_RESULT.PURCHASED &&
-                      result !== PAYWALL_RESULT.RESTORED
-                    ) {
-                      setCanSwipe(false);
-                    } else {
-                      setSwipeCount((prev) => {
-                        const updated = prev + 1;
-                        if (updated % 5 === 0) fetchOpportunities();
-                        return updated;
-                      });
-                    }
-                  },
-                },
-              ],
-            );
-
-            setSwipeCount((prev) => {
-              const updated = prev + 1;
-              if (updated % 5 === 0) fetchOpportunities();
-              return updated;
-            });
-          }
-
-          await logSwipe(opportunity.id, false);
-        }}
+        onSwipedRight={(i) => handleSwipe(i, true)}
+        onSwipedLeft={(i) => handleSwipe(i, false)}
         infinite
         disableTopSwipe
         disableBottomSwipe
@@ -448,6 +385,9 @@ const Opportunities = () => {
 
       <ReactNativeModal
         isVisible={selectedOpportunity !== null}
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
         onBackdropPress={() => setSelectedOpportunity(null)}
         style={{ marginTop: 60, marginHorizontal: 10 }}
       >

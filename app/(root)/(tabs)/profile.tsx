@@ -184,7 +184,7 @@ const Profile = () => {
         }),
       });
 
-      const data = await response.json();
+      await response.json();
       if (response.ok) {
         Alert.alert(
           "Request Sent",
@@ -394,7 +394,12 @@ const Profile = () => {
       </ScrollView>
 
       {/* Sign Out Confirmation Modal */}
-      <ReactNativeModal isVisible={showSignOutModal}>
+      <ReactNativeModal
+        useNativeDriver={true}
+        backdropTransitionOutTiming={1}
+        useNativeDriverForBackdrop={true}
+        isVisible={showSignOutModal}
+      >
         <View className="bg-white px-7 py-9 rounded-2xl">
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Logout
@@ -422,7 +427,12 @@ const Profile = () => {
       </ReactNativeModal>
 
       {/* Delete Account Confirmation Modal */}
-      <ReactNativeModal isVisible={showDeleteModal}>
+      <ReactNativeModal
+        isVisible={showDeleteModal}
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+      >
         <View className="bg-white px-7 py-9 rounded-2xl">
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Delete Account

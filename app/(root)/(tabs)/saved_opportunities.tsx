@@ -42,15 +42,18 @@ export default function Saved_opportunities() {
   const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
   const [loadingReason, setLoadingReason] = useState(false);
 
-  const loadSavedOpportunities = async () => {
-    if (!user) return;
+  const loadSavedOpportunities = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       const res = await fetch(`https://ec-ai.expo.app/getsavedopportunities`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
       });
+
       const json = await res.json();
+
       if (res.ok) {
         const mapped = json.data.map((item: any) => ({
           id: item.id,
@@ -73,7 +76,7 @@ export default function Saved_opportunities() {
       console.error("Error loading saved opportunities:", error);
       setSavedOpportunities([]);
     }
-  };
+  }, [user?.id]);
 
   const getAIReasons = async (opportunity: Opportunity) => {
     try {
@@ -88,11 +91,12 @@ export default function Saved_opportunities() {
           requiredEntitlementIdentifier: "premium",
         });
 
-        if (result === "PURCHASED" || result === "RESTORED") {
-          // Retry after purchase/restore
+        if (
+          result === PAYWALL_RESULT.PURCHASED ||
+          result === PAYWALL_RESULT.RESTORED
+        ) {
           return await getAIReasons(opportunity);
         } else {
-          // Paywall was dismissed, errored, or cancelled
           return;
         }
       }
@@ -123,7 +127,10 @@ export default function Saved_opportunities() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id, opportunity_id: id }),
       });
-      if (!res.ok) throw new Error("Delete failed");
+      if (!res.ok) {
+        Alert.alert("Delete failed. Please try again.");
+        return;
+      }
       setSavedOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     } catch (error) {
       console.error("Error deleting opportunity:", error);
@@ -137,13 +144,15 @@ export default function Saved_opportunities() {
   };
 
   useEffect(() => {
-    if (user?.id) loadSavedOpportunities();
-  }, [user]);
+    if (user?.id) {
+      loadSavedOpportunities().catch(console.error);
+    }
+  }, [loadSavedOpportunities, user?.id]);
 
   useFocusEffect(
     useCallback(() => {
-      loadSavedOpportunities();
-    }, [user]),
+      loadSavedOpportunities().catch(console.error);
+    }, [loadSavedOpportunities]),
   );
 
   const filteredSavedOpportunities = savedOpportunities.filter((opportunity) =>
@@ -239,6 +248,9 @@ export default function Saved_opportunities() {
 
         {/* AI Reasons Modal */}
         <ReactNativeModal
+          backdropTransitionOutTiming={1}
+          useNativeDriver={true}
+          useNativeDriverForBackdrop={true}
           isVisible={showAIReasonsModal}
           onBackdropPress={() => setShowAIReasonsModal(false)}
         >

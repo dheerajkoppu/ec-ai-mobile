@@ -127,7 +127,10 @@ const ActivityTabs = () => {
         {
           text: "OK",
           onPress: () => {
-            router.replace("/(root)/(tabs)/track_activities");
+            router.replace({
+              pathname: "/(root)/(tabs)/track_activities",
+              params: { fromAdd: "true" },
+            });
           },
         },
       ]);
@@ -181,7 +184,10 @@ const ActivityTabs = () => {
         {
           text: "OK",
           onPress: () => {
-            router.replace("/(root)/(tabs)/track_activities");
+            router.replace({
+              pathname: "/(root)/(tabs)/track_activities",
+              params: { fromAdd: "true" },
+            });
           },
         },
       ]);
@@ -214,7 +220,6 @@ const ActivityTabs = () => {
       <KeyboardAwareScrollView
         contentContainerStyle={{ flexGrow: 1 }}
         keyboardShouldPersistTaps="handled"
-        extraScrollHeight={90}
       >
         {activeTab === "add" ? (
           <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">

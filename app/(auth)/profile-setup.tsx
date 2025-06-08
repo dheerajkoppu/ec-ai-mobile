@@ -21,7 +21,6 @@ import CustomButton from "@/components/CustomButton";
 import { fetchAPI } from "@/lib/fetch";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import ReactNativeModal from "react-native-modal";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
 
@@ -228,49 +227,6 @@ const multiSelectStyles = StyleSheet.create({
     fontWeight: "bold",
   },
 });
-
-const styles = StyleSheet.create({
-  dropdownButton: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    padding: 10,
-    borderRadius: 5,
-  },
-  dropdownButtonText: {
-    fontSize: 16,
-    color: "#333",
-  },
-  modalContainer: {
-    flex: 1,
-    padding: 20,
-    backgroundColor: "#fff",
-  },
-  modalTitle: {
-    fontSize: 20,
-    marginBottom: 20,
-  },
-  option: {
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  selectedOption: {
-    backgroundColor: "#ddd",
-  },
-  optionText: {
-    fontSize: 16,
-  },
-  doneButton: {
-    marginTop: 20,
-    padding: 10,
-    alignSelf: "center",
-  },
-  doneButtonText: {
-    fontSize: 18,
-    color: "blue",
-  },
-});
-
 // SlideWrapper component
 const SlideWrapper: React.FC<{
   children: React.ReactNode;

@@ -3,7 +3,6 @@ import {
   View,
   Text,
   Alert,
-  Platform,
   Keyboard,
   TextInput,
   TouchableOpacity,
@@ -225,6 +224,9 @@ const Sign_Up = () => {
             </Link>
           </View>
           <ReactNativeModal
+            backdropTransitionOutTiming={1}
+            useNativeDriver={true}
+            useNativeDriverForBackdrop={true}
             isVisible={verification.state === "pending"}
             style={{ justifyContent: "flex-start", marginTop: 130 }} // adjust marginTop as needed
             onModalHide={() => {
@@ -283,7 +285,12 @@ const Sign_Up = () => {
             </View>
           </ReactNativeModal>
 
-          <ReactNativeModal isVisible={showSuccessModal}>
+          <ReactNativeModal
+            isVisible={showSuccessModal}
+            backdropTransitionOutTiming={1}
+            useNativeDriver={true}
+            useNativeDriverForBackdrop={true}
+          >
             <View className="bg-[#E2E8F0] px-7 py-9 rounded-2xl min-h-[300px]">
               <Image
                 source={images.check}

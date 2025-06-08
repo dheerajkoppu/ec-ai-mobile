@@ -19,7 +19,10 @@ import CustomButton from "@/components/CustomButton";
 import { useFetch, fetchAPI } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
+import { useLocalSearchParams } from "expo-router";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import { useFocusEffect } from "@react-navigation/native";
+import { useCallback } from "react";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -39,6 +42,8 @@ const TrackActivities = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
+  const { fromAdd } = useLocalSearchParams();
+  const [hasRefetchedFromAdd, setHasRefetchedFromAdd] = useState(false);
 
   // New state for the AI description modal
   const [aiDescription, setAiDescription] = useState<string>("");
@@ -99,7 +104,14 @@ const TrackActivities = () => {
       setRefreshing(false);
     }
   };
-
+  useFocusEffect(
+    useCallback(() => {
+      if (fromAdd === "true" && !hasRefetchedFromAdd) {
+        refetch();
+        setHasRefetchedFromAdd(true);
+      }
+    }, [fromAdd, hasRefetchedFromAdd, refetch]),
+  );
   const updateActivity = async () => {
     if (editingActivity && email) {
       const updatedActivity = {
@@ -326,89 +338,100 @@ const TrackActivities = () => {
         )}
       </View>
 
-      <FlatList
-        data={filteredActivities}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-        }
-        renderItem={({ item }) => (
-          <TouchableOpacity
-            onPress={() => openLogs(item)}
-            className="bg-white p-4 mb-4 rounded-lg shadow"
-          >
-            <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
-              {item.category}
-            </Text>
-            <View className="flex-row">
-              <View className="w-24">
-                <Text className="font-PoppinsRegular mb-1 text-xs">
-                  {item.grade}
-                </Text>
-                <Text className="font-PoppinsRegular text-xs mb-1">
-                  {item.hoursPerWeek} hr/wk
-                </Text>
-                <Text className="font-PoppinsRegular text-xs mb-1">
-                  {item.weeksPerYear} wk/yr
-                </Text>
-              </View>
-              <View className="flex-1">
-                <Text className="font-PoppinsSemiBold mb-1">{item.name}</Text>
-                {item.roles && (
-                  <Text className="font-PoppinsRegular text-xs text-gray-600 mb-1">
-                    Roles: {item.roles}
+      {!loading && filteredActivities.length === 0 ? (
+        <Text className="text-center text-gray-500 font-PoppinsRegular mt-10">
+          No activities found.
+        </Text>
+      ) : (
+        <FlatList
+          data={filteredActivities}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          renderItem={({ item }) => (
+            <TouchableOpacity
+              onPress={() => openLogs(item)}
+              className="bg-white p-4 mb-4 rounded-lg shadow"
+            >
+              <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
+                {item.category}
+              </Text>
+              <View className="flex-row">
+                <View className="w-24">
+                  <Text className="font-PoppinsRegular mb-1 text-xs">
+                    {item.grade}
                   </Text>
-                )}
-                <Text className="font-PoppinsRegular text-xs text-gray-800">
-                  {item.description}
-                </Text>
+                  <Text className="font-PoppinsRegular text-xs mb-1">
+                    {item.hoursPerWeek} hr/wk
+                  </Text>
+                  <Text className="font-PoppinsRegular text-xs mb-1">
+                    {item.weeksPerYear} wk/yr
+                  </Text>
+                </View>
+                <View className="flex-1">
+                  <Text className="font-PoppinsSemiBold mb-1">{item.name}</Text>
+                  {item.roles && (
+                    <Text className="font-PoppinsRegular text-xs text-gray-600 mb-1">
+                      Roles: {item.roles}
+                    </Text>
+                  )}
+                  <Text className="font-PoppinsRegular text-xs text-gray-800">
+                    {item.description}
+                  </Text>
+                </View>
               </View>
-            </View>
-            <View className="flex-row justify-end mt-2">
-              <TouchableOpacity
-                onPress={(e) => handleEditPress(item, e)}
-                className="mr-4"
-              >
-                <MaterialCommunityIcons
-                  name="pencil-outline"
-                  size={24}
-                  color="#5b55f6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  getAIDescription(item);
-                }}
-                className="mr-4"
-              >
-                <MaterialCommunityIcons
-                  name="robot"
-                  size={24}
-                  color="#5b55f6"
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={(e) => {
-                  e.stopPropagation();
-                  setDeleteTarget(item);
-                  setShowDeleteModal(true);
-                }}
-              >
-                <MaterialCommunityIcons
-                  name="trash-can-outline"
-                  size={24}
-                  color="#f56565"
-                />
-              </TouchableOpacity>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
+              <View className="flex-row justify-end mt-2">
+                <TouchableOpacity
+                  onPress={(e) => handleEditPress(item, e)}
+                  className="mr-4"
+                >
+                  <MaterialCommunityIcons
+                    name="pencil-outline"
+                    size={24}
+                    color="#5b55f6"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    getAIDescription(item);
+                  }}
+                  className="mr-4"
+                >
+                  <MaterialCommunityIcons
+                    name="robot"
+                    size={24}
+                    color="#5b55f6"
+                  />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(item);
+                    setShowDeleteModal(true);
+                  }}
+                >
+                  <MaterialCommunityIcons
+                    name="trash-can-outline"
+                    size={24}
+                    color="#f56565"
+                  />
+                </TouchableOpacity>
+              </View>
+            </TouchableOpacity>
+          )}
+        />
+      )}
 
       {/* Delete Activity Confirmation Modal */}
-      <ReactNativeModal isVisible={showDeleteModal}>
+      <ReactNativeModal
+        isVisible={showDeleteModal}
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+      >
         <View className="bg-white px-7 py-9 rounded-2xl">
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Delete
@@ -439,6 +462,9 @@ const TrackActivities = () => {
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
         style={{
           justifyContent: "flex-start",
           marginTop: 60,
@@ -597,6 +623,9 @@ const TrackActivities = () => {
       {/* Activity Logs Modal */}
       <ReactNativeModal
         isVisible={showLogsModal}
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
         onBackdropPress={() => setShowLogsModal(false)}
       >
         <View className="bg-white px-7 py-9 rounded-2xl shadow-md max-h-[80%]">
@@ -640,6 +669,9 @@ const TrackActivities = () => {
 
       {/* AI Description Modal */}
       <ReactNativeModal
+        backdropTransitionOutTiming={1}
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
         isVisible={showAIDescriptionModal}
         onBackdropPress={() => setShowAIDescriptionModal(false)}
       >
