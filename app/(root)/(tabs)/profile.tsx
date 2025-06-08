@@ -6,7 +6,6 @@ import {
   Text,
   Image,
   ScrollView,
-  Switch,
   TouchableOpacity,
   Alert,
 } from "react-native";
@@ -28,25 +27,9 @@ import { fetchAPI } from "@/lib/fetch";
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
-  const updateNotificationStatus = async (value: boolean) => {
-    try {
-      setNotifications(value);
-      await fetch("https://ec-ai.expo.app/updatenotifications", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user?.primaryEmailAddress?.emailAddress,
-          wants_notifications: value,
-        }),
-      });
-    } catch (error) {
-      console.error("Error updating notification status:", error);
-      Alert.alert("Error", "Failed to update notification setting.");
-    }
-  };
 
   useEffect(() => {
-    const checkPremiumStatus = async () => {
+    (async () => {
       try {
         const customerInfo = await Purchases.getCustomerInfo();
         const hasPremium = !!customerInfo.entitlements.active["premium"];
@@ -54,12 +37,12 @@ const Profile = () => {
       } catch (error) {
         console.error("Failed to check premium status:", error);
       }
-    };
-    checkPremiumStatus();
+    })();
   }, []);
+
   useFocusEffect(
     useCallback(() => {
-      const checkPremiumStatus = async () => {
+      (async () => {
         try {
           const customerInfo = await Purchases.getCustomerInfo();
           const hasPremium = !!customerInfo.entitlements.active["premium"];
@@ -70,9 +53,7 @@ const Profile = () => {
             error,
           );
         }
-      };
-
-      checkPremiumStatus();
+      })();
     }, []),
   );
 
@@ -85,7 +66,7 @@ const Profile = () => {
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      mediaTypes: ["images"],
       allowsEditing: true,
       aspect: [1, 1],
       quality: 1,
@@ -106,37 +87,6 @@ const Profile = () => {
       }
     }
   };
-
-  const [notifications, setNotifications] = useState(true);
-  useEffect(() => {
-    const fetchNotificationStatus = async () => {
-      if (!user?.primaryEmailAddress?.emailAddress) return;
-
-      try {
-        const response = await fetch(
-          "https://ec-ai.expo.app/getnotificationstatus",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              email: user.primaryEmailAddress.emailAddress,
-            }),
-          },
-        );
-
-        const data = await response.json();
-        if (response.ok && data?.wants_notifications !== undefined) {
-          setNotifications(data.wants_notifications);
-        } else {
-          console.warn("Could not fetch notifications setting:", data);
-        }
-      } catch (error) {
-        console.error("Failed to load notification setting:", error);
-      }
-    };
-
-    fetchNotificationStatus();
-  }, [user?.primaryEmailAddress?.emailAddress]);
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const email = user?.primaryEmailAddress?.emailAddress;
@@ -166,7 +116,7 @@ const Profile = () => {
       await AsyncStorage.clear();
       await Purchases.logOut();
       await signOut();
-      Linking.openURL(Linking.createURL("/"));
+      await Linking.openURL(Linking.createURL("/"));
     } catch (err) {
       console.error("Error during logout:", err);
     }
@@ -212,7 +162,7 @@ const Profile = () => {
       if (response.ok) {
         await Purchases.logOut();
         await signOut();
-        Linking.openURL(Linking.createURL("/"));
+        await Linking.openURL(Linking.createURL("/"));
       } else {
         const error = await response.json();
         console.error("Failed to delete account:", error);
@@ -287,20 +237,6 @@ const Profile = () => {
           <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
             Account Settings
           </Text>
-          <View className="flex-row justify-between py-2 font-PoppinsRegular">
-            <Text className="text-lg font-PoppinsSemiBold mb-2">
-              Notifications
-            </Text>
-            <Switch
-              value={notifications}
-              onValueChange={updateNotificationStatus}
-            />
-          </View>
-          <CustomButton
-            title="Export Data"
-            onPress={requestDataExport}
-            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
-          />
           <CustomButton
             title="Download Activities PDF"
             onPress={async () => {
@@ -309,7 +245,7 @@ const Profile = () => {
                   "Sending PDF...",
                   "We're sending your activities PDF to your email now.",
                 );
-                downloadPDF();
+                await downloadPDF();
               } else {
                 const result = await RevenueCatUI.presentPaywallIfNeeded({
                   requiredEntitlementIdentifier: "premium",
@@ -323,10 +259,15 @@ const Profile = () => {
                     "Sending PDF...",
                     "We're sending your activities PDF to your email now.",
                   );
-                  downloadPDF();
+                  await downloadPDF();
                 }
               }
             }}
+            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+          />
+          <CustomButton
+            title="Export Data"
+            onPress={requestDataExport}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
         </View>
@@ -449,9 +390,9 @@ const Profile = () => {
             />
             <CustomButton
               title="Delete"
-              onPress={() => {
+              onPress={async () => {
                 setShowDeleteModal(false);
-                deleteAccount();
+                await deleteAccount();
               }}
               bgVariant="danger"
               className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"

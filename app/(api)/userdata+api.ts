@@ -29,7 +29,6 @@ export async function POST(request: Request) {
       ecType,
       source,
       usedOtherApps,
-      notifications,
       agreeTerms,
     } = await request.json();
 
@@ -62,7 +61,6 @@ export async function POST(request: Request) {
     const interestedInPaidOpportunities = toBool(paid);
     const interestedInTravel = toBool(travel);
     const usedOtherECFinders = toBool(usedOtherApps);
-    const wantsNotifications = toBool(notifications);
     const agreedToTerms = toBool(agreeTerms);
 
     // Wrap ecReason into an array for the TEXT[] column (if provided)
@@ -96,7 +94,6 @@ export async function POST(request: Request) {
         extracurricular_format = ${ecType},
         referral_source = ${source},
         used_other_ec_finders = ${usedOtherECFinders},
-        wants_notifications = ${wantsNotifications},
         agreed_to_terms = ${agreedToTerms}
       WHERE email = ${userEmail};
     `;

@@ -71,7 +71,6 @@ interface IFormData {
   ecType?: string;
   source?: string;
   usedOtherApps?: string;
-  notifications?: string;
   agreeTerms?: string;
 }
 
@@ -424,7 +423,6 @@ const ProfileSetup: React.FC = () => {
               ecType: userData.extracurricular_format,
               source: userData.referral_source,
               usedOtherApps: userData.used_other_ec_finders ? "Yes" : "No",
-              notifications: userData.wants_notifications ? "Yes" : "No",
               agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
             };
             setFormData(transformedData);
@@ -509,7 +507,6 @@ const ProfileSetup: React.FC = () => {
         return !!(
           formData.source?.trim() &&
           formData.usedOtherApps?.trim() &&
-          formData.notifications?.trim() &&
           formData.agreeTerms?.trim()
         );
       default:
@@ -926,17 +923,6 @@ const ProfileSetup: React.FC = () => {
             value={formData.usedOtherApps || ""}
             placeholder="Select"
             onChange={(item) => handleChange("usedOtherApps", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Notifications? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.notifications || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("notifications", item.value)}
           />
           <DropdownField
             label={
