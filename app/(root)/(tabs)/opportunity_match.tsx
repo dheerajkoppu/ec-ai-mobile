@@ -296,10 +296,16 @@ const Opportunities = () => {
   return (
     <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
       <View style={{ alignItems: "center", marginVertical: 16 }}>
-        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+        <Text
+          allowFontScaling={false}
+          className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center"
+        >
           Opportunity Match
         </Text>
-        <Text className="text-gray-500 font-PoppinsRegular">
+        <Text
+          allowFontScaling={false}
+          className="text-gray-500 font-PoppinsRegular text-center"
+        >
           Swipe RIGHT to save an opportunity, left to skip.{" "}
         </Text>
       </View>
