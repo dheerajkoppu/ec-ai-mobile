@@ -864,17 +864,6 @@ const ProfileSetup: React.FC = () => {
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
-                Looking for leadership? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.leadership || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("leadership", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
                 Opportunity Selectiveness{" "}
                 <Text className="text-red-500">*</Text>
               </Text>
@@ -884,6 +873,18 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("selectivity", item.value)}
           />
+          <DropdownField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Looking for leadership? <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            data={yesNo}
+            value={formData.leadership || ""}
+            placeholder="Select"
+            onChange={(item) => handleChange("leadership", item.value)}
+          />
+
           <CustomButton
             title="Next"
             onPress={goToNextSlide}

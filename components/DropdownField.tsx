@@ -36,6 +36,7 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
         containerStyle={styles.dropdownContainer}
         itemTextStyle={styles.itemText}
         selectedTextStyle={styles.selectedText}
+        dropdownPosition="auto"
       />
     </View>
   );
