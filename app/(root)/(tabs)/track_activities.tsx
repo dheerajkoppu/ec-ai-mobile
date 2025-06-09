@@ -440,7 +440,7 @@ const TrackActivities = () => {
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Delete
           </Text>
-          <Text className="text-base font-PoppinsSemiBold text-center mb-6">
+          <Text className="text-base font-Poppins text-center mb-6">
             Are you sure you want to delete this activity? This action cannot be
             undone.
           </Text>

@@ -346,7 +346,7 @@ const Profile = () => {
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Logout
           </Text>
-          <Text className="text-base font-PoppinsSemiBold text-center mb-6">
+          <Text className="text-base font-Poppins text-center mb-6">
             Are you sure you want to log out?
           </Text>
           <View className="flex-row justify-between">
@@ -379,7 +379,7 @@ const Profile = () => {
           <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
             Confirm Delete Account
           </Text>
-          <Text className="text-base font-PoppinsSemiBold text-center mb-6">
+          <Text className="text-base font-font-Poppins text-center mb-6">
             Are you sure you want to delete your account? This action cannot be
             undone.
           </Text>
