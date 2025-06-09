@@ -479,22 +479,22 @@ const ProfileSetup: React.FC = () => {
         return !!(
           formData.firstGen?.trim() &&
           formData.gpaWeighted?.trim() &&
-          formData.gpaUnweighted?.trim() &&
           formData.satScore?.trim() &&
           formData.actScore?.trim()
         );
       case 2:
         return !!(
+          formData.gpaUnweighted?.trim() &&
           formData.psatScore?.trim() &&
           formData.careerInterest?.length &&
-          formData.entrepreneur?.trim() &&
-          formData.research?.trim()
+          formData.entrepreneur?.trim()
         );
       case 3:
         return !!(
           formData.ecReason?.length &&
           formData.ecLevel?.length &&
-          formData.leadership?.trim()
+          formData.leadership?.trim() &&
+          formData.research?.trim()
         );
       case 4:
         return !!(
@@ -704,17 +704,6 @@ const ProfileSetup: React.FC = () => {
             value={formData.gpaWeighted}
             onChangeText={(val) => handleChange("gpaWeighted", val)}
           />
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Unweighted GPA <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter unweighted GPA"
-            value={formData.gpaUnweighted}
-            onChangeText={(val) => handleChange("gpaUnweighted", val)}
-          />
 
           <CustomButton
             title="Next"
@@ -728,6 +717,17 @@ const ProfileSetup: React.FC = () => {
 
         {/* Slide 3 */}
         <SlideWrapper showBack onBack={handleBack}>
+          <InputField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Unweighted GPA <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            keyboardType="numeric"
+            placeholder="Enter unweighted GPA"
+            value={formData.gpaUnweighted}
+            onChangeText={(val) => handleChange("gpaUnweighted", val)}
+          />
           <DropdownField
             label={
               <Text className="font-medium text-lg font-PoppinsBold">
@@ -769,17 +769,7 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("entrepreneur", item.value)}
           />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Interested in research? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.research || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("research", item.value)}
-          />
+
           <CustomButton
             title="Next"
             onPress={async () => {
@@ -837,7 +827,17 @@ const ProfileSetup: React.FC = () => {
             placeholder="Select"
             onChange={(item) => handleChange("leadership", item.value)}
           />
-
+          <DropdownField
+            label={
+              <Text className="font-medium text-lg font-PoppinsBold">
+                Interested in research? <Text className="text-red-500">*</Text>
+              </Text>
+            }
+            data={yesNo}
+            value={formData.research || ""}
+            placeholder="Select"
+            onChange={(item) => handleChange("research", item.value)}
+          />
           <CustomButton
             title="Next"
             onPress={async () => {
