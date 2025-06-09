@@ -163,7 +163,7 @@ const Profile = () => {
       if (response.ok) {
         await Purchases.logOut();
         await signOut();
-        await Linking.openURL(Linking.createURL("/"));
+        router.replace("/");
       } else {
         const error = await response.json();
         console.error("Failed to delete account:", error);
