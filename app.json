@@ -18,12 +18,10 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/images/splash.png",
+        "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#F5F6F9"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -48,8 +46,11 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "contain",
-          "enableFullScreenImage_legacy": true,
-          "backgroundColor": "#F5F6F9"
+          "backgroundColor": "#F5F7FA",
+          "dark": {
+            "image": "./assets/images/splash-dark.png",
+            "backgroundColor": "#000000"
+          }
         }
       ]
     ],

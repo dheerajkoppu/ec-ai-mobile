@@ -68,9 +68,9 @@ module.exports = {
           800: "#9B2C2C",
           900: "#742A2A",
         },
-        warning: {
+        dark: {
           100: "#FFFFFF",
-          200: "#FEF3C7",
+          200: "#0A0805",
           300: "#FDE68A",
           400: "#FACC15",
           500: "#EAB308",
