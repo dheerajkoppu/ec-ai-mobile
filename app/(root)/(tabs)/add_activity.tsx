@@ -15,6 +15,7 @@ import CustomButton from "@/components/CustomButton";
 import { fetchAPI, useFetch } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
 import { router } from "expo-router";
+import * as Haptics from "expo-haptics";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -123,6 +124,7 @@ const ActivityTabs = () => {
       setDescription("");
       setMilestone("");
       setSelectedGrades([]);
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Success", "Your activity was added successfully!", [
         {
           text: "OK",
@@ -180,6 +182,7 @@ const ActivityTabs = () => {
       setLogDate(new Date());
       setLogHours("");
       setMilestone("");
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Success", "Your hours were logged successfully!", [
         {
           text: "OK",

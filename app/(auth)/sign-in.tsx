@@ -17,6 +17,7 @@ import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
 import { InputFieldProps } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 const Sign_In = () => {
   // State variable to track password visibility
@@ -115,7 +116,10 @@ const Sign_In = () => {
           </View>
           <CustomButton
             title="Sign In"
-            onPress={onSignInPress}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              onSignInPress();
+            }}
             className="mt-6"
           />
           <OAuth />

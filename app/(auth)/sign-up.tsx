@@ -18,6 +18,7 @@ import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { fetchAPI } from "@/lib/fetch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import * as Haptics from "expo-haptics";
 
 const Sign_Up = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -211,7 +212,10 @@ const Sign_Up = () => {
 
             <CustomButton
               title="Sign Up"
-              onPress={onSignUpPress}
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                onSignUpPress();
+              }}
               className="mt-6"
             />
             <OAuth />
@@ -276,7 +280,10 @@ const Sign_Up = () => {
               )}
               <CustomButton
                 title="Verify Email"
-                onPress={onPressVerify}
+                onPress={async () => {
+                  await Haptics.selectionAsync();
+                  onPressVerify();
+                }}
                 className="mt-5 bg-primary-500"
               />
               <TouchableOpacity onPress={onResendCode} className="mt-3">
@@ -304,7 +311,8 @@ const Sign_Up = () => {
               </Text>
               <CustomButton
                 title="Add Additional Details"
-                onPress={() => {
+                onPress={async () => {
+                  await Haptics.selectionAsync();
                   setShowSuccessModal(false);
                   router.replace("/(auth)/profile-setup");
                 }}

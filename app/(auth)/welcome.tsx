@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { onboarding } from "@/constants";
+import * as Haptics from "expo-haptics";
 
 const Home = () => {
   const swiperRef = useRef<Swiper>(null);
@@ -48,11 +49,14 @@ const Home = () => {
 
       <CustomButton
         title={isLastSlide ? "Get Started" : "Next"}
-        onPress={() =>
-          isLastSlide
-            ? router.replace("/(auth)/sign-up")
-            : swiperRef.current?.scrollBy(1)
-        }
+        onPress={async () => {
+          await Haptics.selectionAsync();
+          if (isLastSlide) {
+            router.replace("/(auth)/sign-up");
+          } else {
+            swiperRef.current?.scrollBy(1);
+          }
+        }}
         className="w-11/12 mt-16 mb-14"
       />
     </SafeAreaView>

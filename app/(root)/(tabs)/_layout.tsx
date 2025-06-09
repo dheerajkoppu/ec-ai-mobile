@@ -3,6 +3,7 @@ import { Image, View, TouchableOpacity } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Haptics from "expo-haptics";
 
 // @ts-ignore
 const TabIcon = ({
@@ -22,7 +23,12 @@ const TabIcon = ({
 
   return (
     <TouchableOpacity
-      onPress={() => navigation.navigate(screenName as never)}
+      onPress={async () => {
+        if (!focused) {
+          await Haptics.selectionAsync();
+          navigation.navigate(screenName as never);
+        }
+      }}
       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
       activeOpacity={1}
     >

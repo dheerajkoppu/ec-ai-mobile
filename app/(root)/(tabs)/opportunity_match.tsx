@@ -312,8 +312,12 @@ const Opportunities = () => {
 
       <Swiper
         cards={opportunities}
-        onSwipedRight={(i) => handleSwipe(i, true)}
-        onSwipedLeft={(i) => handleSwipe(i, false)}
+        onSwipedRight={async (i) => {
+          await handleSwipe(i, true);
+        }}
+        onSwipedLeft={async (i) => {
+          await handleSwipe(i, false);
+        }}
         infinite
         disableTopSwipe
         disableBottomSwipe

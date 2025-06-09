@@ -23,6 +23,7 @@ import { useLocalSearchParams } from "expo-router";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import * as Haptics from "expo-haptics";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -352,7 +353,10 @@ const TrackActivities = () => {
           }
           renderItem={({ item }) => (
             <TouchableOpacity
-              onPress={() => openLogs(item)}
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                openLogs(item);
+              }}
               className="bg-white p-4 mb-4 rounded-lg shadow"
             >
               <Text className="font-bold font-PoppinsSemiBold text-base mb-2">

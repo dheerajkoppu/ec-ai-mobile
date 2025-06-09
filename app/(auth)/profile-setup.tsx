@@ -23,6 +23,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
+import * as Haptics from "expo-haptics";
 
 // Interfaces
 interface DropdownOption {
@@ -649,7 +650,10 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={goToNextSlide}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              goToNextSlide();
+            }}
             style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
@@ -714,7 +718,10 @@ const ProfileSetup: React.FC = () => {
 
           <CustomButton
             title="Next"
-            onPress={goToNextSlide}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              goToNextSlide();
+            }}
             style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
@@ -775,7 +782,10 @@ const ProfileSetup: React.FC = () => {
           />
           <CustomButton
             title="Next"
-            onPress={goToNextSlide}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              goToNextSlide();
+            }}
             style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
@@ -830,7 +840,10 @@ const ProfileSetup: React.FC = () => {
 
           <CustomButton
             title="Next"
-            onPress={goToNextSlide}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              goToNextSlide();
+            }}
             style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
@@ -886,7 +899,10 @@ const ProfileSetup: React.FC = () => {
 
           <CustomButton
             title="Next"
-            onPress={goToNextSlide}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              goToNextSlide();
+            }}
             style={{ marginTop: 16, marginBottom: 16 }}
           />
         </SlideWrapper>
@@ -978,7 +994,7 @@ const ProfileSetup: React.FC = () => {
                   requiredEntitlementIdentifier: "premium",
                 });
 
-                setHasShownPaywall(true); // Mark as shown regardless of result
+                setHasShownPaywall(true);
 
                 if (
                   result === PAYWALL_RESULT.PURCHASED ||
@@ -986,12 +1002,18 @@ const ProfileSetup: React.FC = () => {
                 ) {
                   setIsPremium(true);
                   await handleSubmit();
+                  await Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Success,
+                  );
                 }
 
-                return; // Cancel if closed/cancelled
+                return;
               }
 
               await handleSubmit();
+              await Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
             }}
             style={{ marginTop: 16 }}
           />
