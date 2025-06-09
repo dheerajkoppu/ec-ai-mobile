@@ -51,6 +51,7 @@ const CustomButton = ({
       {IconLeft && <IconLeft />}
       <Text
         className={`text-lg font-semibold ${getTextVariantStyle(textVariant)}`}
+        allowFontScaling={false}
       >
         {title}
       </Text>
