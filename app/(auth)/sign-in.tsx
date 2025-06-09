@@ -118,7 +118,7 @@ const Sign_In = () => {
             title="Sign In"
             onPress={async () => {
               await Haptics.selectionAsync();
-              onSignInPress();
+              await onSignInPress();
             }}
             className="mt-6"
           />
