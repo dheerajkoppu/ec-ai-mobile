@@ -143,6 +143,7 @@ const Profile = () => {
       } else {
         Alert.alert("Error", "Failed to send export request.");
       }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
       Alert.alert("Error", "An unexpected error occurred.");
     }
