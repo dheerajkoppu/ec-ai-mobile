@@ -116,7 +116,7 @@ const Profile = () => {
       await AsyncStorage.clear();
       await Purchases.logOut();
       await signOut();
-      await Linking.openURL(Linking.createURL("/"));
+      router.replace("/(auth)/sign-in");
     } catch (err) {
       console.error("Error during logout:", err);
     }

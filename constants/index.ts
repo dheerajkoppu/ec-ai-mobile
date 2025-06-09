@@ -15,9 +15,9 @@ import search from "@/assets/icons/search.png";
 import star from "@/assets/icons/star.png";
 import target from "@/assets/icons/target.png";
 import check from "@/assets/images/check.png";
-import onboarding1 from "@/assets/images/onboarding1.png";
-import onboarding2 from "@/assets/images/onboarding2.png";
-import onboarding3 from "@/assets/images/onboarding3.png";
+import onboarding1 from "@/assets/images/onboarding1.jpg";
+import onboarding2 from "@/assets/images/onboarding2.jpg";
+import onboarding3 from "@/assets/images/onboarding3.jpg";
 import icon from "@/assets/images/icon.png";
 import logo from "@/assets/images/logo.png";
 import logo_outline from "@/assets/images/logo_outline.png";
@@ -74,23 +74,14 @@ export const icons = {
 export const onboarding = [
   {
     id: 1,
-    title: "Track in college-ready format",
-    description:
-      "Log hours, roles, and milestones in a format tailored for college applications.",
     image: images.onboarding1,
   },
   {
     id: 2,
-    title: "Discover personalized opportunities",
-    description:
-      "Swipe through curated programs based on your goals, interests, and eligibility.",
     image: images.onboarding2,
   },
   {
     id: 3,
-    title: "Get AI-optimized summaries",
-    description:
-      "Instantly generate standout activity descriptions perfect for apps and resumes.",
     image: images.onboarding3,
   },
 ];

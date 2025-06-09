@@ -20,12 +20,15 @@ const Home = () => {
         }}
         className="w-full flex justify-end items-end p-5"
       >
-        <Text className=" text-primary-800 text-md font-PoppinsBold">Skip</Text>
+        <Text className=" text-black text-md font-PoppinsBold">Skip</Text>
       </TouchableOpacity>
 
       <Swiper
         ref={swiperRef}
         loop={false}
+        paginationStyle={{
+          bottom: -20,
+        }}
         dot={<View className="w-[32px] h-[4px] mx-1 bg-white rounded-full" />}
         activeDot={
           <View className="w-[32px] h-[4px] mx-1 bg-primary-500 rounded-full" />
@@ -36,18 +39,9 @@ const Home = () => {
           <View key={item.id} className="flex items-center justify-center">
             <Image
               source={item.image}
-              className="w-full h-[300px]"
+              className="w-full h-full"
               resizeMode="contain"
             />
-
-            <View className="flex flex-row items-center justify-center w-full mt-100">
-              <Text className="text-black text-4xl font-bold mx-10 text-center">
-                {item.title}
-              </Text>
-            </View>
-            <Text className="text-xl font-PoppinsRegular text-center text-[#858585] mx-10 mt-3">
-              {item.description}
-            </Text>
           </View>
         ))}
       </Swiper>
@@ -59,7 +53,7 @@ const Home = () => {
             ? router.replace("/(auth)/sign-up")
             : swiperRef.current?.scrollBy(1)
         }
-        className="w-11/12 mt-6 mb-10"
+        className="w-11/12 mt-16 mb-14"
       />
     </SafeAreaView>
   );
