@@ -12,7 +12,7 @@ import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRef, useState } from "react";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignUp } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
@@ -219,13 +219,15 @@ const Sign_Up = () => {
               className="mt-6"
             />
             <OAuth />
-            <Link
-              href="/sign-in"
-              className="text-base text-center text-general-200 mt-5"
+            <TouchableOpacity
+              onPress={() => router.replace("/sign-in")}
+              className="mt-5"
             >
-              <Text>Already have an account? </Text>
-              <Text className="text-primary-500">Sign In</Text>
-            </Link>
+              <Text className="text-base text-center text-general-200">
+                Already have an account?{" "}
+                <Text className="text-primary-500">Sign In</Text>
+              </Text>
+            </TouchableOpacity>
           </View>
           <ReactNativeModal
             backdropTransitionOutTiming={1}

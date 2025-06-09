@@ -1,6 +1,5 @@
 import {
   Image,
-  ScrollView,
   View,
   Text,
   Alert,
@@ -12,7 +11,7 @@ import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import { useCallback, useRef, useState } from "react";
-import { Link, router } from "expo-router";
+import { router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
 import { InputFieldProps } from "@/types/type";
@@ -20,19 +19,12 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 const Sign_In = () => {
-  // State variable to track password visibility
   const [showPassword, setShowPassword] = useState(false);
+  const toggleShowPassword = () => setShowPassword(!showPassword);
 
-  // Function to toggle the password visibility state
-  const toggleShowPassword = () => {
-    setShowPassword(!showPassword);
-  };
   const { signIn, setActive, isLoaded } = useSignIn();
   const passwordRef = useRef<TextInput>(null);
-  const [form, setForm] = useState({
-    email: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ email: "", password: "" });
 
   const onSignInPress = useCallback(async () => {
     if (!isLoaded) return;
@@ -47,7 +39,6 @@ const Sign_In = () => {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/(root)/(tabs)/opportunity_match");
       } else {
-        // See https://clerk.com/docs/custom-flows/error-handling for more info on error handling
         console.log(JSON.stringify(signInAttempt, null, 2));
         Alert.alert("Error", "Log in failed. Please try again.");
       }
@@ -58,7 +49,7 @@ const Sign_In = () => {
   }, [isLoaded, signIn, form.email, form.password, setActive]);
 
   return (
-    <View className={"flex-1 bg-primary-200"}>
+    <View className="flex-1 bg-primary-200">
       <View className="flex-1 bg-[#F5F7FA]">
         <View className="relative w-full h-[250px]">
           <Image
@@ -96,16 +87,11 @@ const Sign_In = () => {
                 onSignInPress();
               }}
               returnKeyType="go"
-              // Add extra padding to the right to prevent text from overlapping the icon
               style={{ paddingRight: 40 }}
             />
             <TouchableOpacity
               onPress={toggleShowPassword}
-              style={{
-                position: "absolute",
-                right: 15, // adjust as needed
-                top: 62, // (48 - 24) / 2
-              }}
+              style={{ position: "absolute", right: 15, top: 62 }}
             >
               <MaterialCommunityIcons
                 name={showPassword ? "eye-off" : "eye"}
@@ -123,15 +109,16 @@ const Sign_In = () => {
             className="mt-6"
           />
           <OAuth />
-          <Link
-            href="/sign-up"
-            className="text-base text-center text-general-200 mt-5"
+          <TouchableOpacity
+            onPress={() => router.replace("/sign-up")}
+            className="mt-5"
           >
-            <Text>Don't have an account? </Text>
-            <Text className="text-primary-500">Sign Up</Text>
-          </Link>
+            <Text className="text-base text-center text-general-200">
+              Don't have an account?{" "}
+              <Text className="text-primary-500">Sign Up</Text>
+            </Text>
+          </TouchableOpacity>
         </View>
-        {/*Verification Model*/}
       </View>
     </View>
   );
