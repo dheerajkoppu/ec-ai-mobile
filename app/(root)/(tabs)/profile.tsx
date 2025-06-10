@@ -93,7 +93,6 @@ const Profile = () => {
   };
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-  const [activities, setActivities] = useState([]);
   const email = user?.primaryEmailAddress?.emailAddress;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
@@ -115,9 +114,10 @@ const Profile = () => {
       const activities = activityJson.data;
 
       if (!Array.isArray(activities)) {
-        throw new Error("Failed to fetch valid activities");
+        console.error("Invalid activities array");
+        Alert.alert("Error", "Failed to fetch valid activities.");
+        return false;
       }
-
       // 1) Generate the PDF
       const genRes = await fetchAPI(
         "https://ec-ai.expo.app/generate-activities-pdf",
@@ -129,11 +129,9 @@ const Profile = () => {
       );
 
       if (!genRes?.pdfBase64) {
-        console.error(
-          "generate-activities-pdf returned invalid response:",
-          genRes,
-        );
-        throw new Error("PDF generation failed");
+        console.error("Invalid PDF response:", genRes);
+        Alert.alert("Error", "PDF generation failed.");
+        return false;
       }
 
       const { pdfBase64 } = genRes;
