@@ -14,6 +14,11 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "CFBundleDisplayName": "EC-AI"
+      },
+      "icon": {
+        "light": "./assets/images/logo.png",
+        "dark": "./assets/images/ios-dark.png",
+        "tinted": "./assets/images/ios-tinted.png"
       }
     },
     "android": {
@@ -48,7 +53,7 @@
           "resizeMode": "contain",
           "backgroundColor": "#F5F7FA",
           "dark": {
-            "image": "./assets/images/splash-dark.png",
+            "image": "./assets/images/splash.png",
             "backgroundColor": "#000000"
           }
         }
