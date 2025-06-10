@@ -4,6 +4,20 @@ import { useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import { ComponentProps } from "react";
+
+type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
+
+type TabIconProps = {
+  filledIconName: IconName;
+  outlineIconName: IconName;
+  filledImageSource?: any;
+  outlineImageSource?: any;
+  focused: boolean;
+  screenName: string;
+  isProfile?: boolean;
+  profileImage?: string;
+};
 
 // @ts-ignore
 const TabIcon = ({

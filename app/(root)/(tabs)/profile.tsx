@@ -93,26 +93,73 @@ const Profile = () => {
   };
 
   const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [activities, setActivities] = useState([]);
   const email = user?.primaryEmailAddress?.emailAddress;
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
-  const downloadPDF = async () => {
-    if (email) {
-      try {
-        await fetchAPI("https://ec-ai.expo.app/activities-pdf", {
+  const downloadPDF = async (): Promise<boolean> => {
+    if (!email) {
+      Alert.alert("Missing Email", "We couldn't find your account email.");
+      return false;
+    }
+
+    try {
+      // 0) Fetch user activities
+      const activityRes = await fetch("https://ec-ai.expo.app/getactivities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const activityJson = await activityRes.json();
+      const activities = activityJson.data;
+
+      if (!Array.isArray(activities)) {
+        throw new Error("Failed to fetch valid activities");
+      }
+
+      // 1) Generate the PDF
+      const genRes = await fetchAPI(
+        "https://ec-ai.expo.app/generate-activities-pdf",
+        {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        });
-      } catch (error) {
-        console.error("PDF download error:", error);
-        Alert.alert(
-          "Error",
-          "Failed to generate and send your activities PDF.",
+          body: JSON.stringify({ email, activities }),
+        },
+      );
+
+      if (!genRes?.pdfBase64) {
+        console.error(
+          "generate-activities-pdf returned invalid response:",
+          genRes,
         );
+        throw new Error("PDF generation failed");
       }
-    } else {
-      Alert.alert("Missing Email", "We couldn't find your account email.");
+
+      const { pdfBase64 } = genRes;
+
+      // 2) Send the email
+      const sendRes = await fetchAPI(
+        "https://ec-ai.expo.app/send-activities-email",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, pdfBase64 }),
+        },
+      );
+
+      if (!sendRes || sendRes.error) {
+        console.error("Email send failed:", sendRes);
+        return false;
+      }
+      return true;
+    } catch (error) {
+      console.error("PDF workflow error:", error);
+      Alert.alert(
+        "Error",
+        "Something went wrong generating or sending your PDF.",
+      );
+      return false;
     }
   };
   const handleSignOut = async () => {
@@ -260,8 +307,8 @@ const Profile = () => {
               await Haptics.selectionAsync();
               if (isPremium) {
                 Alert.alert(
-                  "Sending PDF...",
-                  "We're sending your activities PDF to your email now.",
+                  "Sent PDF",
+                  "Your activities PDF has been sent to your email.",
                 );
                 await downloadPDF();
               } else {
