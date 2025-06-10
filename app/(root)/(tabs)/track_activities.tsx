@@ -156,7 +156,11 @@ const TrackActivities = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ activityId: deleteTarget.id }),
       });
-      if (!res.ok) throw new Error("Delete failed");
+      if (!res.ok) {
+        console.error("Delete failed with status", res.status);
+        Alert.alert("Error", "Failed to delete activity.");
+        return;
+      }
       setActivities((prev) => prev.filter((a) => a.id !== deleteTarget.id));
       setShowDeleteModal(false);
       setDeleteTarget(null);
@@ -355,7 +359,7 @@ const TrackActivities = () => {
             <TouchableOpacity
               onPress={async () => {
                 await Haptics.selectionAsync();
-                openLogs(item);
+                await openLogs(item);
               }}
               className="bg-white p-4 mb-4 rounded-lg shadow"
             >

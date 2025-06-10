@@ -23,6 +23,7 @@ import { useRouter } from "expo-router";
 import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { fetchAPI } from "@/lib/fetch";
+import * as Haptics from "expo-haptics";
 
 const Profile = () => {
   const { user } = useUser();
@@ -82,6 +83,9 @@ const Profile = () => {
       try {
         const updatedImage = await user?.setProfileImage({ file: dataUrl });
         setImageUri(updatedImage?.publicUrl || dataUrl);
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
       } catch (error) {
         console.error("Error updating profile image:", error);
       }
@@ -116,6 +120,7 @@ const Profile = () => {
       await AsyncStorage.clear();
       await Purchases.logOut();
       await signOut();
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(auth)/sign-in");
     } catch (err) {
       console.error("Error during logout:", err);
@@ -151,6 +156,7 @@ const Profile = () => {
 
   const deleteAccount = async () => {
     if (!user?.primaryEmailAddress?.emailAddress) return;
+
     try {
       const response = await fetch("https://ec-ai.expo.app/deleteuser", {
         method: "DELETE",
@@ -161,6 +167,9 @@ const Profile = () => {
       });
 
       if (response.ok) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
         await Purchases.logOut();
         await signOut();
         router.replace("/");
@@ -215,8 +224,12 @@ const Profile = () => {
                   [PAYWALL_RESULT.PURCHASED, PAYWALL_RESULT.RESTORED].includes(
                     result,
                   )
-                )
+                ) {
+                  await Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Success,
+                  );
                   setIsPremium(true);
+                }
               }
             }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
@@ -229,7 +242,10 @@ const Profile = () => {
           </Text>
           <CustomButton
             title="Update User Data"
-            onPress={() => router.replace("/(auth)/profile-setup?update=true")}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              router.replace("/(auth)/profile-setup?update=true");
+            }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
         </View>
@@ -241,6 +257,7 @@ const Profile = () => {
           <CustomButton
             title="Download Activities PDF"
             onPress={async () => {
+              await Haptics.selectionAsync();
               if (isPremium) {
                 Alert.alert(
                   "Sending PDF...",
@@ -261,6 +278,9 @@ const Profile = () => {
                     "We're sending your activities PDF to your email now.",
                   );
                   await downloadPDF();
+                  await Haptics.notificationAsync(
+                    Haptics.NotificationFeedbackType.Success,
+                  );
                 }
               }
             }}
@@ -268,7 +288,10 @@ const Profile = () => {
           />
           <CustomButton
             title="Export Data"
-            onPress={requestDataExport}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              await requestDataExport();
+            }}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
         </View>
@@ -279,18 +302,20 @@ const Profile = () => {
           </Text>
           <CustomButton
             title="Contact Support"
-            onPress={() =>
-              Linking.openURL(
+            onPress={async () => {
+              await Linking.openURL(
                 "mailto:ask.ecai@gmail.com?subject=Support%20Inquiry",
-              )
-            }
+              );
+            }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
           <CustomButton
             title="Submit Feedback"
-            onPress={() =>
-              Linking.openURL("mailto:ask.ecai@gmail.com?subject=Feedback")
-            }
+            onPress={async () => {
+              await Linking.openURL(
+                "mailto:ask.ecai@gmail.com?subject=Feedback",
+              );
+            }}
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
         </View>
@@ -302,20 +327,22 @@ const Profile = () => {
           </Text>
           <CustomButton
             title="Privacy Policy"
-            onPress={() =>
-              WebBrowser.openBrowserAsync(
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              await WebBrowser.openBrowserAsync(
                 "https://ec-aiweb.vercel.app/privacy-policy",
-              )
-            }
+              );
+            }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
           />
           <CustomButton
             title="Terms of Use"
-            onPress={() =>
-              WebBrowser.openBrowserAsync(
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              await WebBrowser.openBrowserAsync(
                 "https://ec-aiweb.vercel.app/terms-of-use",
-              )
-            }
+              );
+            }}
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
           />
         </View>
@@ -323,13 +350,20 @@ const Profile = () => {
         <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
           <CustomButton
             title="Log Out"
-            onPress={() => setShowSignOutModal(true)}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              setShowSignOutModal(true);
+            }}
             bgVariant="danger"
             className="mb-4 shadow-md"
           />
+
           <CustomButton
             title="Delete Account"
-            onPress={() => setShowDeleteModal(true)}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              setShowDeleteModal(true);
+            }}
             className="shadow-md"
           />
         </View>

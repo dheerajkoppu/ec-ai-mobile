@@ -214,7 +214,7 @@ const Sign_Up = () => {
               title="Sign Up"
               onPress={async () => {
                 await Haptics.selectionAsync();
-                onSignUpPress();
+                await onSignUpPress();
               }}
               className="mt-6"
             />
@@ -284,7 +284,7 @@ const Sign_Up = () => {
                 title="Verify Email"
                 onPress={async () => {
                   await Haptics.selectionAsync();
-                  onPressVerify();
+                  await onPressVerify();
                 }}
                 className="mt-5 bg-primary-500"
               />

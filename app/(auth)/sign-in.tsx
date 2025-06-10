@@ -14,7 +14,6 @@ import { useCallback, useRef, useState } from "react";
 import { router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
-import { InputFieldProps } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 

@@ -1,6 +1,7 @@
 import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Text, View } from "react-native";
+import * as Haptics from "expo-haptics"; // <-- import haptics
 
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
@@ -13,10 +14,11 @@ const OAuth = () => {
     const result = await googleOAuth(startOAuthFlow);
 
     if (result.code === "session_exists" || result.code === "success") {
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
       if (result.date) {
         const timeSinceSignIn = Date.now() - result.date;
 
-        // If account is new (within 5 seconds), go to profile-setup
         if (timeSinceSignIn < 5000) {
           router.replace("/(auth)/profile-setup");
           Alert.alert("Success", "Welcome! Let’s finish setting things up.");
@@ -29,6 +31,7 @@ const OAuth = () => {
       return;
     }
 
+    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     Alert.alert("Error", result.message);
   };
 
