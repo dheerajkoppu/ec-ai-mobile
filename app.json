@@ -17,8 +17,7 @@
       },
       "icon": {
         "light": "./assets/images/logo.png",
-        "dark": "./assets/images/ios-dark.png",
-        "tinted": "./assets/images/ios-tinted.png"
+        "dark": "./assets/images/ios-dark.png"
       }
     },
     "android": {
