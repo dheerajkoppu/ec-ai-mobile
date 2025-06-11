@@ -24,6 +24,7 @@ import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import * as Haptics from "expo-haptics";
+import { useColorScheme } from "react-native";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -32,6 +33,8 @@ const TrackActivities = () => {
   const email = user?.primaryEmailAddress?.emailAddress;
   const userId = user?.id;
   const [activities, setActivities] = useState<Activity[]>([]);
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
@@ -297,28 +300,31 @@ const TrackActivities = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
-      <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+    <SafeAreaView
+      className={`flex-1 px-4 py-6 ${isDark ? "bg-[#121212]" : "bg-primary-200"}`}
+    >
+      <Text
+        className={`text-3xl font-bold font-PoppinsBold pb-2 ${
+          isDark ? "text-white" : "text-gray-800"
+        }`}
+      >
+        {" "}
         Track Activities
       </Text>
-
       {loading && !refreshing && (
         <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
       )}
-
       {error && (
         <Text className="text-red-500 font-PoppinsRegular my-4">
           Error loading activities: {error}
         </Text>
       )}
-
       <InputField
         label=""
         placeholder="Search Activities"
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-
       <View className="flex-row mb-4 relative z-10">
         <TouchableOpacity
           onPress={() => setShowSortDropdown(!showSortDropdown)}
@@ -342,7 +348,6 @@ const TrackActivities = () => {
           </View>
         )}
       </View>
-
       {!loading && filteredActivities.length === 0 ? (
         <Text className="text-center text-gray-500 font-PoppinsRegular mt-10">
           No activities found.
@@ -361,31 +366,83 @@ const TrackActivities = () => {
                 await Haptics.selectionAsync();
                 await openLogs(item);
               }}
-              className="bg-white p-4 mb-4 rounded-lg shadow"
+              style={{
+                backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                padding: 16,
+                marginBottom: 16,
+                borderRadius: 10,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 4,
+                elevation: 3,
+              }}
             >
-              <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
+              <Text
+                className={`font-bold font-PoppinsSemiBold text-base mb-2 ${
+                  isDark ? "text-white" : "text-black"
+                }`}
+              >
                 {item.category}
               </Text>
+
               <View className="flex-row">
                 <View className="w-24">
-                  <Text className="font-PoppinsRegular mb-1 text-xs">
+                  <Text
+                    className={`font-PoppinsRegular mb-1 text-xs ${
+                      isDark ? "text-white" : "text-black"
+                    }`}
+                  >
                     {item.grade}
                   </Text>
-                  <Text className="font-PoppinsRegular text-xs mb-1">
+
+                  <Text
+                    className={`font-PoppinsRegular mb-1 text-xs ${
+                      isDark ? "text-white" : "text-black"
+                    }`}
+                  >
+                    {" "}
                     {item.hoursPerWeek} hr/wk
                   </Text>
-                  <Text className="font-PoppinsRegular text-xs mb-1">
+                  <Text
+                    className={`font-PoppinsRegular mb-1 text-xs ${
+                      isDark ? "text-white" : "text-black"
+                    }`}
+                  >
+                    {" "}
                     {item.weeksPerYear} wk/yr
                   </Text>
                 </View>
                 <View className="flex-1">
-                  <Text className="font-PoppinsSemiBold mb-1">{item.name}</Text>
+                  <Text
+                    className={`font-PoppinsSemiBold mb-1 ${
+                      isDark ? "text-white" : "text-black"
+                    }`}
+                  >
+                    {item.name}
+                  </Text>
+
                   {item.roles && (
-                    <Text className="font-PoppinsRegular text-xs text-gray-600 mb-1">
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        color: isDark ? "#ccc" : "#444",
+                        marginBottom: 4,
+                      }}
+                    >
                       Roles: {item.roles}
                     </Text>
                   )}
-                  <Text className="font-PoppinsRegular text-xs text-gray-800">
+                  <Text
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      fontSize: 12,
+                      color: isDark ? "#bbb" : "#333",
+                      marginBottom: 8,
+                    }}
+                  >
+                    {" "}
                     {item.description}
                   </Text>
                 </View>
@@ -432,7 +489,6 @@ const TrackActivities = () => {
           )}
         />
       )}
-
       {/* Delete Activity Confirmation Modal */}
       <ReactNativeModal
         isVisible={showDeleteModal}
@@ -440,11 +496,20 @@ const TrackActivities = () => {
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
       >
-        <View className="bg-white px-7 py-9 rounded-2xl">
-          <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
+        <View
+          className="bg-white px-7 py-9 rounded-2xl"
+          style={{ backgroundColor: isDark ? "#121212" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-PoppinsSemiBold text-center mb-4"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Confirm Delete
           </Text>
-          <Text className="text-base font-Poppins text-center mb-6">
+          <Text
+            className="text-base font-Poppins text-center mb-6"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Are you sure you want to delete this activity? This action cannot be
             undone.
           </Text>
@@ -466,7 +531,6 @@ const TrackActivities = () => {
           </View>
         </View>
       </ReactNativeModal>
-
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
@@ -487,7 +551,16 @@ const TrackActivities = () => {
           setShowEditModal(false);
         }}
       >
-        <View className="bg-primary-200 px-7 py-9 rounded-2xl mb-16 shadow-md">
+        <View
+          style={{
+            backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+            paddingHorizontal: 28,
+            paddingVertical: 36,
+            borderRadius: 16,
+            marginBottom: 64,
+            shadowColor: "#000",
+          }}
+        >
           <TouchableOpacity
             onPress={() => {
               setEditingActivity(null);
@@ -495,9 +568,20 @@ const TrackActivities = () => {
             }}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color="#000" />
+            <MaterialCommunityIcons
+              name="close"
+              size={24}
+              color={isDark ? "#fff" : "#000"}
+            />
           </TouchableOpacity>
-          <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+          <Text
+            style={{
+              fontSize: 24,
+              fontFamily: "Poppins-Bold",
+              color: isDark ? "#fff" : "#1f2937",
+              marginBottom: 12,
+            }}
+          >
             Edit Activity
           </Text>
           <KeyboardAwareScrollView
@@ -519,17 +603,30 @@ const TrackActivities = () => {
                   <ActivityIndicator
                     size="small"
                     color="#5b55f6"
-                    className="my-2"
+                    style={{ marginVertical: 8 }}
                   />
                 ) : errorCareerFields ? (
-                  <Text className="text-red-500 font-PoppinsRegular mb-2">
+                  <Text
+                    style={{
+                      color: "#ef4444",
+                      fontFamily: "Poppins-Regular",
+                      marginBottom: 8,
+                    }}
+                  >
                     Failed to load career fields
                   </Text>
                 ) : (
                   <DropdownField
                     label={
-                      <Text className="font-medium text-lg font-PoppinsBold">
-                        Career Field <Text className="text-red-500">*</Text>
+                      <Text
+                        style={{
+                          fontWeight: "600",
+                          fontSize: 18,
+                          fontFamily: "Poppins-Bold",
+                          color: isDark ? "#fff" : "#000",
+                        }}
+                      >
+                        Career Field <Text style={{ color: "#ef4444" }}>*</Text>
                       </Text>
                     }
                     data={careerFields ?? []}
@@ -552,27 +649,51 @@ const TrackActivities = () => {
                     setEditingActivity({ ...editingActivity, roles: value })
                   }
                 />
-                <View className="mb-4">
-                  <Text className="text-gray-700 font-medium text-lg font-PoppinsBold mb-2">
-                    Grades <Text className="text-red-500">*</Text>
+                <View style={{ marginBottom: 16 }}>
+                  <Text
+                    style={{
+                      color: isDark ? "#fff" : "#000",
+                      fontWeight: "600",
+                      fontSize: 18,
+                      fontFamily: "Poppins-Bold",
+                      marginBottom: 8,
+                    }}
+                  >
+                    Grades <Text style={{ color: "#ef4444" }}>*</Text>
                   </Text>
-                  <View className="flex-row flex-wrap gap-3">
+                  <View
+                    style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}
+                  >
                     {gradeOptions.map((grade) => (
                       <TouchableOpacity
                         key={grade}
                         onPress={() => toggleEditingGrade(grade)}
-                        className={`px-2 py-2 border rounded-lg ${
-                          editingGrades.includes(grade)
-                            ? "bg-[#5b55f6] border-[#5b55f6]"
-                            : "border-gray-300 bg-white"
-                        }`}
+                        style={{
+                          paddingVertical: 8,
+                          paddingHorizontal: 16,
+                          borderRadius: 8,
+                          borderWidth: 1,
+                          borderColor: editingGrades.includes(grade)
+                            ? "#5b55f6"
+                            : "#ccc",
+                          backgroundColor: editingGrades.includes(grade)
+                            ? "#5b55f6"
+                            : isDark
+                              ? "#1e1e1e"
+                              : "#fff",
+                          marginRight: 12,
+                          marginBottom: 12,
+                        }}
                       >
                         <Text
-                          className={`font-PoppinsRegular ${
-                            editingGrades.includes(grade)
-                              ? "text-white"
-                              : "text-gray-700"
-                          }`}
+                          style={{
+                            fontFamily: "Poppins-Regular",
+                            color: editingGrades.includes(grade)
+                              ? "#fff"
+                              : isDark
+                                ? "#e0e0e0"
+                                : "#000",
+                          }}
                         >
                           {grade}
                         </Text>
@@ -620,14 +741,13 @@ const TrackActivities = () => {
                 <CustomButton
                   title="Update Activity"
                   onPress={updateActivity}
-                  className="mt-5 mb-5 rounded-lg shadow-md"
+                  style={{ marginTop: 20, marginBottom: 20 }}
                 />
               </>
             )}
           </KeyboardAwareScrollView>
         </View>
       </ReactNativeModal>
-
       {/* Activity Logs Modal */}
       <ReactNativeModal
         isVisible={showLogsModal}
@@ -636,37 +756,86 @@ const TrackActivities = () => {
         useNativeDriverForBackdrop={true}
         onBackdropPress={() => setShowLogsModal(false)}
       >
-        <View className="bg-white px-7 py-9 rounded-2xl shadow-md max-h-[80%]">
+        <View
+          style={{
+            backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+            paddingHorizontal: 28,
+            paddingVertical: 36,
+            borderRadius: 16,
+            shadowColor: "#000",
+            maxHeight: "80%",
+          }}
+        >
           <TouchableOpacity
             onPress={() => setShowLogsModal(false)}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color="#000" />
+            <MaterialCommunityIcons
+              name="close"
+              size={24}
+              color={isDark ? "#fff" : "#000"}
+            />
           </TouchableOpacity>
-          <Text className="text-2xl font-bold text-gray-800 mb-4">
+
+          <Text
+            style={{
+              fontSize: 24,
+              fontWeight: "bold",
+              color: isDark ? "#fff" : "#1f2937",
+              marginBottom: 16,
+            }}
+          >
             Activity Logs
           </Text>
+
           {logs.length === 0 ? (
-            <Text className="text-gray-600 mb-4">No logs found.</Text>
+            <Text
+              style={{ color: isDark ? "#aaa" : "#4b5563", marginBottom: 16 }}
+            >
+              No logs found.
+            </Text>
           ) : (
             <FlatList
               data={logs}
               keyExtractor={(item, index) => index.toString()}
               renderItem={({ item }) => (
-                <View className="border-b border-gray-300 pb-2 mb-2">
-                  <Text className="font-PoppinsBold">
+                <View
+                  style={{
+                    borderBottomWidth: 1,
+                    borderBottomColor: isDark ? "#444" : "#d1d5db",
+                    paddingBottom: 8,
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontFamily: "Poppins-Bold",
+                      color: isDark ? "#fff" : "#000",
+                    }}
+                  >
                     Date: {formatDate(item.date_of_activity)}
                   </Text>
-                  <Text className="font-PoppinsRegular">
+                  <Text
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      color: isDark ? "#ccc" : "#222",
+                    }}
+                  >
                     Hours Logged: {item.hours_logged}
                   </Text>
-                  <Text className="font-PoppinsRegular">
+                  <Text
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      color: isDark ? "#ccc" : "#222",
+                    }}
+                  >
                     Description: {item.description}
                   </Text>
                 </View>
               )}
             />
           )}
+
           <CustomButton
             title="Close"
             onPress={() => setShowLogsModal(false)}
@@ -674,7 +843,6 @@ const TrackActivities = () => {
           />
         </View>
       </ReactNativeModal>
-
       {/* AI Description Modal */}
       <ReactNativeModal
         backdropTransitionOutTiming={1}
@@ -683,22 +851,49 @@ const TrackActivities = () => {
         isVisible={showAIDescriptionModal}
         onBackdropPress={() => setShowAIDescriptionModal(false)}
       >
-        <View className="bg-white px-7 py-9 rounded-2xl shadow-md">
+        <View
+          style={{
+            backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+            paddingHorizontal: 28,
+            paddingVertical: 36,
+            borderRadius: 16,
+            shadowColor: "#000",
+          }}
+        >
           <TouchableOpacity
             onPress={() => setShowAIDescriptionModal(false)}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color="#000" />
+            <MaterialCommunityIcons
+              name="close"
+              size={24}
+              color={isDark ? "#fff" : "#000"}
+            />
           </TouchableOpacity>
-          <Text className="text-2xl font-PoppinsSemiBold text-gray-800 mb-4">
+
+          <Text
+            style={{
+              fontSize: 24,
+              fontFamily: "Poppins-SemiBold",
+              color: isDark ? "#fff" : "#1f2937",
+              marginBottom: 16,
+            }}
+          >
             AI Activity Summary
           </Text>
+
           <Text
-            className="text-base font-PoppinsRegular text-gray-700 mb-6"
+            style={{
+              fontSize: 16,
+              fontFamily: "Poppins-Regular",
+              color: isDark ? "#ccc" : "#374151",
+              marginBottom: 24,
+            }}
             selectable={true}
           >
             {aiDescription}
           </Text>
+
           <CustomButton
             title="Replace Current Description"
             onPress={replaceAIDescription}

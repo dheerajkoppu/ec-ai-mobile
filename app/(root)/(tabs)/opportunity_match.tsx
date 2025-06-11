@@ -6,12 +6,12 @@ import {
   SafeAreaView,
   ActivityIndicator,
   ScrollView,
-  Linking,
   Dimensions,
   ImageBackground,
 } from "react-native";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
+import { useColorScheme } from "react-native";
 
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
@@ -19,6 +19,8 @@ import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
+import * as WebBrowser from "expo-web-browser";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Opportunity {
   id: string;
@@ -65,11 +67,14 @@ const Opportunities = () => {
   const [swipeCount, setSwipeCount] = useState(0);
   const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
   const { user } = useUser();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedOpportunity, setSelectedOpportunity] =
     useState<Opportunity | null>(null);
+  const [cardIndex, setCardIndex] = useState(0);
   const [canSwipe, setCanSwipe] = useState(true);
 
   useEffect(() => {
@@ -79,6 +84,18 @@ const Opportunities = () => {
       setLastSwipeDate(today);
     }
   }, [lastSwipeDate]);
+
+  const onSwiped = async (i: number, liked: boolean) => {
+    setCardIndex(i + 1);
+    await AsyncStorage.setItem("lastCardIndex", String(i + 1));
+    await handleSwipe(i, liked);
+  };
+  useEffect(() => {
+    (async () => {
+      const saved = await AsyncStorage.getItem("lastCardIndex");
+      if (saved !== null) setCardIndex(Number(saved));
+    })();
+  }, []);
 
   const checkPremiumAndUnlock = async () => {
     try {
@@ -277,7 +294,9 @@ const Opportunities = () => {
 
   if (loading) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+      >
         <ActivityIndicator size="large" color="#5b55f6" />
       </SafeAreaView>
     );
@@ -285,7 +304,9 @@ const Opportunities = () => {
 
   if (error) {
     return (
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+      <SafeAreaView
+        style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+      >
         <Text style={{ color: "red", textAlign: "center", marginTop: 20 }}>
           {error}
         </Text>
@@ -294,17 +315,36 @@ const Opportunities = () => {
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingVertical: 24,
+        backgroundColor: isDark ? "#121212" : "#F5F7FA",
+      }}
+    >
       <View style={{ alignItems: "center", marginVertical: 16 }}>
         <Text
           allowFontScaling={false}
-          className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2 text-center"
+          style={{
+            fontSize: 24,
+            fontWeight: "bold",
+            color: isDark ? "#fff" : "#1f2937", // dark gray or white
+            textAlign: "center",
+            fontFamily: "Poppins-Bold",
+            paddingBottom: 8,
+          }}
         >
           Opportunity Match
         </Text>
         <Text
           allowFontScaling={false}
-          className="text-gray-500 font-PoppinsRegular text-center"
+          style={{
+            color: isDark ? "#ccc" : "#6b7280", // tailwind gray-500
+            fontFamily: "Poppins-Regular",
+            textAlign: "center",
+            fontSize: 14,
+          }}
         >
           Swipe RIGHT to save an opportunity, left to skip.{" "}
         </Text>
@@ -312,12 +352,9 @@ const Opportunities = () => {
 
       <Swiper
         cards={opportunities}
-        onSwipedRight={async (i) => {
-          await handleSwipe(i, true);
-        }}
-        onSwipedLeft={async (i) => {
-          await handleSwipe(i, false);
-        }}
+        cardIndex={cardIndex} // ← new
+        onSwipedRight={(i) => onSwiped(i, true)} // ← new
+        onSwipedLeft={(i) => onSwiped(i, false)}
         infinite
         disableTopSwipe
         disableBottomSwipe
@@ -403,7 +440,7 @@ const Opportunities = () => {
       >
         <View
           style={{
-            backgroundColor: "#FFF",
+            backgroundColor: isDark ? "#1e1e1e" : "#FFF",
             borderRadius: 12,
             padding: 16,
             maxHeight: "80%",
@@ -413,18 +450,24 @@ const Opportunities = () => {
             onPress={() => setSelectedOpportunity(null)}
             style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
           >
-            <MaterialCommunityIcons name="close" size={24} color="#000" />
+            <MaterialCommunityIcons
+              name="close"
+              size={24}
+              color={isDark ? "#fff" : "#000"}
+            />
           </TouchableOpacity>
+
           <Text
             style={{
               fontSize: 22,
               fontWeight: "700",
-              color: "#000",
+              color: isDark ? "#fff" : "#000",
               marginBottom: 12,
             }}
           >
             {selectedOpportunity?.title}
           </Text>
+
           <ScrollView>
             {[
               ["School", selectedOpportunity?.school],
@@ -448,32 +491,99 @@ const Opportunities = () => {
             ].map(
               ([label, value], idx) =>
                 value !== undefined && (
-                  <Text key={idx} style={{ fontSize: 14, marginBottom: 8 }}>
-                    <Text style={{ fontWeight: "600" }}>{label}:</Text> {value}
+                  <Text
+                    key={idx}
+                    style={{
+                      fontSize: 14,
+                      marginBottom: 8,
+                      color: isDark ? "#ddd" : "#000",
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        color: isDark ? "#aaa" : "#000",
+                      }}
+                    >
+                      {label}:
+                    </Text>{" "}
+                    {value}
                   </Text>
                 ),
             )}
 
-            {/* ⭐ Prestige field rendered as stars */}
-            <Text style={{ fontSize: 14, marginBottom: 8 }}>
-              <Text style={{ fontWeight: "600" }}>Prestige:</Text>{" "}
+            <Text
+              style={{
+                fontSize: 14,
+                marginBottom: 8,
+                color: isDark ? "#ddd" : "#000",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+              >
+                Prestige:
+              </Text>{" "}
               {renderStars(selectedOpportunity?.prestige)}
             </Text>
 
-            <Text style={{ fontSize: 14, marginBottom: 8 }}>
-              <Text style={{ fontWeight: "600" }}>Only FRL Students:</Text>{" "}
+            <Text
+              style={{
+                fontSize: 14,
+                marginBottom: 8,
+                color: isDark ? "#ddd" : "#000",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+              >
+                Only FRL Students:
+              </Text>{" "}
               {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
             </Text>
-            <Text style={{ fontSize: 14, marginBottom: 8 }}>
-              <Text style={{ fontWeight: "600" }}>Only First Gen:</Text>{" "}
+
+            <Text
+              style={{
+                fontSize: 14,
+                marginBottom: 8,
+                color: isDark ? "#ddd" : "#000",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+              >
+                Only First Gen:
+              </Text>{" "}
               {selectedOpportunity?.onlyFirstGen ? "Yes" : "No"}
             </Text>
-            <Text style={{ fontSize: 14, marginBottom: 8 }}>
-              <Text style={{ fontWeight: "600" }}>Has Leadership Roles:</Text>{" "}
+
+            <Text
+              style={{
+                fontSize: 14,
+                marginBottom: 8,
+                color: isDark ? "#ddd" : "#000",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+              >
+                Has Leadership Roles:
+              </Text>{" "}
               {selectedOpportunity?.hasLeadershipRoles ? "Yes" : "No"}
             </Text>
-            <Text style={{ fontSize: 14, marginBottom: 8 }}>
-              <Text style={{ fontWeight: "600" }}>Outside US:</Text>{" "}
+
+            <Text
+              style={{
+                fontSize: 14,
+                marginBottom: 8,
+                color: isDark ? "#ddd" : "#000",
+              }}
+            >
+              <Text
+                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+              >
+                Outside US:
+              </Text>{" "}
               {selectedOpportunity?.outsideUS ? "Yes" : "No"}
             </Text>
 
@@ -485,9 +595,19 @@ const Opportunities = () => {
                   marginBottom: 8,
                 }}
               >
-                <Text style={{ fontWeight: "600" }}>Apply:</Text>
+                <Text
+                  style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+                >
+                  Apply:
+                </Text>
                 <TouchableOpacity
-                  onPress={() => Linking.openURL(selectedOpportunity.apply!)}
+                  onPress={async () => {
+                    if (selectedOpportunity?.apply) {
+                      await WebBrowser.openBrowserAsync(
+                        selectedOpportunity.apply,
+                      );
+                    }
+                  }}
                   style={{ marginLeft: 8 }}
                 >
                   <Text

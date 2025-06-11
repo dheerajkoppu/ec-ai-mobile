@@ -6,9 +6,11 @@ import * as Haptics from "expo-haptics"; // <-- import haptics
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { googleOAuth } from "@/lib/auth";
+import { useColorScheme } from "react-native";
 
 const OAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  const isDark = useColorScheme() === "dark";
 
   const handleGoogleSignIn = async () => {
     const result = await googleOAuth(startOAuthFlow);
@@ -39,7 +41,9 @@ const OAuth = () => {
     <View>
       <View className="flex flex-row justify-center items-center mt-4 gap-x-3">
         <View className="flex-1 h-[1px] bg-general-100" />
-        <Text className="text-lg">Or</Text>
+        <Text className="text-lg" style={{ color: isDark ? "#fff" : "#000" }}>
+          Or
+        </Text>
         <View className="flex-1 h-[1px] bg-general-100" />
       </View>
       <CustomButton

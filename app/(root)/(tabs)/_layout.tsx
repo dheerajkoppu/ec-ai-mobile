@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { Image, View, TouchableOpacity } from "react-native";
+import { Image, View, TouchableOpacity, useColorScheme } from "react-native";
 import { useUser } from "@clerk/clerk-expo";
 import { useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -19,21 +19,22 @@ type TabIconProps = {
   profileImage?: string;
 };
 
-// @ts-ignore
 const TabIcon = ({
   filledIconName,
   outlineIconName,
-  filledImageSource, // <-- ADD
-  outlineImageSource, // <-- ADD
+  filledImageSource,
+  outlineImageSource,
   focused,
   screenName,
   isProfile,
   profileImage,
 }: TabIconProps) => {
   const navigation = useNavigation();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
   const icon = focused ? filledIconName : outlineIconName;
-  const purple = "#5b55f6";
   const size = 53;
+  const purple = "#5b55f6";
 
   return (
     <TouchableOpacity
@@ -51,7 +52,7 @@ const TabIcon = ({
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: "white",
+          backgroundColor: isDark ? "#1a1a1a" : "white",
           alignItems: "center",
           justifyContent: "center",
         }}
@@ -60,7 +61,7 @@ const TabIcon = ({
           <View
             style={{
               borderWidth: focused ? 2 : 0,
-              borderColor: "#5b55f6",
+              borderColor: purple,
               borderRadius: size / 2,
               padding: focused ? 2 : 0,
             }}
@@ -93,6 +94,8 @@ const TabIcon = ({
 
 const Layout = () => {
   const { user } = useUser();
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
   const profileImage = user?.imageUrl;
 
   return (
@@ -101,7 +104,7 @@ const Layout = () => {
       screenOptions={{
         tabBarShowLabel: false,
         tabBarStyle: {
-          backgroundColor: "#F5F7FA",
+          backgroundColor: isDark ? "#121212" : "#F5F7FA",
           paddingBottom: 50,
           height: 100,
           display: "flex",
@@ -109,6 +112,7 @@ const Layout = () => {
           alignItems: "center",
           flexDirection: "row",
           position: "absolute",
+          borderTopColor: isDark ? "#2a2a2a" : "#e0e0e0", // <- change this color
         },
         tabBarItemStyle: {
           paddingVertical: 20,
@@ -129,7 +133,6 @@ const Layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="track_activities"
         options={{
@@ -172,7 +175,6 @@ const Layout = () => {
           ),
         }}
       />
-
       <Tabs.Screen
         name="profile"
         options={{

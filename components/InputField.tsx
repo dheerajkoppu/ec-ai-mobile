@@ -8,6 +8,7 @@ import {
   Keyboard,
 } from "react-native";
 import { InputFieldProps } from "@/types/type";
+import { useColorScheme } from "react-native";
 
 const InputField = forwardRef<TextInput, InputFieldProps>(
   (
@@ -27,6 +28,8 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
   ) => {
     // 1. Local state for immediate typing
     const [local, setLocal] = useState<string>(value ?? "");
+    const isDark = useColorScheme() === "dark";
+    const [isFocused, setIsFocused] = useState(false);
 
     // 2. Sync local if parent value changes externally
     useEffect(() => {
@@ -39,27 +42,57 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="my-2 w-full">
           {label && (
-            <Text className={`text-lg font-PoppinsBold mb-2 ${labelStyle}`}>
+            <Text
+              style={{
+                fontSize: 18,
+                fontFamily: "Poppins-Bold",
+                marginBottom: 8,
+                color: isDark ? "#ffffff" : "#000000",
+                ...labelStyle,
+              }}
+            >
               {label}
             </Text>
           )}
           <View
-            className={`flex flex-row items-center bg-white rounded-xl border border-gray-200 focus:border-[#6C5CE7] p-4 ${containerStyle}`}
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+              borderRadius: 12,
+              borderWidth: 1.5,
+              borderColor: isFocused
+                ? isDark
+                  ? "#6C5CE7" // light blue for dark mode
+                  : "#5b55f6" // your primary in light mode
+                : isDark
+                  ? "#444"
+                  : "#e5e7eb",
+              padding: 16,
+              ...containerStyle,
+            }}
           >
             {icon && (
               <Image source={icon} className={`w-6 h-6 mr-3 ${iconStyle}`} />
             )}
             <TextInput
               ref={ref}
-              // 3. Render local state for snappy typing
               value={local}
-              onChangeText={setLocal}
-              // 4. Only propagate to parent on blur
-              onEndEditing={() => {
-                onChangeText?.(local);
+              onChangeText={(text) => {
+                setLocal(text);
+                onChangeText?.(text);
               }}
-              className={`text-[15px] flex-1 font-Poppins text-left ${inputStyle}`}
-              placeholderTextColor="#A0A3BD"
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              style={{
+                fontSize: 15,
+                flex: 1,
+                fontFamily: "Poppins-Regular",
+                textAlign: "left",
+                color: isDark ? "#ffffff" : "#000000",
+                ...inputStyle,
+              }}
+              placeholderTextColor={isDark ? "#888888" : "#A0A3BD"}
               secureTextEntry={secureTextEntry}
               {...props}
             />

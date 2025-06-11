@@ -8,6 +8,7 @@ import {
   RefreshControl,
   Alert,
   ActivityIndicator,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
@@ -32,6 +33,7 @@ interface Opportunity {
 
 export default function Saved_opportunities() {
   const { user } = useUser();
+  const isDark = useColorScheme() === "dark";
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
@@ -101,7 +103,6 @@ export default function Saved_opportunities() {
         }
       }
 
-      // Premium access confirmed, fetch AI-generated reasons
       const response = await fetch("https://ec-ai.expo.app/getaireasons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,9 +163,23 @@ export default function Saved_opportunities() {
   );
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#121212" : "#F5F7FA",
+        paddingHorizontal: 16,
+        paddingTop: 24,
+      }}
+    >
       <SignedIn>
-        <Text className="text-3xl font-bold text-gray-800 font-PoppinsBold pb-2">
+        <Text
+          style={{
+            fontSize: 28,
+            fontFamily: "Poppins-Bold",
+            paddingBottom: 12,
+            color: isDark ? "#ffffff" : "#1a1a1a",
+          }}
+        >
           Saved Opportunities
         </Text>
 
@@ -176,7 +191,14 @@ export default function Saved_opportunities() {
         />
 
         {filteredSavedOpportunities.length === 0 ? (
-          <Text className="text-center text-gray-500 font-PoppinsRegular mt-10">
+          <Text
+            style={{
+              textAlign: "center",
+              marginTop: 40,
+              fontFamily: "Poppins-Regular",
+              color: isDark ? "#999" : "#666",
+            }}
+          >
             No saved opportunities found.
           </Text>
         ) : (
@@ -188,48 +210,110 @@ export default function Saved_opportunities() {
             }
             contentContainerStyle={{ paddingBottom: 120 }}
             renderItem={({ item }) => (
-              <View className="bg-white p-4 mb-4 rounded-lg shadow">
-                <Text className="font-bold font-PoppinsSemiBold text-base mb-2">
+              <View
+                style={{
+                  backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                  padding: 16,
+                  marginBottom: 16,
+                  borderRadius: 10,
+                  shadowColor: "#000",
+                }}
+              >
+                <Text
+                  style={{
+                    fontFamily: "Poppins-SemiBold",
+                    fontSize: 16,
+                    color: isDark ? "#fff" : "#111",
+                    marginBottom: 8,
+                  }}
+                >
                   {item.activityType}
                 </Text>
-                <View className="flex-row">
-                  <View className="w-28">
-                    <Text className="font-PoppinsRegular text-xs mb-1">
+                <View style={{ flexDirection: "row" }}>
+                  <View style={{ width: 112 }}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        color: isDark ? "#ccc" : "#444",
+                        marginBottom: 4,
+                      }}
+                    >
                       Location: {item.location}
                     </Text>
                     {item.duration && (
-                      <Text className="font-PoppinsRegular text-xs mb-1">
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 12,
+                          color: isDark ? "#ccc" : "#444",
+                          marginBottom: 4,
+                        }}
+                      >
                         Duration: {item.duration}
                       </Text>
                     )}
                     {item.deadline && (
-                      <Text className="font-PoppinsRegular text-xs mb-1">
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 12,
+                          color: isDark ? "#ccc" : "#444",
+                          marginBottom: 4,
+                        }}
+                      >
                         Deadline: {item.deadline}
                       </Text>
                     )}
                   </View>
-                  <View className="flex-1 ml-2">
-                    <Text className="font-PoppinsSemiBold mb-1 text-sm">
+                  <View style={{ flex: 1, marginLeft: 8 }}>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-SemiBold",
+                        fontSize: 14,
+                        color: isDark ? "#fff" : "#111",
+                        marginBottom: 4,
+                      }}
+                    >
                       {item.title}
                     </Text>
-                    <Text className="font-PoppinsRegular text-xs text-gray-800 mb-2">
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        color: isDark ? "#bbb" : "#333",
+                        marginBottom: 8,
+                      }}
+                    >
                       {item.description}
                     </Text>
                     {item.apply && (
                       <TouchableOpacity
                         onPress={() => Linking.openURL(item.apply)}
                       >
-                        <Text className="text-blue-500 underline text-sm">
+                        <Text
+                          style={{
+                            color: "#5b55f6",
+                            textDecorationLine: "underline",
+                            fontSize: 13,
+                          }}
+                        >
                           Apply Here
                         </Text>
                       </TouchableOpacity>
                     )}
                   </View>
                 </View>
-                <View className="flex-row justify-end mt-2">
+                <View
+                  style={{
+                    flexDirection: "row",
+                    justifyContent: "flex-end",
+                    marginTop: 8,
+                  }}
+                >
                   <TouchableOpacity
-                    className="mr-4"
                     onPress={() => getAIReasons(item)}
+                    style={{ marginRight: 16 }}
                   >
                     <MaterialCommunityIcons
                       name="robot"
@@ -246,30 +330,51 @@ export default function Saved_opportunities() {
           />
         )}
 
-        {/* AI Reasons Modal */}
         <ReactNativeModal
           backdropTransitionOutTiming={1}
-          useNativeDriver={true}
-          useNativeDriverForBackdrop={true}
+          useNativeDriver
+          useNativeDriverForBackdrop
           isVisible={showAIReasonsModal}
           onBackdropPress={() => setShowAIReasonsModal(false)}
         >
-          <View className="bg-white px-7 py-9 rounded-2xl shadow-md">
+          <View
+            style={{
+              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+              padding: 28,
+              borderRadius: 20,
+            }}
+          >
             <TouchableOpacity
               onPress={() => setShowAIReasonsModal(false)}
               style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
             >
-              <MaterialCommunityIcons name="close" size={24} color="#000" />
+              <MaterialCommunityIcons
+                name="close"
+                size={24}
+                color={isDark ? "#fff" : "#000"}
+              />
             </TouchableOpacity>
-            <Text className="text-2xl font-PoppinsSemiBold text-gray-800 mb-4">
+            <Text
+              style={{
+                fontSize: 24,
+                fontFamily: "Poppins-SemiBold",
+                color: isDark ? "#fff" : "#222",
+                marginBottom: 16,
+              }}
+            >
               Top 3 Reasons to Join
             </Text>
             {loadingReason ? (
               <ActivityIndicator size="large" color="#5b55f6" />
             ) : (
               <Text
-                className="text-base font-PoppinsRegular text-gray-700 mb-6"
-                selectable={true}
+                style={{
+                  fontSize: 16,
+                  fontFamily: "Poppins-Regular",
+                  color: isDark ? "#ccc" : "#333",
+                  marginBottom: 24,
+                }}
+                selectable
               >
                 {aiReasons}
               </Text>

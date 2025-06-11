@@ -8,6 +8,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  useColorScheme,
 } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
@@ -28,6 +29,7 @@ import * as Haptics from "expo-haptics";
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const isDark = useColorScheme() === "dark";
 
   useEffect(() => {
     (async () => {
@@ -228,7 +230,10 @@ const Profile = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6 pb-10">
+    <SafeAreaView
+      className="flex-1 px-4 py-6 pb-10"
+      style={{ backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+    >
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
@@ -246,16 +251,25 @@ const Profile = () => {
               <Ionicons name="cloud-upload" size={18} color="white" />
             </TouchableOpacity>
           </View>
-          <Text className="text-xl font-PoppinsSemiBold mt-2">
+          <Text
+            className="text-xl font-PoppinsSemiBold mt-2"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             {user?.fullName}
           </Text>
-          <Text className="text-primary-900 text-base font-PoppinsRegular">
+          <Text className="text-[#5b55f7] text-base font-PoppinsRegular">
             {user?.primaryEmailAddress?.emailAddress}
           </Text>
         </View>
 
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
-          <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-semibold mb-2 font-PoppinsBold"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Subscription Status
           </Text>
           <CustomButton
@@ -281,8 +295,14 @@ const Profile = () => {
           />
         </View>
 
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
-          <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-semibold mb-2 font-PoppinsBold"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Customization
           </Text>
           <CustomButton
@@ -295,8 +315,14 @@ const Profile = () => {
           />
         </View>
 
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
-          <Text className="text-xl font-semibold mb-2 font-PoppinsBold">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-semibold mb-2 font-PoppinsBold"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Account Settings
           </Text>
           <CustomButton
@@ -341,8 +367,14 @@ const Profile = () => {
           />
         </View>
 
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
-          <Text className="text-xl font-semibold mb-3 font-PoppinsBold">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-semibold mb-3 font-PoppinsBold"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Help & Support
           </Text>
           <CustomButton
@@ -366,8 +398,14 @@ const Profile = () => {
         </View>
 
         {/* Legal Section */}
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
-          <Text className="text-xl font-semibold mb-3 font-PoppinsBold">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-semibold mb-3 font-PoppinsBold"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Legal
           </Text>
           <CustomButton
@@ -392,7 +430,10 @@ const Profile = () => {
           />
         </View>
 
-        <View className="bg-white p-4 mb-4 rounded-lg shadow-md">
+        <View
+          className="p-4 mb-4 rounded-lg shadow-md"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
           <CustomButton
             title="Log Out"
             onPress={async () => {
@@ -413,7 +454,6 @@ const Profile = () => {
           />
         </View>
       </ScrollView>
-
       {/* Sign Out Confirmation Modal */}
       <ReactNativeModal
         useNativeDriver={true}
@@ -421,11 +461,20 @@ const Profile = () => {
         useNativeDriverForBackdrop={true}
         isVisible={showSignOutModal}
       >
-        <View className="bg-white px-7 py-9 rounded-2xl">
-          <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
+        <View
+          className="px-7 py-9 rounded-2xl"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-PoppinsSemiBold text-center mb-4"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Confirm Logout
           </Text>
-          <Text className="text-base font-Poppins text-center mb-6">
+          <Text
+            className="text-base font-Poppins text-center mb-6"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Are you sure you want to log out?
           </Text>
           <View className="flex-row justify-between">
@@ -446,7 +495,6 @@ const Profile = () => {
           </View>
         </View>
       </ReactNativeModal>
-
       {/* Delete Account Confirmation Modal */}
       <ReactNativeModal
         isVisible={showDeleteModal}
@@ -454,11 +502,20 @@ const Profile = () => {
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
       >
-        <View className="bg-white px-7 py-9 rounded-2xl">
-          <Text className="text-xl font-PoppinsSemiBold text-center mb-4">
+        <View
+          className="px-7 py-9 rounded-2xl"
+          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+        >
+          <Text
+            className="text-xl font-PoppinsSemiBold text-center mb-4"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Confirm Delete Account
           </Text>
-          <Text className="text-base font-font-Poppins text-center mb-6">
+          <Text
+            className="text-base font-font-Poppins text-center mb-6"
+            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          >
             Are you sure you want to delete your account? This action cannot be
             undone.
           </Text>

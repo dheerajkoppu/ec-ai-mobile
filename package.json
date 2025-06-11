@@ -54,7 +54,9 @@
     "resend": "^4.3.0",
     "uploadthing": "^7.6.0",
     "react-native-web": "~0.19.13",
-    "expo-haptics": "~14.0.1"
+    "expo-haptics": "~14.0.1",
+    "expo-store-review": "~8.0.1",
+    "expo-system-ui": "~4.0.9"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",

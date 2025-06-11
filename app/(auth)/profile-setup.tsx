@@ -9,6 +9,7 @@ import {
   FlatList,
   StyleSheet,
   ScrollView,
+  useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
@@ -90,29 +91,33 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   placeholder = "Select options",
 }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const isDark = useColorScheme() === "dark";
 
-  const toggleOption = (value: string) => {
-    if (selectedValues.includes(value)) {
-      onChange(selectedValues.filter((item) => item !== value));
-    } else {
-      onChange([...selectedValues, value]);
-    }
-  };
+  // dynamic colors
+  const bg = isDark ? "#1e1e1e" : "#fff";
+  const fg = isDark ? "#eee" : "#111";
+  const bord = isDark ? "#444" : "#ccc";
+  const ovbg = "rgba(0,0,0,0.5)";
+
+  const toggle = (v: string) =>
+    selectedValues.includes(v)
+      ? onChange(selectedValues.filter((s) => s !== v))
+      : onChange([...selectedValues, v]);
 
   const renderOption = ({ item }: { item: DropdownOption }) => {
-    const isSelected = selectedValues.includes(item.value);
+    const sel = selectedValues.includes(item.value);
     return (
       <TouchableOpacity
-        style={multiSelectStyles.option}
-        onPress={() => toggleOption(item.value)}
+        style={[styles.option, { backgroundColor: bg }]}
+        onPress={() => toggle(item.value)}
       >
         <View
           style={[
-            multiSelectStyles.checkbox,
-            isSelected && multiSelectStyles.checkedCheckbox,
+            styles.checkbox,
+            { borderColor: bord, backgroundColor: sel ? "#5b55f7" : bg },
           ]}
         />
-        <Text style={multiSelectStyles.optionText}>{item.label}</Text>
+        <Text style={[styles.optionText, { color: fg }]}>{item.label}</Text>
       </TouchableOpacity>
     );
   };
@@ -120,10 +125,10 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   return (
     <View>
       <TouchableOpacity
-        style={multiSelectStyles.dropdownButton}
+        style={[styles.button, { backgroundColor: bg, borderColor: bord }]}
         onPress={() => setModalVisible(true)}
       >
-        <Text style={multiSelectStyles.dropdownButtonText}>
+        <Text style={[styles.buttonText, { color: fg }]}>
           {selectedValues.length
             ? options
                 .filter((o) => selectedValues.includes(o.value))
@@ -133,21 +138,29 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
         </Text>
       </TouchableOpacity>
 
-      <Modal visible={modalVisible} animationType="fade" transparent>
-        <View style={multiSelectStyles.modalOverlay}>
-          <View style={multiSelectStyles.modalContainer}>
-            <ScrollView style={multiSelectStyles.scrollContainer}>
+      <Modal visible={modalVisible} transparent animationType="fade">
+        <View style={[styles.overlay, { backgroundColor: ovbg }]}>
+          <View
+            style={[
+              styles.container,
+              { backgroundColor: bg, borderColor: bord },
+            ]}
+          >
+            <ScrollView contentContainerStyle={styles.scroll}>
               <FlatList
                 data={options}
-                keyExtractor={(item) => item.value}
+                keyExtractor={(i) => i.value}
                 renderItem={renderOption}
               />
             </ScrollView>
             <TouchableOpacity
-              style={multiSelectStyles.doneButton}
+              style={[
+                styles.done,
+                { backgroundColor: isDark ? "#444" : "#5b55f7" },
+              ]}
               onPress={() => setModalVisible(false)}
             >
-              <Text style={multiSelectStyles.doneButtonText}>Done</Text>
+              <Text style={styles.doneText}>Done</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -156,37 +169,29 @@ const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
   );
 };
 
-const multiSelectStyles = StyleSheet.create({
-  dropdownButton: {
+const styles = StyleSheet.create({
+  button: {
     padding: 10,
     borderWidth: 1,
     borderRadius: 8,
-    borderColor: "#ccc",
-    backgroundColor: "white",
   },
-  dropdownButtonText: {
+  buttonText: {
     fontSize: 16,
-    color: "black",
   },
-  modalOverlay: {
+  overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
     justifyContent: "center",
     alignItems: "center",
   },
-  modalContainer: {
+  container: {
     width: 300,
     maxHeight: "70%",
-    backgroundColor: "white",
     borderRadius: 12,
     padding: 15,
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 5,
+    borderWidth: 1,
     elevation: 5,
-    alignSelf: "center",
   },
-  scrollContainer: {
+  scroll: {
     flexGrow: 1,
   },
   option: {
@@ -196,86 +201,83 @@ const multiSelectStyles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   optionText: {
-    fontFamily: "Poppins-SemiBold",
     fontSize: 16,
-    color: "black",
     flexShrink: 1,
-    flexWrap: "wrap",
   },
   checkbox: {
     width: 20,
     height: 20,
     borderWidth: 1,
-    borderColor: "#5b55f7",
-    backgroundColor: "white",
     marginRight: 10,
     borderRadius: 4,
   },
-  checkedCheckbox: {
-    backgroundColor: "#5b55f7",
-  },
-  doneButton: {
+  done: {
     marginTop: 10,
     padding: 10,
-    backgroundColor: "#5b55f7",
     borderRadius: 8,
     alignItems: "center",
   },
-  doneButtonText: {
-    color: "white",
+  doneText: {
+    color: "#fff",
     fontSize: 16,
     fontWeight: "bold",
   },
 });
+
 // SlideWrapper component
 const SlideWrapper: React.FC<{
   children: React.ReactNode;
   showBack?: boolean;
   onBack?: () => void;
-}> = ({ children, showBack = false, onBack = () => {} }) => (
-  <KeyboardAwareScrollView
-    style={{ flex: 1 }}
-    contentContainerStyle={{ paddingBottom: 100, maxHeight: 700 }}
-    keyboardShouldPersistTaps="handled"
-    extraScrollHeight={80}
-    showsVerticalScrollIndicator={false}
-  >
-    <View
-      style={{
-        backgroundColor: "white",
-        padding: 20,
-        borderRadius: 8,
-        shadowColor: "#000",
-        marginBottom: 16,
-        paddingBottom: 20,
-      }}
+}> = ({ children, showBack = false, onBack = () => {} }) => {
+  const isDark = useColorScheme() === "dark";
+
+  return (
+    <KeyboardAwareScrollView
+      style={{ flex: 1 }}
+      contentContainerStyle={{ paddingBottom: 100, maxHeight: 700 }}
+      keyboardShouldPersistTaps="handled"
+      extraScrollHeight={80}
+      showsVerticalScrollIndicator={false}
     >
-      {showBack && (
-        <TouchableOpacity
-          onPress={onBack}
-          style={{
-            marginBottom: 7, // <- Large margin before bold header content
-            paddingVertical: 10,
-            paddingHorizontal: 14,
-            backgroundColor: "#5b55f7",
-            alignSelf: "flex-start",
-            borderRadius: 8,
-          }}
-        >
-          <Text style={{ fontSize: 14, color: "white", fontWeight: "600" }}>
-            ← Back
-          </Text>
-        </TouchableOpacity>
-      )}
-      {children}
-    </View>
-  </KeyboardAwareScrollView>
-);
+      <View
+        style={{
+          backgroundColor: isDark ? "#1e1e1e" : "#F5F7FA",
+          padding: 20,
+          borderRadius: 8,
+          shadowColor: "#000",
+          marginBottom: 16,
+          paddingBottom: 20,
+        }}
+      >
+        {showBack && (
+          <TouchableOpacity
+            onPress={onBack}
+            style={{
+              marginBottom: 7, // <- Large margin before bold header content
+              paddingVertical: 10,
+              paddingHorizontal: 14,
+              backgroundColor: "#5b55f7",
+              alignSelf: "flex-start",
+              borderRadius: 8,
+            }}
+          >
+            <Text style={{ fontSize: 14, color: "white", fontWeight: "600" }}>
+              ← Back
+            </Text>
+          </TouchableOpacity>
+        )}
+        {children}
+      </View>
+    </KeyboardAwareScrollView>
+  );
+};
 // ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
   const [isPremium, setIsPremium] = useState(false);
   const [hasShownPaywall, setHasShownPaywall] = useState(false);
+  const isDark = useColorScheme() === "dark";
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
@@ -551,7 +553,7 @@ const ProfileSetup: React.FC = () => {
       <SafeAreaView
         style={{
           flex: 1,
-          backgroundColor: "#F5F7FA",
+          backgroundColor: isDark ? "#121212" : "#F5F7FA",
           justifyContent: "center",
           alignItems: "center",
         }}
@@ -574,14 +576,16 @@ const ProfileSetup: React.FC = () => {
   const yesNo = dropdowns.yesNo;
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#F5F7FA" }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+    >
       <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 }}>
         <Text
           allowFontScaling={false}
           style={{
             fontSize: 24,
             fontWeight: "bold",
-            color: "#333",
+            color: isDark ? "#fff" : "#333",
             fontFamily: "Poppins-Bold",
           }}
         >
@@ -589,7 +593,11 @@ const ProfileSetup: React.FC = () => {
         </Text>
         <Text
           allowFontScaling={false}
-          style={{ fontSize: 16, color: "#555", fontFamily: "Poppins-Regular" }}
+          style={{
+            fontSize: 16,
+            color: isDark ? "#fff" : "#555",
+            fontFamily: "Poppins-Regular",
+          }}
         >
           Step {step + 1} of 6
         </Text>
@@ -744,7 +752,7 @@ const ProfileSetup: React.FC = () => {
               fontSize: 18,
               fontFamily: "Poppins-Bold",
               marginBottom: 5,
-              color: "#333",
+              color: isDark ? "#fff" : "#000", // dark gray or white
             }}
           >
             Career Interest <Text className="text-red-500">*</Text>
@@ -787,7 +795,7 @@ const ProfileSetup: React.FC = () => {
               fontSize: 18,
               fontFamily: "Poppins-Bold",
               marginBottom: 5,
-              color: "#333",
+              color: isDark ? "#fff" : "#000", // dark gray or white
             }}
           >
             EC Goals? <Text className="text-red-500">*</Text>
@@ -804,7 +812,7 @@ const ProfileSetup: React.FC = () => {
               fontFamily: "Poppins-Bold",
               marginTop: 10,
               marginBottom: 5,
-              color: "#333",
+              color: isDark ? "#fff" : "#000", // dark gray or white
             }}
           >
             Level to reach in your field?{" "}

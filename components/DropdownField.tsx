@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, useColorScheme } from "react-native";
 import { Dropdown } from "react-native-element-dropdown";
 
-// Define TypeScript types for the props
 interface DropdownFieldProps {
   label: any;
-  data: { label: string; value: string }[]; // Expecting an array of objects
+  data: { label: string; value: string }[];
   value: string;
   onChange: (item: { label: string; value: string }) => void;
   placeholder: string;
@@ -19,10 +18,16 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
   placeholder,
 }) => {
   const [isFocus, setIsFocus] = useState(false);
+  const scheme = useColorScheme();
+  const isDark = scheme === "dark";
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && (
+        <Text style={[styles.label, { color: isDark ? "#fff" : "#333" }]}>
+          {label}
+        </Text>
+      )}
       <Dropdown
         data={data}
         labelField="label"
@@ -32,17 +37,41 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
         placeholder={!isFocus ? placeholder : "..."}
         onFocus={() => setIsFocus(true)}
         onBlur={() => setIsFocus(false)}
-        style={styles.dropdown}
-        containerStyle={styles.dropdownContainer}
-        itemTextStyle={styles.itemText}
-        selectedTextStyle={styles.selectedText}
+        style={[
+          styles.dropdown,
+          {
+            backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+            borderColor: isDark ? "#444" : "#D1D5DB",
+          },
+        ]}
+        containerStyle={{
+          borderWidth: 1,
+          borderColor: isDark ? "#444" : "#D1D5DB",
+          borderRadius: 10,
+          backgroundColor: isDark ? "#2a2a2a" : "#fff",
+        }}
+        itemTextStyle={{
+          color: isDark ? "#fff" : "#000",
+          fontFamily: "Poppins-Regular",
+          fontSize: 15,
+        }}
+        selectedTextStyle={{
+          color: isDark ? "#fff" : "#111",
+          fontFamily: "Poppins-Regular",
+          fontSize: 15,
+        }}
+        placeholderStyle={{
+          color: isDark ? "#aaa" : "#888",
+          fontFamily: "Poppins-Regular",
+          fontSize: 15,
+        }}
+        activeColor={isDark ? "#3a3a3a" : "#e5e5e5"} // 👈 this fixes the invisible highlight
         dropdownPosition="auto"
       />
     </View>
   );
 };
 
-// Styles to mimic `InputField`
 const styles = StyleSheet.create({
   container: {
     marginVertical: 8,
@@ -52,29 +81,12 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: "Poppins-Bold",
     marginBottom: 5,
-    color: "#333",
   },
   dropdown: {
-    backgroundColor: "white",
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: "#D1D5DB",
     paddingHorizontal: 15,
     paddingVertical: 12,
-  },
-  dropdownContainer: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 10,
-  },
-  itemText: {
-    fontSize: 15,
-    fontFamily: "Poppins-Regular",
-  },
-  selectedText: {
-    fontSize: 15,
-    fontFamily: "Poppins-Regular",
-    color: "#111",
   },
 });
 

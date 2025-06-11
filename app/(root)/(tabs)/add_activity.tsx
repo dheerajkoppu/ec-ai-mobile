@@ -16,6 +16,7 @@ import { fetchAPI, useFetch } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
+import { useColorScheme } from "react-native";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -28,11 +29,15 @@ const ActivityTabs = () => {
   const { user } = useUser();
   const [activeTab, setActiveTab] = useState<string>("add");
   const [activityName, setActivityName] = useState<string>("");
+  const scheme = useColorScheme();
+
   const [activityType, setActivityType] = useState<string>("");
   const [timeSpent, setTimeSpent] = useState<string>("");
   const [weeksPerYear, setWeeksPerYear] = useState<string>("");
   const [roles, setRoles] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+  const isDark = scheme === "dark";
+
   const [milestone, setMilestone] = useState<string>("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
   const [logDate, setLogDate] = useState<Date>(new Date());
@@ -203,7 +208,14 @@ const ActivityTabs = () => {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-primary-200 px-4 py-6">
+    <SafeAreaView
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#121212" : "#F5F7FA", // or any light background you use
+        paddingHorizontal: 16,
+        paddingVertical: 24,
+      }}
+    >
       <View className="flex-row justify-center mb-4">
         {["add", "log"].map((tab) => (
           <TouchableOpacity
@@ -225,10 +237,28 @@ const ActivityTabs = () => {
         keyboardShouldPersistTaps="handled"
       >
         {activeTab === "add" ? (
-          <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
+          <View
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+              paddingHorizontal: 16,
+              paddingVertical: 24,
+              borderRadius: 12,
+              marginBottom: 64,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 },
+            }}
+          >
             <InputField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Name of Activity <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -238,7 +268,13 @@ const ActivityTabs = () => {
             />
             <DropdownField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Activity Type <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -249,7 +285,13 @@ const ActivityTabs = () => {
             />
             <InputField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Hours Per Week <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -260,7 +302,13 @@ const ActivityTabs = () => {
             />
             <InputField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Weeks Per Year <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -271,7 +319,13 @@ const ActivityTabs = () => {
             />
             <InputField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Roles <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -279,7 +333,15 @@ const ActivityTabs = () => {
               placeholder="ex. President (12)"
               onChangeText={setRoles}
             />
-            <Text className="font-medium text-lg font-PoppinsBold mt-4">
+            <Text
+              style={{
+                color: isDark ? "#fff" : "#000",
+                fontWeight: "500",
+                fontSize: 18,
+                fontFamily: "Poppins-Bold",
+                marginTop: 16,
+              }}
+            >
               Grade Level <Text className="text-red-500">*</Text>
             </Text>
             <View className="flex-wrap flex-row mt-2">
@@ -287,16 +349,31 @@ const ActivityTabs = () => {
                 <Pressable
                   key={grade}
                   onPress={() => toggleGradeSelection(grade)}
-                  className={`mr-4 mb-2 px-4 py-2 rounded-lg border border-gray-300 ${
-                    selectedGrades.includes(grade) ? "bg-[#5b55f7]" : "bg-white"
-                  }`}
+                  style={{
+                    marginRight: 16,
+                    marginBottom: 8,
+                    paddingVertical: 8,
+                    paddingHorizontal: 16,
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: isDark ? "#555" : "#ccc",
+                    backgroundColor: selectedGrades.includes(grade)
+                      ? "#5b55f7"
+                      : isDark
+                        ? "#1e1e1e"
+                        : "#fff",
+                  }}
                 >
                   <Text
-                    className={`text-sm font-PoppinsMedium ${
-                      selectedGrades.includes(grade)
-                        ? "text-white"
-                        : "text-black"
-                    }`}
+                    style={{
+                      fontSize: 14,
+                      fontFamily: "Poppins-Medium",
+                      color: selectedGrades.includes(grade)
+                        ? "#fff"
+                        : isDark
+                          ? "#e0e0e0"
+                          : "#000",
+                    }}
                   >
                     {grade}
                   </Text>
@@ -317,10 +394,28 @@ const ActivityTabs = () => {
             />
           </View>
         ) : (
-          <View className="bg-white px-4 py-6 rounded-lg shadow-md mb-16">
+          <View
+            style={{
+              backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+              paddingHorizontal: 16,
+              paddingVertical: 24,
+              borderRadius: 12,
+              marginBottom: 64,
+              shadowColor: "#000",
+              shadowOpacity: 0.1,
+              shadowRadius: 8,
+              shadowOffset: { width: 0, height: 2 },
+            }}
+          >
             <DropdownField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Name of Activity <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -332,7 +427,13 @@ const ActivityTabs = () => {
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField
               label={
-                <Text className="font-medium text-lg font-PoppinsBold">
+                <Text
+                  style={{
+                    color: isDark ? "#fff" : "#000",
+                    fontWeight: "600",
+                    fontSize: 18,
+                  }}
+                >
                   Hours <Text className="text-red-500">*</Text>
                 </Text>
               }
@@ -366,6 +467,7 @@ const DateInputField = ({
   logDate: Date;
   setLogDate: (date: Date) => void;
 }) => {
+  const isDark = useColorScheme() === "dark"; // Add this line
   const [dateText, setDateText] = useState<string>(
     logDate.toLocaleDateString("en-US"),
   );
@@ -402,21 +504,26 @@ const DateInputField = ({
 
   return (
     <View>
-      <Text className="font-medium text-lg font-PoppinsBold">
+      <Text
+        className="font-medium text-lg font-PoppinsBold"
+        style={{ color: isDark ? "#ffffff" : "#000000" }}
+      >
         Date of Activity <Text className="text-red-500">*</Text>
       </Text>
+
       <TextInput
         value={dateText}
         onChangeText={handleDateChange}
         placeholder="MM/DD/YYYY"
         keyboardType="numeric"
         maxLength={10}
+        placeholderTextColor={isDark ? "#999" : "#888"} // optional
         style={{
-          backgroundColor: "white",
-          color: "black",
+          backgroundColor: isDark ? "#1e1e1e" : "white",
+          color: isDark ? "white" : "black",
           height: 40,
           borderWidth: 1,
-          borderColor: "#ccc",
+          borderColor: isDark ? "#444" : "#ccc",
           borderRadius: 8,
           paddingHorizontal: 12,
           marginTop: 4,

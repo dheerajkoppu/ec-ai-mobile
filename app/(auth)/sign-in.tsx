@@ -6,6 +6,7 @@ import {
   Keyboard,
   TextInput,
   TouchableOpacity,
+  useColorScheme,
 } from "react-native";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
@@ -18,6 +19,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
 
 const Sign_In = () => {
+  const isDark = useColorScheme() === "dark";
   const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = () => setShowPassword(!showPassword);
 
@@ -48,18 +50,22 @@ const Sign_In = () => {
   }, [isLoaded, signIn, form.email, form.password, setActive]);
 
   return (
-    <View className="flex-1 bg-primary-200">
-      <View className="flex-1 bg-[#F5F7FA]">
+    <View style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}>
+      <View className="flex-1">
         <View className="relative w-full h-[250px]">
           <Image
             source={images.icon}
             className="self-center mt-[90px]"
             style={{ width: 280, height: 70, resizeMode: "contain" }}
           />
-          <Text className="text-2xl text-black font-PoppinsBold absolute bottom-0 left-5">
+          <Text
+            className="text-2xl font-PoppinsBold absolute bottom-0 left-5"
+            style={{ color: isDark ? "#fff" : "#000" }}
+          >
             Sign In
           </Text>
         </View>
+
         <View className="p-5">
           <InputField
             label="Email"
@@ -70,7 +76,10 @@ const Sign_In = () => {
             value={form.email}
             onSubmitEditing={() => passwordRef.current?.focus()}
             onChangeText={(value) => setForm({ ...form, email: value })}
+            containerStyle={isDark ? "bg-[#1e1e1e] border-gray-700" : ""}
+            inputStyle={isDark ? "text-white" : ""}
           />
+
           <View style={{ position: "relative" }}>
             <InputField
               label="Password"
@@ -86,7 +95,6 @@ const Sign_In = () => {
                 onSignInPress();
               }}
               returnKeyType="go"
-              style={{ paddingRight: 40 }}
             />
             <TouchableOpacity
               onPress={toggleShowPassword}
@@ -95,10 +103,11 @@ const Sign_In = () => {
               <MaterialCommunityIcons
                 name={showPassword ? "eye-off" : "eye"}
                 size={24}
-                color="#aaa"
+                color={isDark ? "#ccc" : "#888"}
               />
             </TouchableOpacity>
           </View>
+
           <CustomButton
             title="Sign In"
             onPress={async () => {
@@ -107,14 +116,19 @@ const Sign_In = () => {
             }}
             className="mt-6"
           />
+
           <OAuth />
+
           <TouchableOpacity
             onPress={() => router.replace("/sign-up")}
             className="mt-5"
           >
-            <Text className="text-base text-center text-general-200">
+            <Text
+              className="text-base text-center"
+              style={{ color: isDark ? "#ccc" : "#666" }}
+            >
               Don't have an account?{" "}
-              <Text className="text-primary-500">Sign Up</Text>
+              <Text style={{ color: "#5b55f6" }}>Sign Up</Text>
             </Text>
           </TouchableOpacity>
         </View>
