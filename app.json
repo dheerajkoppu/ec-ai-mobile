@@ -50,7 +50,7 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "contain",
-          "imageWidth": 290,
+          "imageWidth": 300,
           "backgroundColor": "#F5F7FA",
           "dark": {
             "image": "./assets/images/splash.png",
