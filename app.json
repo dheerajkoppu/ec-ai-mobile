@@ -50,6 +50,7 @@
         {
           "image": "./assets/images/splash.png",
           "resizeMode": "contain",
+          "imageWidth": 290,
           "backgroundColor": "#F5F7FA",
           "dark": {
             "image": "./assets/images/splash.png",
@@ -62,7 +63,7 @@
       "typedRoutes": true
     },
     "extra": {
-      "API_ORIGIN": "https://ec-ai--tzxxglromv.expo.app",
+      "API_ORIGIN": "https://ec-ai.expo.app",
       "eas": {
         "projectId": "a31952ea-e220-4629-8d9e-7efbbb3c8b30"
       }
