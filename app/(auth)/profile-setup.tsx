@@ -563,7 +563,7 @@ const ProfileSetup: React.FC = () => {
           style={{
             fontSize: 18,
             marginTop: 8,
-            color: "#555",
+            color: isDark ? "#ccc" : "#555",
             fontFamily: "Poppins-Regular",
           }}
         >
