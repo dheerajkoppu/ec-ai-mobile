@@ -1,4 +1,3 @@
-// File: app/api/alteractivity/route.ts
 import { neon } from "@neondatabase/serverless";
 
 export async function POST(request: Request) {
@@ -23,6 +22,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Update the activity if it belongs to the user with the given email
     const updatedActivity = await sql`
             UPDATE activities a
             SET

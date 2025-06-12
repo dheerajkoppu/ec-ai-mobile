@@ -9,6 +9,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing user email" }, { status: 400 });
     }
 
+    // Fetch all activities for the user based on their email
     const activities = await sql`
       SELECT
         a.id,
@@ -27,6 +28,7 @@ export async function POST(request: Request) {
 
     let totalHoursPerWeek = 0;
 
+    // Format activities and calculate total weekly hours
     const formatted = activities.map((a: any) => {
       totalHoursPerWeek += a.hours_per_week;
       return {

@@ -14,6 +14,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Delete the matching saved opportunity
     const response = await sql`
       DELETE FROM user_saved_opportunities
       WHERE clerk_id = ${clerk_id} AND opportunity_id = ${opportunity_id};

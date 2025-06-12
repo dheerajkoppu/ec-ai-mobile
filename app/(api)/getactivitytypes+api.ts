@@ -1,16 +1,18 @@
-// /app/api/activity-types/route.ts
 import { neon } from "@neondatabase/serverless";
 
 export async function GET(request: Request) {
   try {
     const sql = neon(`${process.env.DATABASE_URL}`);
-    const response =
-      await sql`SELECT name FROM activityTypes ORDER BY name ASC;`;
 
-    // Return in format: [{ label, value }]
+    // Fetch activity types sorted alphabetically
+    const response = await sql`
+      SELECT name FROM activityTypes ORDER BY name ASC;
+    `;
+
+    // Format into { label, value } objects with slugified values
     const formatted = response.map((row: any) => ({
       label: row.name,
-      value: row.name.toLowerCase().replace(/[^\w]+/g, "-"), // slugify
+      value: row.name.toLowerCase().replace(/[^\w]+/g, "-"),
     }));
 
     return new Response(JSON.stringify({ data: formatted }), {

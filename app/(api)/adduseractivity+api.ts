@@ -3,8 +3,9 @@ import { neon } from "@neondatabase/serverless";
 export async function POST(request: Request) {
   try {
     const sql = neon(`${process.env.DATABASE_URL}`);
+    // Extract fields from request body
     const {
-      userEmail, // username to look up user_id
+      userEmail,
       name,
       activity_type,
       hours_per_week,
@@ -30,6 +31,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Insert new activity with user_id looked up from email
     const response = await sql`
             INSERT INTO activities (
                 user_id,

@@ -12,7 +12,7 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "Missing userEmail" }, { status: 400 });
     }
 
-    // One subrequest to fetch ID and delete records
+    // Delete user and their activities in one query
     const deletionResult = await sql`
       WITH target_user AS (
         SELECT id FROM users WHERE email = ${userEmail} LIMIT 1
@@ -29,10 +29,9 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Send email via Resend (Edge-compatible)
     await resend.emails.send({
-      from: "EC-AI <onboarding@resend.dev>", // still works even without your own domain
-      to: "ask.ecai@gmail.com",
+      from: "EC-AI <onboarding@resend.dev>",
+      to: "ask.ecai@gmail.com", //replace with 'email' in production
       subject: "User Deletion Request",
       text: `The user with email ${userEmail} has requested account deletion. Please delete the user from both Clerk and RevenueCat`,
     });

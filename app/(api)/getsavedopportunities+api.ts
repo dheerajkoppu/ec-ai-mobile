@@ -11,6 +11,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch all opportunities the user has saved
     const opportunities = await sql`
       SELECT
         id,
@@ -47,6 +48,7 @@ export async function POST(request: Request) {
       );
     `;
 
+    // Normalize field names for frontend compatibility
     const formatted = opportunities.map((op: any) => ({
       id: op.id,
       school: op.school,

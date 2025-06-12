@@ -1,4 +1,3 @@
-// File: pages/api/generate-activities-pdf.ts
 import PDFDocument from "pdfkit";
 
 export async function POST(request: Request) {
@@ -17,7 +16,7 @@ export async function POST(request: Request) {
     });
   }
 
-  // Load fonts from /public/fonts
+  // Dynamically load fonts from /public/fonts
   const { origin } = new URL(request.url);
   async function fetchFont(name: string) {
     const res = await fetch(`${origin}/fonts/${name}`);
@@ -27,6 +26,7 @@ export async function POST(request: Request) {
   const poppinsRegular = await fetchFont("Poppins-Regular.ttf");
   const poppinsBold = await fetchFont("Poppins-Bold.ttf");
 
+  // Initialize PDF document
   const doc = new PDFDocument({
     size: "A4",
     margin: 40,
@@ -41,13 +41,14 @@ export async function POST(request: Request) {
   doc.addPage();
   doc.font("Poppins-Regular");
 
+  // Collect output as buffer
   const buffers: Uint8Array[] = [];
   doc.on("data", (chunk) => buffers.push(chunk));
   const pdfBufferPromise = new Promise<Buffer>((resolve) =>
     doc.on("end", () => resolve(Buffer.concat(buffers))),
   );
 
-  // Header
+  // Header section
   doc.rect(40, doc.y, doc.page.width - 80, 6).fill("#5B55F7");
   doc.moveDown(1);
   doc
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
     .stroke();
   doc.moveDown(1);
 
-  // Format activities (with safe defaults)
+  // Render each activity
   for (const act of activities) {
     const startY = doc.y;
 
@@ -132,6 +133,7 @@ export async function POST(request: Request) {
   doc.end();
   const pdfBuffer = await pdfBufferPromise;
 
+  // Return Base64-encoded PDF
   return new Response(
     JSON.stringify({
       pdfBase64: pdfBuffer.toString("base64"),

@@ -12,6 +12,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Insert saved opportunity into the database
     const response = await sql`
       INSERT INTO user_saved_opportunities (clerk_id, opportunity_id)
       VALUES (${clerk_id}, ${opportunity_id});

@@ -1,4 +1,3 @@
-// File: /api/generateDescription.ts
 import { neon } from "@neondatabase/serverless";
 
 export async function POST(request: Request) {
@@ -12,12 +11,11 @@ export async function POST(request: Request) {
 
     const sql = neon(process.env.DATABASE_URL as string);
 
-    // ONE SQL call instead of three
+    // Fetch activity name, roles, and all logged hour descriptions
     const [row] = await sql`
       SELECT
         a.name,
         a.roles,
-        -- collect all hour descriptions into an array
         COALESCE(json_agg(h.description), '[]') AS descriptions
       FROM users u
       JOIN activities a
@@ -34,7 +32,7 @@ export async function POST(request: Request) {
         status: 404,
       });
     }
-
+    // Generate prompt from DB values
     const allLoggedDescriptions = (row.descriptions as string[]).join(" ");
     const prompt = `
 Act as an elite university admissions officer at an Ivy League. From the provided data about a student's extracurricular activity, write a polished 150-character description suitable for Ivy League application summaries. Focus on highlighting impact, leadership, uniqueness, or sustained commitment. Use elevated but natural language. Only use “I” as a pronoun; no other pronouns. Only return the 150-character description, nothing more.
@@ -43,6 +41,7 @@ Roles: ${row.roles}
 All Logged Hours Descriptions: ${allLoggedDescriptions}
     `.trim();
 
+    // Call OpenAI for description generation
     const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {

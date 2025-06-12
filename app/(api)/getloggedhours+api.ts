@@ -11,22 +11,23 @@ export async function POST(request: Request) {
       });
     }
 
-    // Fetch recent 3 logs
+    // Fetch the 3 most recent activity logs for the user
     const recentLogs = await sql`
-            SELECT description, date_of_activity
-            FROM hours_logged
-            WHERE user_id = ${user_id}
-            ORDER BY date_of_activity DESC
-                LIMIT 3;
-        `;
+      SELECT description, date_of_activity
+      FROM hours_logged
+      WHERE user_id = ${user_id}
+      ORDER BY date_of_activity DESC
+        LIMIT 3;
+    `;
 
-    // Calculate total hours
+    // Aggregate total hours logged by the user
     const totalHoursResult = await sql`
       SELECT SUM(hours_logged) as total_hours
       FROM hours_logged
       WHERE user_id = ${user_id};
     `;
 
+    // Fallback to 0 if no hours are logged
     const total_hours =
       totalHoursResult[0]?.total_hours !== null
         ? parseFloat(totalHoursResult[0].total_hours)

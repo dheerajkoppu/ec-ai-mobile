@@ -11,6 +11,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch logged hours for the specified user and activity
     const logs = await sql`
       SELECT date_of_activity, hours_logged, description
       FROM hours_logged

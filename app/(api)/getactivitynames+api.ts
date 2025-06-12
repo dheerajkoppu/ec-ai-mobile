@@ -9,12 +9,13 @@ export async function POST(request: Request) {
       return Response.json({ error: "Missing user email" }, { status: 400 });
     }
 
+    // Fetch activity IDs and names for the user
     const activities = await sql`
       SELECT
         a.id,
         a.name
       FROM activities a
-      JOIN users u ON a.user_id = u.id
+             JOIN users u ON a.user_id = u.id
       WHERE u.email = ${email};
     `;
 

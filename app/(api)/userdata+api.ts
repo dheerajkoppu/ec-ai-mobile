@@ -32,7 +32,6 @@ export async function POST(request: Request) {
       agreeTerms,
     } = await request.json();
 
-    // Check for required field(s)
     if (!userEmail) {
       return new Response(
         JSON.stringify({ error: "Missing required field: userEmail" }),
@@ -40,10 +39,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Use a fallback for name if not provided
+    // Use email as fallback name in no name is provided
     const finalName = name || userEmail;
 
-    // Convert string numeric values.
+    // Convert numeric fields to proper types
     const ageInt = age ? parseInt(age) : null;
     const gpaWeightedNum = gpaWeighted ? parseFloat(gpaWeighted) : null;
     const gpaUnweightedNum = gpaUnweighted ? parseFloat(gpaUnweighted) : null;
@@ -51,7 +50,7 @@ export async function POST(request: Request) {
     const actScoreInt = actScore ? parseInt(actScore) : null;
     const psatScoreInt = psatScore ? parseInt(psatScore) : null;
 
-    // Utility: Convert "yes"/"no" strings to booleans.
+    // Normalize "yes"/"no" responses to booleans
     const toBool = (val: string | undefined) =>
       val && val.toLowerCase() === "yes";
     const firstGenCollege = toBool(firstGen);
@@ -63,10 +62,10 @@ export async function POST(request: Request) {
     const usedOtherECFinders = toBool(usedOtherApps);
     const agreedToTerms = toBool(agreeTerms);
 
-    // Wrap ecReason into an array for the TEXT[] column (if provided)
+    // Wrap single value into array for TEXT[] column
     const extracurricularMotivation = ecReason ? [ecReason] : null;
 
-    // Update the user record where email matches the provided userEmail.
+    // Perform UPDATE query to modify user profile based on email
     const response = await sql`
       UPDATE users
       SET

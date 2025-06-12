@@ -11,6 +11,7 @@ export async function POST(request: Request) {
       description,
     } = await request.json();
 
+    // Validate required fields
     if (!user_id || !activity_id || !date_of_activity || !hours_logged) {
       return Response.json(
         { error: "Missing required fields" },
@@ -18,21 +19,23 @@ export async function POST(request: Request) {
       );
     }
 
+    // Insert a new hours_logged record
     const response = await sql`
-            INSERT INTO hours_logged (
-                user_id,
-                activity_id,
-                date_of_activity,
-                hours_logged,
-                description
-            )
-            VALUES (
-                       ${user_id},
-                       ${activity_id},
-                       ${date_of_activity},
-                       ${hours_logged},
-                       ${description || null}
-                   );`;
+      INSERT INTO hours_logged (
+        user_id,
+        activity_id,
+        date_of_activity,
+        hours_logged,
+        description
+      )
+      VALUES (
+               ${user_id},
+               ${activity_id},
+               ${date_of_activity},
+               ${hours_logged},
+               ${description || null}
+             );
+    `;
 
     return new Response(JSON.stringify({ data: response }), {
       status: 201,

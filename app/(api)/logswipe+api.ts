@@ -5,6 +5,7 @@ export async function POST(request: Request) {
     const sql = neon(`${process.env.DATABASE_URL}`);
     const { userClerkId, opportunityId, liked } = await request.json();
 
+    // Ensure required fields are provided
     if (!userClerkId || !opportunityId || liked === undefined) {
       return Response.json(
         { error: "Missing required fields" },
@@ -12,6 +13,7 @@ export async function POST(request: Request) {
       );
     }
 
+    // Record the swipe action in the user_swipes table
     const inserted = await sql`
       INSERT INTO user_swipes (user_clerk_id, opportunity_id, liked)
       VALUES (${userClerkId}, ${opportunityId}, ${liked})

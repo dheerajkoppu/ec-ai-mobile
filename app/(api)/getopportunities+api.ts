@@ -11,6 +11,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Get all opportunities that the user hasn't already saved
     const opportunities = await sql`
       SELECT
         id,
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       );
     `;
 
+    // Normalize and format opportunity data for frontend consumption
     const formatted = opportunities.map((op: any) => ({
       id: op.id,
       school: op.school,

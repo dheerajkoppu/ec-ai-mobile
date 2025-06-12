@@ -4,7 +4,7 @@ export async function GET(request: Request) {
   try {
     const sql = neon(`${process.env.DATABASE_URL}`);
 
-    // Run all queries concurrently for better performance
+    // Run all reference data queries concurrently for efficiency
     const [
       questions,
       career_interest,
@@ -34,10 +34,10 @@ export async function GET(request: Request) {
       sql`SELECT * FROM referral_source`,
       sql`SELECT * FROM school_name`,
       sql`SELECT * FROM weekly_commitment`,
-      sql`SELECT * FROM "y-n"`,
+      sql`SELECT * FROM "y-n"`, // Quoted because of hyphen in table name
     ]);
 
-    // Return the results in a structured JSON object
+    // Return all form options in a single payload
     return Response.json({
       data: {
         questions,

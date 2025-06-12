@@ -1,4 +1,3 @@
-// File: app/api/updatedescription+api.ts
 import { neon } from "@neondatabase/serverless";
 
 export async function POST(request: Request) {

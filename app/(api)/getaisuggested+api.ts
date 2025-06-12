@@ -11,17 +11,18 @@ export async function POST(request: Request) {
       });
     }
 
+    // Fetch user and all opportunities from the database
     const [row] = await sql`
-            SELECT
-                u.*,
-                (
-                    SELECT json_agg(o)
-                    FROM opportunities o
-                ) AS opportunities
-            FROM users u
-            WHERE u.email = ${email}
-                LIMIT 1;
-        `;
+      SELECT
+        u.*,
+        (
+          SELECT json_agg(o)
+          FROM opportunities o
+        ) AS opportunities
+      FROM users u
+      WHERE u.email = ${email}
+        LIMIT 1;
+    `;
 
     if (!row) {
       return new Response(JSON.stringify({ error: "User not found" }), {
@@ -29,6 +30,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Build user profile object for OpenAI prompt
     const user = {
       name: row.name,
       age: row.age,
@@ -54,6 +56,7 @@ export async function POST(request: Request) {
 
     const opportunities = row.opportunities as any[];
 
+    // Prompt engineering to generate top 3 matching opportunities with reasons
     const prompt = `
 You are an experienced college and career advisor trained to match students with extracurricular activities that align with their personal story, ambitions, and goals.
 
@@ -106,6 +109,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
 [[1, "reason1", "reason2", "reason3"], [2, "reason1", "reason2", "reason3"], [3, "reason1", "reason2", "reason3"]]
 `;
 
+    // Call OpenAI API to get top 3 recommended opportunities
     const chatResponse = await fetch(
       "https://api.openai.com/v1/chat/completions",
       {
@@ -131,6 +135,8 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
     }
 
     const rawResponse = await chatResponse.text();
+
+    // ChatGPT sometimes returns plain text instead of JSON — handle both cases
     let chatData;
     try {
       chatData = JSON.parse(rawResponse);
@@ -149,6 +155,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
       );
     }
 
+    // Parse the final JSON stringified array of suggestions
     type Suggestion = [string, string, string, string];
     let suggestions: Suggestion[];
     try {
@@ -160,6 +167,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
       );
     }
 
+    // Map suggestion IDs to their reasons
     const suggestionMap: Record<number, [string, string, string]> = {};
     const activityIds = suggestions.map(([id, r1, r2, r3]) => {
       const num = parseInt(id, 10);
@@ -167,6 +175,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
       return num;
     });
 
+    // Attach the top 3 reasons to each recommended opportunity
     const enrichedActivities = opportunities
       .filter((op) => activityIds.includes(Number(op.id)))
       .map((op) => ({

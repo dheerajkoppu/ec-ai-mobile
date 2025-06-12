@@ -1,11 +1,9 @@
-// File: /api/fetchdropdowns.ts
 import { neon } from "@neondatabase/serverless";
 
 export async function POST(request: Request) {
   try {
     const sql = neon(process.env.DATABASE_URL as string);
-
-    // collapse all dropdown fetches into one SQL call
+    // Fetch and aggregate all dropdown data into a single JSON object
     const [{ data }] = await sql`
       SELECT json_build_object(
                  'careerInterest',

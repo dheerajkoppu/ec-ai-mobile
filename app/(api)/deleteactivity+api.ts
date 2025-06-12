@@ -9,6 +9,7 @@ export async function DELETE(request: Request) {
       return Response.json({ error: "Missing activityId" }, { status: 400 });
     }
 
+    // Delete activity by ID
     const response = await sql`
       DELETE FROM activities
       WHERE id = ${activityId};
