@@ -214,7 +214,7 @@ const ActivityTabs = () => {
     <SafeAreaView
       style={{
         flex: 1,
-        backgroundColor: isDark ? "#121212" : "#F5F7FA", // or any light background you use
+        backgroundColor: isDark ? "#121212" : "#F5F7FA",
         paddingHorizontal: 16,
         paddingVertical: 24,
       }}
