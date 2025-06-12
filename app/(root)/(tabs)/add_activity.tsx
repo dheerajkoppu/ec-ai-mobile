@@ -44,6 +44,7 @@ const ActivityTabs = () => {
   const [logHours, setLogHours] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  // Fetch activity types for dropdown
   const { data: activitiesRaw } = useFetch(
     "https://ec-ai.expo.app/getactivitytypes",
   );
@@ -51,6 +52,7 @@ const ActivityTabs = () => {
     ? activitiesRaw
     : [];
 
+  // Prepare request options to fetch activity names for current user
   const activityNamesRequestOptions = user?.primaryEmailAddress?.emailAddress
     ? {
         method: "POST",
@@ -61,6 +63,7 @@ const ActivityTabs = () => {
       }
     : undefined;
 
+  // Fetch previously added activity names
   const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
     "https://ec-ai.expo.app/getactivitynames",
     activityNamesRequestOptions,

@@ -44,6 +44,7 @@ export default function Saved_opportunities() {
   const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
   const [loadingReason, setLoadingReason] = useState(false);
 
+  // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
     if (!user?.id) return;
 
@@ -57,6 +58,7 @@ export default function Saved_opportunities() {
       const json = await res.json();
 
       if (res.ok) {
+        // Format response data for local use
         const mapped = json.data.map((item: any) => ({
           id: item.id,
           title: item.activityName || "No Title",
@@ -80,6 +82,7 @@ export default function Saved_opportunities() {
     }
   }, [user?.id]);
 
+  // Fetch AI-generated personalized reasons for a specific opportunity
   const getAIReasons = async (opportunity: Opportunity) => {
     try {
       setLoadingReason(true);
@@ -89,6 +92,7 @@ export default function Saved_opportunities() {
         customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
+        // Show paywall if not subscribed
         const result = await RevenueCatUI.presentPaywallIfNeeded({
           requiredEntitlementIdentifier: "premium",
         });
@@ -97,7 +101,7 @@ export default function Saved_opportunities() {
           result === PAYWALL_RESULT.PURCHASED ||
           result === PAYWALL_RESULT.RESTORED
         ) {
-          return await getAIReasons(opportunity);
+          return await getAIReasons(opportunity); // Retry after upgrade
         } else {
           return;
         }
@@ -120,6 +124,7 @@ export default function Saved_opportunities() {
     }
   };
 
+  // Delete a saved opportunity by ID and update UI
   const deleteOpportunity = async (id: string) => {
     if (!user) return;
     try {
