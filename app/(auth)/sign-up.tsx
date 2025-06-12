@@ -46,9 +46,11 @@ const Sign_Up = () => {
     if (!isLoaded) return;
 
     try {
+      // Split full name into first and last
       const [firstName, ...rest] = form.name.trim().split(" ");
       const lastName = rest.join(" ") || "";
 
+      // Clerk Sign Up
       await signUp.create({
         emailAddress: form.email,
         password: form.password,
@@ -56,6 +58,7 @@ const Sign_Up = () => {
         lastName,
       });
 
+      // Trigger email verification
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
       setVerification({
@@ -79,6 +82,7 @@ const Sign_Up = () => {
       });
 
       if (signUpAttempt.status === "complete") {
+        // Send user data to backend
         await fetchAPI("https://ec-ai.expo.app/user", {
           method: "POST",
           body: JSON.stringify({
@@ -87,7 +91,11 @@ const Sign_Up = () => {
             clerkId: signUpAttempt.createdUserId,
           }),
         });
+
+        // Set session active
         await setActive({ session: signUpAttempt.createdSessionId });
+
+        // Show success modal
         setVerification({ ...verification, state: "success" });
       } else {
         setVerification({
@@ -103,12 +111,12 @@ const Sign_Up = () => {
         state: "pending",
       });
       Alert.alert("Error", err.errors[0].longMessage);
-      console.log(JSON.stringify(err, null, 2));
     }
   };
 
   const onResendCode = async () => {
     if (!isLoaded) return;
+
     try {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
       setVerification({ ...verification, error: "" });
@@ -118,7 +126,6 @@ const Sign_Up = () => {
       );
     } catch (err: any) {
       setVerification({ ...verification, error: err.errors[0].longMessage });
-      console.log(JSON.stringify(err, null, 2));
     }
   };
 

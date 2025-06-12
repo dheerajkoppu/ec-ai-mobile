@@ -39,6 +39,7 @@ const Sign_In = () => {
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/(root)/(tabs)/opportunity_match");
+        // Navigate to main screen on success
       } else {
         console.log(JSON.stringify(signInAttempt, null, 2));
         Alert.alert("Error", "Log in failed. Please try again.");
@@ -46,6 +47,7 @@ const Sign_In = () => {
     } catch (err: any) {
       console.log(JSON.stringify(err, null, 2));
       Alert.alert("Error", err.errors[0].longMessage);
+      // Show Clerk-provided error
     }
   }, [isLoaded, signIn, form.email, form.password, setActive]);
 
