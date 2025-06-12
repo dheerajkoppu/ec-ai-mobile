@@ -49,5 +49,3 @@ export const useOnboardingData = () => {
     },
   ];
 };
-
-export const data = {};
