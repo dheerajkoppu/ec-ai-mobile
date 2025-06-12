@@ -112,7 +112,7 @@ const Layout = () => {
           alignItems: "center",
           flexDirection: "row",
           position: "absolute",
-          borderTopColor: isDark ? "#2a2a2a" : "#e0e0e0", // <- change this color
+          borderTopColor: isDark ? "#2a2a2a" : "#e0e0e0",
         },
         tabBarItemStyle: {
           paddingVertical: 20,
