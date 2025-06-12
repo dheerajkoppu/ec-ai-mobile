@@ -33,7 +33,7 @@ export const icons = {
 export const useOnboardingData = () => {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";
-
+  // Dark and light mode images for onboarding
   return [
     {
       id: 1,
