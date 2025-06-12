@@ -13,7 +13,7 @@ const Home = () => {
   const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isDark = useColorScheme() === "dark";
-  const onboarding = useOnboardingData(); // ✅ Now valid
+  const onboarding = useOnboardingData();
 
   const isLastSlide = activeIndex === onboarding.length - 1;
 
