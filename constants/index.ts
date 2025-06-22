@@ -6,9 +6,11 @@ import check from "@/assets/images/check.png";
 import onboarding1 from "@/assets/images/onboarding1.png";
 import onboarding2 from "@/assets/images/onboarding2.png";
 import onboarding3 from "@/assets/images/onboarding3.png";
+import onboarding4 from "@/assets/images/onboarding4.png";
 import onboarding1dark from "@/assets/images/onboarding1-dark.png";
 import onboarding2dark from "@/assets/images/onboarding2-dark.png";
 import onboarding3dark from "@/assets/images/onboarding3-dark.png";
+import onboarding4dark from "@/assets/images/onboarding4-dark.png";
 import icon from "@/assets/images/icon.png";
 import { useColorScheme } from "react-native";
 
@@ -16,9 +18,11 @@ export const images = {
   onboarding1,
   onboarding2,
   onboarding3,
+  onboarding4,
   onboarding1dark,
   onboarding2dark,
   onboarding3dark,
+  onboarding4dark,
   check,
   icon,
 };
@@ -46,6 +50,10 @@ export const useOnboardingData = () => {
     {
       id: 3,
       image: isDark ? images.onboarding3dark : images.onboarding3,
+    },
+    {
+      id: 4,
+      image: isDark ? images.onboarding4dark : images.onboarding4,
     },
   ];
 };

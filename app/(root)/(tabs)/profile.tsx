@@ -413,7 +413,7 @@ const Profile = () => {
             onPress={async () => {
               await Haptics.selectionAsync();
               await WebBrowser.openBrowserAsync(
-                "https://ec-aiweb.vercel.app/privacy-policy",
+                "https://ec-ai.app/privacy-policy",
               );
             }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
@@ -423,7 +423,7 @@ const Profile = () => {
             onPress={async () => {
               await Haptics.selectionAsync();
               await WebBrowser.openBrowserAsync(
-                "https://ec-aiweb.vercel.app/terms-of-use",
+                "https://ec-ai.app/terms-of-use",
               );
             }}
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"

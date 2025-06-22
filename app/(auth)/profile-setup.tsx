@@ -958,7 +958,7 @@ const ProfileSetup: React.FC = () => {
                 <Text
                   onPress={async () =>
                     await WebBrowser.openBrowserAsync(
-                      "https://ec-aiweb.vercel.app/terms-of-use",
+                      "https://ec-ai.app/terms-of-use",
                     )
                   }
                   style={{ color: "#5b55f7", textDecorationLine: "underline" }}
@@ -969,7 +969,7 @@ const ProfileSetup: React.FC = () => {
                 <Text
                   onPress={async () =>
                     await WebBrowser.openBrowserAsync(
-                      "https://ec-aiweb.vercel.app/privacy-policy",
+                      "https://ec-ai.app/privacy-policy",
                     )
                   }
                   style={{ color: "#5b55f7", textDecorationLine: "underline" }}
