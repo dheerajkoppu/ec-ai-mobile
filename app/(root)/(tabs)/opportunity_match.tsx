@@ -12,6 +12,9 @@ import {
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useColorScheme } from "react-native";
+import InputField from "@/components/InputField";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
+import * as Haptics from "expo-haptics";
 
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
@@ -21,6 +24,7 @@ import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
 import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import CustomButton from "@/components/CustomButton";
 
 interface Opportunity {
   id: string;
@@ -76,7 +80,9 @@ const Opportunities = () => {
     useState<Opportunity | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
   const [canSwipe, setCanSwipe] = useState(true);
-
+  const [reportingOp, setReportingOp] = useState<Opportunity | null>(null);
+  const [reportReason, setReportReason] = useState<string>("");
+  const [reportDetails, setReportDetails] = useState<string>("");
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
     if (lastSwipeDate !== today) {
@@ -84,6 +90,34 @@ const Opportunities = () => {
       setLastSwipeDate(today);
     }
   }, [lastSwipeDate]);
+
+  const openReport = (op: Opportunity) => {
+    setReportingOp(op);
+    setReportReason("");
+    setReportDetails("");
+  };
+
+  const submitReport = async () => {
+    if (!reportingOp || !reportReason) return;
+    try {
+      const res = await fetch("https://ec-ai.expo.app/reportopportunity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          clerk_id: user!.id,
+          opportunity_id: reportingOp.id,
+          reason: reportReason,
+          details: reportDetails,
+        }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Alert.alert("Report submitted", "Thank you for your feedback.");
+      setReportingOp(null);
+    } catch (err: any) {
+      Alert.alert("Error", err.message || "Could not submit report.");
+    }
+  };
 
   const onSwiped = async (i: number, liked: boolean) => {
     setCardIndex(i + 1);
@@ -323,13 +357,14 @@ const Opportunities = () => {
         backgroundColor: isDark ? "#121212" : "#F5F7FA",
       }}
     >
+      {/* Header */}
       <View style={{ alignItems: "center", marginVertical: 16 }}>
         <Text
           allowFontScaling={false}
           style={{
             fontSize: 24,
             fontWeight: "bold",
-            color: isDark ? "#fff" : "#1f2937", // dark gray or white
+            color: isDark ? "#fff" : "#1f2937",
             textAlign: "center",
             fontFamily: "Poppins-Bold",
             paddingBottom: 8,
@@ -340,20 +375,21 @@ const Opportunities = () => {
         <Text
           allowFontScaling={false}
           style={{
-            color: isDark ? "#ccc" : "#6b7280", // tailwind gray-500
+            color: isDark ? "#ccc" : "#6b7280",
             fontFamily: "Poppins-Regular",
             textAlign: "center",
             fontSize: 14,
           }}
         >
-          Swipe RIGHT to save an opportunity, left to skip.{" "}
+          Swipe RIGHT to save an opportunity, left to skip.
         </Text>
       </View>
 
+      {/* Card swiper */}
       <Swiper
         cards={opportunities}
-        cardIndex={cardIndex} // ← new
-        onSwipedRight={(i) => onSwiped(i, true)} // ← new
+        cardIndex={cardIndex}
+        onSwipedRight={(i) => onSwiped(i, true)}
         onSwipedLeft={(i) => onSwiped(i, false)}
         infinite
         disableTopSwipe
@@ -365,70 +401,185 @@ const Opportunities = () => {
         cardVerticalMargin={20}
         backgroundColor="transparent"
         containerStyle={{ flex: 1, marginTop: 150 }}
-        renderCard={(item: Opportunity) => (
-          <TouchableOpacity
-            activeOpacity={0.9}
-            onPress={() => setSelectedOpportunity(item)}
-          >
-            <ImageBackground
-              source={{ uri: item.pictureurl }}
+        renderCard={(item) => (
+          <View>
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setSelectedOpportunity(item)}
+            >
+              <ImageBackground
+                source={{ uri: item.pictureurl }}
+                style={{
+                  width: CARD_WIDTH,
+                  height: CARD_HEIGHT,
+                  backgroundColor: "#FFF",
+                  borderRadius: 12,
+                  padding: 16,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  alignSelf: "center",
+                }}
+                imageStyle={{ borderRadius: 12 }}
+              >
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: 16,
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    borderBottomLeftRadius: 12,
+                    borderBottomRightRadius: 12,
+                  }}
+                >
+                  <Text className="text-white text-xl font-PoppinsBold mb-0.5">
+                    {item.title}
+                  </Text>
+                  <Text className="text-white text-md font-PoppinsRegular mb-1">
+                    <Text className="text-white text-md font-PoppinsSemiBold">
+                      Prestige:
+                    </Text>{" "}
+                    {renderStars(item.prestige)}
+                  </Text>
+                  <Text className="text-white text-md font-PoppinsRegular">
+                    <Text className="text-white text-md font-PoppinsSemiBold">
+                      Activity Type:
+                    </Text>{" "}
+                    {item.activityType}
+                  </Text>
+                  {item.description && (
+                    <Text className="text-white text-md font-PoppinsRegular">
+                      <Text className="text-white text-md font-PoppinsSemiBold">
+                        Description:
+                      </Text>{" "}
+                      {item.description}
+                    </Text>
+                  )}
+                </View>
+              </ImageBackground>
+            </TouchableOpacity>
+
+            {/* Report icon */}
+            <TouchableOpacity
               style={{
-                width: CARD_WIDTH,
-                height: CARD_HEIGHT,
-                backgroundColor: "#FFF",
-                borderRadius: 12,
-                padding: 16,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 4,
-                alignSelf: "center",
+                position: "absolute",
+                top: 8,
+                right: 8,
+                zIndex: 2,
               }}
-              imageStyle={{ borderRadius: 12 }}
+              onPress={() => openReport(item)}
             >
               <View
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  padding: 16,
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  borderBottomLeftRadius: 12,
-                  borderBottomRightRadius: 12,
-                }}
+                className={`p-1 rounded-full ${
+                  isDark ? "bg-white/20" : "bg-white/70"
+                }`}
               >
-                <Text className="text-white text-xl font-PoppinsBold mb-0.5">
-                  {item.title}
-                </Text>
-                <Text className="text-white text-md font-PoppinsRegular mb-1">
-                  <Text className="text-white text-md font-PoppinsSemiBold">
-                    Prestige:{" "}
-                  </Text>
-                  {renderStars(item.prestige)}
-                </Text>
-
-                <Text className="text-white text-md font-PoppinsRegular">
-                  <Text className=" text-white text-md font-PoppinsSemiBold">
-                    Activity Type:{" "}
-                  </Text>
-                  {item.activityType}
-                </Text>
-
-                {item.description && (
-                  <Text className="text-white text-md font-PoppinsRegular">
-                    <Text className=" text-white text-md font-PoppinsSemiBold">
-                      Description:{" "}
-                    </Text>
-                    {item.description}
-                  </Text>
-                )}
+                <MaterialCommunityIcons
+                  name="flag-outline"
+                  size={24}
+                  color={isDark ? "#fff" : "#000"}
+                />
               </View>
-            </ImageBackground>
-          </TouchableOpacity>
+            </TouchableOpacity>
+          </View>
         )}
       />
+
+      <ReactNativeModal
+        isVisible={!!reportingOp}
+        backdropTransitionOutTiming={1}
+        useNativeDriver
+        useNativeDriverForBackdrop
+        onBackdropPress={() => setReportingOp(null)}
+      >
+        <View
+          className={`px-7 py-9 rounded-2xl ${isDark ? "bg-[#1E1E1E]" : "bg-white"}`}
+          style={{
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: isDark ? 0.4 : 0.1,
+            shadowRadius: 8,
+            marginBottom: 64,
+          }}
+        >
+          <KeyboardAwareScrollView
+            enableOnAndroid
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            {/* Title + Close */}
+            <View className="flex-row items-center justify-between mb-4">
+              <Text className="text-xl font-PoppinsSemiBold text-black dark:text-white">
+                Report Opportunity
+              </Text>
+              <TouchableOpacity
+                onPress={() => setReportingOp(null)}
+                className="p-1 rounded-full"
+                activeOpacity={0.6}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={24}
+                  color={isDark ? "#fff" : "#000"}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <Text className="text-base font-Poppins text-center mb-6 text-black dark:text-white">
+              Why are you reporting “{reportingOp?.title}”?
+            </Text>
+
+            {["Scam", "Inaccurate info", "Other"].map((r) => {
+              const isSelected = reportReason === r;
+
+              return (
+                <TouchableOpacity
+                  key={r}
+                  onPress={() => setReportReason(r)}
+                  className={`px-4 py-3 rounded-lg mb-3 border-2 ${
+                    isSelected ? "bg-primary-600/60" : "bg-primary-600"
+                  } border-primary-600`}
+                >
+                  <Text
+                    className={`text-center font-PoppinsSemiBold ${
+                      isSelected ? "text-white" : "text-white/80"
+                    }`}
+                  >
+                    {r}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+
+            {(reportReason === "Inaccurate info" ||
+              reportReason === "Other") && (
+              <InputField
+                label="Please describe what's wrong"
+                returnKeyType="done"
+                placeholder="Enter your explanation"
+                keyboardShouldPersistTaps="never"
+                value={reportDetails}
+                onChangeText={setReportDetails}
+                containerStyle={isDark ? "bg-[#1e1e1e] border-gray-700" : ""}
+                inputStyle={isDark ? "text-white" : ""}
+              />
+            )}
+
+            <View className="mt-6">
+              <CustomButton
+                title="Submit"
+                onPress={submitReport}
+                disabled={!reportReason}
+                className="w-full"
+              />
+            </View>
+          </KeyboardAwareScrollView>
+        </View>
+      </ReactNativeModal>
 
       <ReactNativeModal
         isVisible={selectedOpportunity !== null}

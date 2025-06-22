@@ -30,8 +30,8 @@ export async function DELETE(request: Request) {
     }
 
     await resend.emails.send({
-      from: "EC-AI <onboarding@resend.dev>",
-      to: "ask.ecai@gmail.com", //replace with 'email' in production
+      from: "EC-AI <support@ec-ai.app>",
+      to: "ask.ecai@gmail.com",
       subject: "User Deletion Request",
       text: `The user with email ${userEmail} has requested account deletion. Please delete the user from both Clerk and RevenueCat`,
     });

@@ -12,8 +12,8 @@ export async function POST(request: Request) {
 
     // Send email to admin with user data request
     await resend.emails.send({
-      from: "EC-AI <onboarding@resend.dev>",
-      to: "ask.ecai@gmail.com", //replace with 'email' in production
+      from: "EC-AI <support@ec-ai.app>",
+      to: "ask.ecai@gmail.com",
       subject: "User Data Request",
       text: `The user with email ${userEmail} has requested a copy of their user data. Please give their users table, activity table, and user saved opportunities table.`,
     });

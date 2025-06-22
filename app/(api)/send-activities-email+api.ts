@@ -12,8 +12,9 @@ export async function POST(request: Request) {
 
   // Send email with attached PDF
   await resend.emails.send({
-    from: "EC-AI <onboarding@resend.dev>", // Change when product is live
-    to: "ask.ecai@gmail.com", // Change to `email` param when product is live
+    from: "EC-AI <support@ec-ai.app>",
+    to: email,
+    replyTo: "ask.ecai@gmail.com",
     subject: "Your EC‑AI Activities PDF",
     text: "Hello,\n\nAttached is your activities PDF.\n\nSincerely,\nEC-AI",
     attachments: [

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       .text(`${act.hoursPerWeek ?? "?"} hr/wk`, { width: leftW })
       .text(`${act.weeksPerYear ?? "?"} wk/yr`, { width: leftW });
 
-    const rightX = leftX + leftW + 16;
+    const rightX = leftX + leftW + 36;
     const rightW = (doc.page.width - 80) * 0.75 - 16;
     doc
       .font("Poppins-Bold")
