@@ -2,7 +2,7 @@ import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Text, View } from "react-native";
 import * as Haptics from "expo-haptics"; // <-- import haptics
-
+import * as AuthSession from "expo-auth-session";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { googleOAuth } from "@/lib/auth";
@@ -13,7 +13,10 @@ const OAuth = () => {
   const isDark = useColorScheme() === "dark";
 
   const handleGoogleSignIn = async () => {
-    const result = await googleOAuth(startOAuthFlow);
+    const redirectUrl = AuthSession.makeRedirectUri({
+      native: "myapp://oauth-redirect",
+    });
+    const result = await googleOAuth(() => startOAuthFlow({ redirectUrl }));
 
     if (result.code === "session_exists" || result.code === "success") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
