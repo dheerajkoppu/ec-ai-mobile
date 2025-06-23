@@ -541,8 +541,8 @@ const Opportunities = () => {
                   key={r}
                   onPress={() => setReportReason(r)}
                   className={`px-4 py-3 rounded-lg mb-3 border-2 ${
-                    isSelected ? "bg-primary-600/60" : "bg-primary-600"
-                  } border-primary-600`}
+                    isSelected ? "bg-primary-500/60" : "bg-primary-500"
+                  } border-primary-500`}
                 >
                   <Text
                     className={`text-center font-PoppinsSemiBold ${
