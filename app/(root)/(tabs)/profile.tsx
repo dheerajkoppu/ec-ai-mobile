@@ -120,6 +120,13 @@ const Profile = () => {
         Alert.alert("Error", "Failed to fetch valid activities.");
         return false;
       }
+      if (activities.length === 0) {
+        Alert.alert(
+          "No Activities",
+          "You haven't added any activities yet. Please add activities before generating a PDF.",
+        );
+        return false;
+      }
       // 1) Generate the PDF
       const genRes = await fetchAPI(
         "https://ec-ai.expo.app/generate-activities-pdf",

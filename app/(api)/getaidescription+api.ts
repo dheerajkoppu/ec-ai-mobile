@@ -16,6 +16,7 @@ export async function POST(request: Request) {
       SELECT
         a.name,
         a.roles,
+        a.description,
         COALESCE(json_agg(h.description), '[]') AS descriptions
       FROM users u
       JOIN activities a
@@ -35,11 +36,13 @@ export async function POST(request: Request) {
     // Generate prompt from DB values
     const allLoggedDescriptions = (row.descriptions as string[]).join(" ");
     const prompt = `
-Act as an elite university admissions officer at an Ivy League. From the provided data about a student's extracurricular activity, write a polished 150-character description suitable for Ivy League application summaries. Focus on highlighting impact, leadership, uniqueness, or sustained commitment. Use elevated but natural language. Only use “I” as a pronoun; no other pronouns. Only return the 150-character description, nothing more.
-Name: ${row.name}
+Act as an elite Ivy League admissions officer. Write a 150-character activity summary using the info below. Use numbers to quantify impact, strong verbs, and precise adjectives. Avoid filler. Focus on leadership, uniqueness, sustained commitment, and tangible results. Only use "I" as a pronoun. Do NOT explain anything. Return ONLY the 150-character summary. No intro or closing.
+
+Current Description: ${row.description ?? "N/A"}
+Activity Name: ${row.name}
 Roles: ${row.roles}
 All Logged Hours Descriptions: ${allLoggedDescriptions}
-    `.trim();
+`.trim();
 
     // Call OpenAI for description generation
     const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {

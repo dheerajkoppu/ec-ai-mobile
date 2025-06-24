@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     to: email,
     replyTo: "ask.ecai@gmail.com",
     subject: "Your EC‑AI Activities PDF",
-    text: "Hello,\n\nAttached is your activities PDF.\n\nSincerely,\nEC-AI",
+    text: "Hi there,\n\nWe've attached your activities PDF to this email.\n\nThanks for being a part of EC-AI!\n– The EC-AI Team",
     attachments: [
       {
         filename: "activities.pdf",
