@@ -78,3 +78,50 @@ export const googleOAuth = async (startOAuthFlow: any) => {
     };
   }
 };
+export const appleOAuth = async (startOAuthFlow: any) => {
+  try {
+    const { createdSessionId, setActive, signUp } = await startOAuthFlow({
+      redirectUrl: Linking.createURL("/(root)/(tabs)/opportunity_match"),
+    });
+
+    if (createdSessionId && setActive) {
+      await setActive({ session: createdSessionId });
+
+      if (signUp.createdUserId) {
+        await fetchAPI("https://ec-ai.expo.app/user", {
+          method: "POST",
+          body: JSON.stringify({
+            name: `${signUp.firstName ?? ""} ${signUp.lastName ?? ""}`.trim(),
+            email: signUp.emailAddress,
+            clerkId: signUp.createdUserId,
+          }),
+        });
+
+        return {
+          success: true,
+          code: "success",
+          message: "You have successfully signed in with Apple",
+          date: Date.now(),
+        };
+      }
+
+      return {
+        success: true,
+        code: "success",
+        message: "You have successfully signed in with Apple",
+      };
+    }
+
+    return {
+      success: false,
+      message: "An error occurred while signing in with Apple",
+    };
+  } catch (err: any) {
+    console.log(err);
+    return {
+      success: false,
+      code: err.code,
+      message: err?.errors?.[0]?.longMessage ?? "Unknown error occurred.",
+    };
+  }
+};

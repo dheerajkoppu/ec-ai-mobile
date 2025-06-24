@@ -1,5 +1,7 @@
 import email from "@/assets/icons/email.png";
 import google from "@/assets/icons/google.png";
+import applelight from "@/assets/icons/apple-light.png";
+import appledark from "@/assets/icons/apple-dark.png";
 import lock from "@/assets/icons/lock.png";
 import person from "@/assets/icons/person.png";
 import check from "@/assets/images/check.png";
@@ -28,6 +30,8 @@ export const images = {
 };
 
 export const icons = {
+  applelight,
+  appledark,
   google,
   lock,
   person,

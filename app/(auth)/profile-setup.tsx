@@ -22,8 +22,6 @@ import CustomButton from "@/components/CustomButton";
 import { fetchAPI } from "@/lib/fetch";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
-import Purchases from "react-native-purchases";
 import * as Haptics from "expo-haptics";
 
 // Interfaces
@@ -275,8 +273,6 @@ const SlideWrapper: React.FC<{
 // ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
-  const [isPremium, setIsPremium] = useState(false);
-  const [hasShownPaywall, setHasShownPaywall] = useState(false);
   const isDark = useColorScheme() === "dark";
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
@@ -295,19 +291,6 @@ const ProfileSetup: React.FC = () => {
     },
     [],
   );
-  useEffect(() => {
-    const checkPremiumStatus = async () => {
-      try {
-        const customerInfo = await Purchases.getCustomerInfo();
-        const hasPremium = !!customerInfo.entitlements.active["premium"];
-        setIsPremium(hasPremium);
-      } catch (error) {
-        console.error("Failed to check premium status:", error);
-      }
-    };
-    checkPremiumStatus();
-  }, []);
-
   const handleBack = () => {
     if (step > 0) {
       swiperRef.current?.scrollBy(-1);
@@ -993,28 +976,6 @@ const ProfileSetup: React.FC = () => {
                   "Incomplete",
                   "Please fill out all required fields on this page.",
                 );
-                return;
-              }
-
-              // Only show paywall if NOT in update mode
-              if (update !== "true" && !isPremium && !hasShownPaywall) {
-                const result = await RevenueCatUI.presentPaywallIfNeeded({
-                  requiredEntitlementIdentifier: "premium",
-                });
-
-                setHasShownPaywall(true);
-
-                if (
-                  result === PAYWALL_RESULT.PURCHASED ||
-                  result === PAYWALL_RESULT.RESTORED
-                ) {
-                  setIsPremium(true);
-                  await handleSubmit();
-                  await Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Success,
-                  );
-                }
-
                 return;
               }
 

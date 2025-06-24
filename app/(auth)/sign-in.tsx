@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   useColorScheme,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { icons, images } from "@/constants";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
@@ -17,6 +18,7 @@ import OAuth from "@/components/OAuth";
 import { useSignIn } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
+import AppleAuth from "@/components/AppleAuth";
 
 const Sign_In = () => {
   const isDark = useColorScheme() === "dark";
@@ -39,7 +41,6 @@ const Sign_In = () => {
       if (signInAttempt.status === "complete") {
         await setActive({ session: signInAttempt.createdSessionId });
         router.replace("/(root)/(tabs)/opportunity_match");
-        // Navigate to main screen on success
       } else {
         console.log(JSON.stringify(signInAttempt, null, 2));
         Alert.alert("Error", "Log in failed. Please try again.");
@@ -47,13 +48,17 @@ const Sign_In = () => {
     } catch (err: any) {
       console.log(JSON.stringify(err, null, 2));
       Alert.alert("Error", err.errors[0].longMessage);
-      // Show Clerk-provided error
     }
   }, [isLoaded, signIn, form.email, form.password, setActive]);
 
   return (
     <View style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}>
-      <View className="flex-1">
+      <KeyboardAwareScrollView
+        keyboardShouldPersistTaps="handled"
+        enableOnAndroid
+        contentContainerStyle={{ paddingBottom: 40 }}
+        style={{ flex: 1 }}
+      >
         <View className="relative w-full h-[250px]">
           <Image
             source={images.icon}
@@ -68,7 +73,7 @@ const Sign_In = () => {
           </Text>
         </View>
 
-        <View className="p-5">
+        <View className="px-5">
           <InputField
             label="Email"
             returnKeyType="next"
@@ -120,6 +125,7 @@ const Sign_In = () => {
           />
 
           <OAuth />
+          <AppleAuth />
 
           <TouchableOpacity
             onPress={() => router.replace("/sign-up")}
@@ -130,11 +136,11 @@ const Sign_In = () => {
               style={{ color: isDark ? "#ccc" : "#666" }}
             >
               Don't have an account?{" "}
-              <Text style={{ color: "#5b55f6" }}>Sign Up</Text>
+              <Text className="text-primary-500">Sign Up</Text>
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAwareScrollView>
     </View>
   );
 };
