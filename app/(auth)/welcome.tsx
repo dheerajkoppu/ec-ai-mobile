@@ -1,12 +1,12 @@
 import { router } from "expo-router";
 import { useRef, useState } from "react";
-import { Image, Text, TouchableOpacity, View } from "react-native";
+import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { useOnboardingData } from "@/constants";
 import { useColorScheme } from "react-native";
-
+import { Video } from "expo-av";
 import * as Haptics from "expo-haptics";
 
 const Home = () => {
@@ -14,22 +14,19 @@ const Home = () => {
   const [activeIndex, setActiveIndex] = useState(0);
   const isDark = useColorScheme() === "dark";
   const onboarding = useOnboardingData();
-
   const isLastSlide = activeIndex === onboarding.length - 1;
 
   return (
     <SafeAreaView
-      className="flex h-full items-center justify-between bg-primary-200"
-      style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+      className="flex h-full items-center justify-between"
+      style={{ backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
     >
       <TouchableOpacity
-        onPress={() => {
-          router.replace("/(auth)/sign-up");
-        }}
+        onPress={() => router.replace("/(auth)/sign-up")}
         className="w-full flex justify-end items-end p-5"
       >
         <Text
-          className=" text-black text-md font-PoppinsBold"
+          className="text-md font-PoppinsBold"
           style={{ color: isDark ? "#fff" : "#000" }}
         >
           Skip
@@ -39,9 +36,7 @@ const Home = () => {
       <Swiper
         ref={swiperRef}
         loop={false}
-        paginationStyle={{
-          bottom: -20,
-        }}
+        paginationStyle={{ bottom: -20 }}
         dot={<View className="w-[32px] h-[4px] mx-1 bg-white rounded-full" />}
         activeDot={
           <View className="w-[32px] h-[4px] mx-1 bg-primary-500 rounded-full" />
@@ -49,11 +44,18 @@ const Home = () => {
         onIndexChanged={(index) => setActiveIndex(index)}
       >
         {onboarding.map((item) => (
-          <View key={item.id} className="flex items-center justify-center">
-            <Image
-              source={item.image}
-              className="w-full h-full"
-              resizeMode="contain"
+          <View
+            key={item.id}
+            className="flex items-center justify-center w-full h-full"
+          >
+            <Video
+              source={{ uri: item.video }}
+              rate={1.0}
+              volume={1.0}
+              isMuted={true}
+              shouldPlay={true}
+              isLooping={true}
+              style={{ width: "84.32432228%", height: "112.098789%" }}
             />
           </View>
         ))}

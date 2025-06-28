@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ActivityIndicator,
-  ScrollView,
   Dimensions,
   ImageBackground,
 } from "react-native";
@@ -22,37 +21,14 @@ import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
-import * as WebBrowser from "expo-web-browser";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
 
 interface Opportunity {
   id: string;
-  school?: string;
   title: string;
-  careerField?: string;
   activityType: string;
-  location: string;
-  duration?: string;
-  deadline?: string;
-  apply?: string;
-  gradeRequirements?: string;
-  raceRequirements?: string;
-  genderRequirements?: string;
-  ageRequirements?: string;
-  primaryCity?: string;
-  onlyFRLStudents?: boolean;
-  onlyFirstGen?: boolean;
-  minGPA?: number;
-  minSAT?: number;
-  minACT?: number;
-  minPSAT?: number;
-  hasLeadershipRoles?: boolean;
-  selectivityLevel?: string;
-  outsideUS?: boolean;
-  hoursPerWeek?: number;
   pictureurl?: string;
-  createdAt?: string;
   description?: string;
   prestige?: number;
 }
@@ -76,8 +52,7 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOpportunity, setSelectedOpportunity] =
-    useState<Opportunity | null>(null);
+  useState<Opportunity | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
   const [canSwipe, setCanSwipe] = useState(true);
   const [reportingOp, setReportingOp] = useState<Opportunity | null>(null);
@@ -120,10 +95,12 @@ const Opportunities = () => {
   };
 
   const onSwiped = async (i: number, liked: boolean) => {
+    if (!canSwipe) return;
     setCardIndex(i + 1);
     await AsyncStorage.setItem("lastCardIndex", String(i + 1));
     await handleSwipe(i, liked);
   };
+
   useEffect(() => {
     (async () => {
       const saved = await AsyncStorage.getItem("lastCardIndex");
@@ -215,8 +192,6 @@ const Opportunities = () => {
   }, [user, fetchOpportunities]);
 
   const handleSwipe = async (i: number, liked: boolean) => {
-    if (!canSwipe) return;
-
     const today = new Date().toISOString().split("T")[0];
     const opportunity = opportunities[i];
 
@@ -225,6 +200,7 @@ const Opportunities = () => {
       const isPremium =
         customerInfo.entitlements.active["premium"] !== undefined;
 
+      // Reset swipe count if it's a new day
       if (lastSwipeDate !== today) {
         setSwipeCount(1);
         setLastSwipeDate(today);
@@ -234,6 +210,8 @@ const Opportunities = () => {
         setSwipeCount(updated);
         if (updated % 5 === 0) await fetchOpportunities();
       } else {
+        // Block further swipes
+        setCanSwipe(false); // 🔒 lock swiper
         Alert.alert(
           "Swipe Limit Reached",
           "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
@@ -246,11 +224,10 @@ const Opportunities = () => {
                 });
 
                 if (
-                  result !== PAYWALL_RESULT.PURCHASED &&
-                  result !== PAYWALL_RESULT.RESTORED
+                  result === PAYWALL_RESULT.PURCHASED ||
+                  result === PAYWALL_RESULT.RESTORED
                 ) {
-                  setCanSwipe(false);
-                } else {
+                  setCanSwipe(true);
                   const updated = swipeCount + 1;
                   setSwipeCount(updated);
                   if (updated % 5 === 0) await fetchOpportunities();
@@ -260,9 +237,7 @@ const Opportunities = () => {
           ],
         );
 
-        const updated = swipeCount + 1;
-        setSwipeCount(updated);
-        if (updated % 5 === 0) await fetchOpportunities();
+        return; // ❌ prevent swipe logging or card index update
       }
 
       if (liked) await handleSave(opportunity);
@@ -403,65 +378,60 @@ const Opportunities = () => {
         containerStyle={{ flex: 1, marginTop: 150 }}
         renderCard={(item) => (
           <View>
-            <TouchableOpacity
-              activeOpacity={0.9}
-              onPress={() => setSelectedOpportunity(item)}
+            <ImageBackground
+              source={{ uri: item.pictureurl }}
+              style={{
+                width: CARD_WIDTH,
+                height: CARD_HEIGHT,
+                backgroundColor: "#FFF",
+                borderRadius: 12,
+                padding: 16,
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                elevation: 4,
+                alignSelf: "center",
+              }}
+              imageStyle={{ borderRadius: 12 }}
             >
-              <ImageBackground
-                source={{ uri: item.pictureurl }}
+              <View
                 style={{
-                  width: CARD_WIDTH,
-                  height: CARD_HEIGHT,
-                  backgroundColor: "#FFF",
-                  borderRadius: 12,
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
                   padding: 16,
-                  shadowColor: "#000",
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.1,
-                  shadowRadius: 8,
-                  elevation: 4,
-                  alignSelf: "center",
+                  backgroundColor: "rgba(0, 0, 0, 0.5)",
+                  borderBottomLeftRadius: 12,
+                  borderBottomRightRadius: 12,
                 }}
-                imageStyle={{ borderRadius: 12 }}
               >
-                <View
-                  style={{
-                    position: "absolute",
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    padding: 16,
-                    backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    borderBottomLeftRadius: 12,
-                    borderBottomRightRadius: 12,
-                  }}
-                >
-                  <Text className="text-white text-xl font-PoppinsBold mb-0.5">
-                    {item.title}
-                  </Text>
-                  <Text className="text-white text-md font-PoppinsRegular mb-1">
-                    <Text className="text-white text-md font-PoppinsSemiBold">
-                      Prestige:
-                    </Text>{" "}
-                    {renderStars(item.prestige)}
-                  </Text>
+                <Text className="text-white text-xl font-PoppinsBold mb-0.5">
+                  {item.title}
+                </Text>
+                <Text className="text-white text-md font-PoppinsRegular mb-1">
+                  <Text className="text-white text-md font-PoppinsSemiBold">
+                    Prestige:
+                  </Text>{" "}
+                  {renderStars(item.prestige)}
+                </Text>
+                <Text className="text-white text-md font-PoppinsRegular">
+                  <Text className="text-white text-md font-PoppinsSemiBold">
+                    Activity Type:
+                  </Text>{" "}
+                  {item.activityType}
+                </Text>
+                {item.description && (
                   <Text className="text-white text-md font-PoppinsRegular">
                     <Text className="text-white text-md font-PoppinsSemiBold">
-                      Activity Type:
+                      Description:
                     </Text>{" "}
-                    {item.activityType}
+                    {item.description}
                   </Text>
-                  {item.description && (
-                    <Text className="text-white text-md font-PoppinsRegular">
-                      <Text className="text-white text-md font-PoppinsSemiBold">
-                        Description:
-                      </Text>{" "}
-                      {item.description}
-                    </Text>
-                  )}
-                </View>
-              </ImageBackground>
-            </TouchableOpacity>
+                )}
+              </View>
+            </ImageBackground>
 
             {/* Report icon */}
             <TouchableOpacity
@@ -578,202 +548,6 @@ const Opportunities = () => {
               />
             </View>
           </KeyboardAwareScrollView>
-        </View>
-      </ReactNativeModal>
-
-      <ReactNativeModal
-        isVisible={selectedOpportunity !== null}
-        backdropTransitionOutTiming={1}
-        useNativeDriver={true}
-        useNativeDriverForBackdrop={true}
-        onBackdropPress={() => setSelectedOpportunity(null)}
-        style={{ marginTop: 60, marginHorizontal: 10 }}
-      >
-        <View
-          style={{
-            backgroundColor: isDark ? "#1e1e1e" : "#FFF",
-            borderRadius: 12,
-            padding: 16,
-            maxHeight: "80%",
-          }}
-        >
-          <TouchableOpacity
-            onPress={() => setSelectedOpportunity(null)}
-            style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
-          >
-            <MaterialCommunityIcons
-              name="close"
-              size={24}
-              color={isDark ? "#fff" : "#000"}
-            />
-          </TouchableOpacity>
-
-          <Text
-            style={{
-              fontSize: 22,
-              fontWeight: "700",
-              color: isDark ? "#fff" : "#000",
-              marginBottom: 12,
-            }}
-          >
-            {selectedOpportunity?.title}
-          </Text>
-
-          <ScrollView>
-            {[
-              ["School", selectedOpportunity?.school],
-              ["Career Field", selectedOpportunity?.careerField],
-              ["Activity Type", selectedOpportunity?.activityType],
-              ["Location", selectedOpportunity?.location],
-              ["Duration", selectedOpportunity?.duration],
-              ["Deadline", selectedOpportunity?.deadline],
-              ["Grade Requirements", selectedOpportunity?.gradeRequirements],
-              ["Race Requirements", selectedOpportunity?.raceRequirements],
-              ["Gender Requirements", selectedOpportunity?.genderRequirements],
-              ["Age Requirements", selectedOpportunity?.ageRequirements],
-              ["Primary City", selectedOpportunity?.primaryCity],
-              ["Min GPA", selectedOpportunity?.minGPA],
-              ["Min SAT", selectedOpportunity?.minSAT],
-              ["Min ACT", selectedOpportunity?.minACT],
-              ["Min PSAT", selectedOpportunity?.minPSAT],
-              ["Selectivity Level", selectedOpportunity?.selectivityLevel],
-              ["Hours per Week", selectedOpportunity?.hoursPerWeek],
-              ["Added On", selectedOpportunity?.createdAt],
-            ].map(
-              ([label, value], idx) =>
-                value !== undefined && (
-                  <Text
-                    key={idx}
-                    style={{
-                      fontSize: 14,
-                      marginBottom: 8,
-                      color: isDark ? "#ddd" : "#000",
-                    }}
-                  >
-                    <Text
-                      style={{
-                        fontWeight: "600",
-                        color: isDark ? "#aaa" : "#000",
-                      }}
-                    >
-                      {label}:
-                    </Text>{" "}
-                    {value}
-                  </Text>
-                ),
-            )}
-
-            <Text
-              style={{
-                fontSize: 14,
-                marginBottom: 8,
-                color: isDark ? "#ddd" : "#000",
-              }}
-            >
-              <Text
-                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-              >
-                Prestige:
-              </Text>{" "}
-              {renderStars(selectedOpportunity?.prestige)}
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 14,
-                marginBottom: 8,
-                color: isDark ? "#ddd" : "#000",
-              }}
-            >
-              <Text
-                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-              >
-                Only FRL Students:
-              </Text>{" "}
-              {selectedOpportunity?.onlyFRLStudents ? "Yes" : "No"}
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 14,
-                marginBottom: 8,
-                color: isDark ? "#ddd" : "#000",
-              }}
-            >
-              <Text
-                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-              >
-                Only First Gen:
-              </Text>{" "}
-              {selectedOpportunity?.onlyFirstGen ? "Yes" : "No"}
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 14,
-                marginBottom: 8,
-                color: isDark ? "#ddd" : "#000",
-              }}
-            >
-              <Text
-                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-              >
-                Has Leadership Roles:
-              </Text>{" "}
-              {selectedOpportunity?.hasLeadershipRoles ? "Yes" : "No"}
-            </Text>
-
-            <Text
-              style={{
-                fontSize: 14,
-                marginBottom: 8,
-                color: isDark ? "#ddd" : "#000",
-              }}
-            >
-              <Text
-                style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-              >
-                Outside US:
-              </Text>{" "}
-              {selectedOpportunity?.outsideUS ? "Yes" : "No"}
-            </Text>
-
-            {selectedOpportunity?.apply && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginBottom: 8,
-                }}
-              >
-                <Text
-                  style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
-                >
-                  Apply:
-                </Text>
-                <TouchableOpacity
-                  onPress={async () => {
-                    if (selectedOpportunity?.apply) {
-                      await WebBrowser.openBrowserAsync(
-                        selectedOpportunity.apply,
-                      );
-                    }
-                  }}
-                  style={{ marginLeft: 8 }}
-                >
-                  <Text
-                    style={{
-                      color: "#3B82F6",
-                      textDecorationLine: "underline",
-                      fontSize: 14,
-                    }}
-                  >
-                    {selectedOpportunity.apply}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </ScrollView>
         </View>
       </ReactNativeModal>
     </SafeAreaView>

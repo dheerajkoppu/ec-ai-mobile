@@ -2,13 +2,13 @@ import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   Text,
-  Linking,
   FlatList,
   TouchableOpacity,
   RefreshControl,
   Alert,
   ActivityIndicator,
   useColorScheme,
+  ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser } from "@clerk/clerk-expo";
@@ -19,16 +19,37 @@ import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import * as WebBrowser from "expo-web-browser";
 
 interface Opportunity {
   id: string;
+  school?: string;
   title: string;
+  careerField?: string;
   activityType: string;
   location: string;
   duration?: string;
   deadline?: string;
-  apply: string;
+  apply?: string;
+  gradeRequirements?: string;
+  raceRequirements?: string;
+  genderRequirements?: string;
+  ageRequirements?: string;
+  primaryCity?: string;
+  onlyFRLStudents?: boolean;
+  onlyFirstGen?: boolean;
+  minGPA?: number;
+  minSAT?: number;
+  minACT?: number;
+  minPSAT?: number;
+  hasLeadershipRoles?: boolean;
+  selectivityLevel?: string;
+  outsideUS?: boolean;
+  hoursPerWeek?: number;
+  pictureurl?: string;
+  createdAt?: string;
   description?: string;
+  prestige?: number;
 }
 
 export default function Saved_opportunities() {
@@ -37,6 +58,8 @@ export default function Saved_opportunities() {
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
   );
+  const [selectedOpportunity, setSelectedOpportunity] =
+    useState<Opportunity | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState<string>("");
 
@@ -44,6 +67,11 @@ export default function Saved_opportunities() {
   const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
   const [loadingReason, setLoadingReason] = useState(false);
 
+  const renderStars = (rating?: number) => {
+    if (rating === undefined || rating === null) return "N/A";
+    const fullStars = Math.round(rating);
+    return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
+  };
   // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
     if (!user?.id) return;
@@ -59,17 +87,37 @@ export default function Saved_opportunities() {
 
       if (res.ok) {
         // Format response data for local use
-        const mapped = json.data.map((item: any) => ({
-          id: item.id,
-          title: item.activityName || "No Title",
-          activityType: item.activityType,
-          location: item.location,
-          duration: item.duration,
-          deadline: item.deadline
-            ? new Date(item.deadline).toISOString().split("T")[0]
+        const mapped = json.data.map((op: any) => ({
+          id: op.id,
+          school: op.school,
+          title: op.activityName,
+          careerField: op.careerField,
+          activityType: op.activityType,
+          pictureurl: op.pictureurl,
+          location: op.location,
+          duration: op.duration,
+          deadline: op.deadline
+            ? new Date(op.deadline).toISOString().split("T")[0]
             : undefined,
-          apply: item.applicationLink,
-          description: item.description,
+          apply: op.applicationLink,
+          gradeRequirements: op.gradeRequirements,
+          raceRequirements: op.raceRequirements,
+          genderRequirements: op.genderRequirements,
+          ageRequirements: op.ageRequirements,
+          primaryCity: op.primaryCity,
+          onlyFRLStudents: op.onlyFRLStudents,
+          onlyFirstGen: op.onlyFirstGen,
+          minGPA: op.minGPA,
+          minSAT: op.minSAT,
+          minACT: op.minACT,
+          minPSAT: op.minPSAT,
+          hasLeadershipRoles: op.hasLeadershipRoles,
+          selectivityLevel: op.selectivityLevel,
+          outsideUS: op.outsideUS,
+          hoursPerWeek: op.hoursPerWeek,
+          createdAt: op.createdAt,
+          description: op.description,
+          prestige: op.prestige,
         }));
         setSavedOpportunities(mapped);
       } else {
@@ -215,122 +263,132 @@ export default function Saved_opportunities() {
             }
             contentContainerStyle={{ paddingBottom: 120 }}
             renderItem={({ item }) => (
-              <View
-                style={{
-                  backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
-                  padding: 16,
-                  marginBottom: 16,
-                  borderRadius: 10,
-                  shadowColor: "#000",
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: "Poppins-SemiBold",
-                    fontSize: 16,
-                    color: isDark ? "#fff" : "#111",
-                    marginBottom: 8,
-                  }}
-                >
-                  {item.activityType}
-                </Text>
-                <View style={{ flexDirection: "row" }}>
-                  <View style={{ width: 112 }}>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins-Regular",
-                        fontSize: 12,
-                        color: isDark ? "#ccc" : "#444",
-                        marginBottom: 4,
-                      }}
-                    >
-                      Location: {item.location}
-                    </Text>
-                    {item.duration && (
-                      <Text
-                        style={{
-                          fontFamily: "Poppins-Regular",
-                          fontSize: 12,
-                          color: isDark ? "#ccc" : "#444",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Duration: {item.duration}
-                      </Text>
-                    )}
-                    {item.deadline && (
-                      <Text
-                        style={{
-                          fontFamily: "Poppins-Regular",
-                          fontSize: 12,
-                          color: isDark ? "#ccc" : "#444",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Deadline: {item.deadline}
-                      </Text>
-                    )}
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 8 }}>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins-SemiBold",
-                        fontSize: 14,
-                        color: isDark ? "#fff" : "#111",
-                        marginBottom: 4,
-                      }}
-                    >
-                      {item.title}
-                    </Text>
-                    <Text
-                      style={{
-                        fontFamily: "Poppins-Regular",
-                        fontSize: 12,
-                        color: isDark ? "#bbb" : "#333",
-                        marginBottom: 8,
-                      }}
-                    >
-                      {item.description}
-                    </Text>
-                    {item.apply && (
-                      <TouchableOpacity
-                        onPress={() => Linking.openURL(item.apply)}
-                      >
-                        <Text
-                          style={{
-                            color: "#5b55f6",
-                            textDecorationLine: "underline",
-                            fontSize: 13,
-                          }}
-                        >
-                          Apply Here
-                        </Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
+              <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
                 <View
                   style={{
-                    flexDirection: "row",
-                    justifyContent: "flex-end",
-                    marginTop: 8,
+                    backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                    padding: 16,
+                    marginBottom: 16,
+                    borderRadius: 10,
+                    shadowColor: "#000",
                   }}
                 >
-                  <TouchableOpacity
-                    onPress={() => getAIReasons(item)}
-                    style={{ marginRight: 16 }}
+                  <Text
+                    style={{
+                      fontFamily: "Poppins-SemiBold",
+                      fontSize: 16,
+                      color: isDark ? "#fff" : "#111",
+                      marginBottom: 8,
+                    }}
                   >
-                    <MaterialCommunityIcons
-                      name="robot"
-                      size={24}
-                      color="#5b55f6"
-                    />
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={() => deleteOpportunity(item.id)}>
-                    <FontAwesome name="trash" size={22} color="#f56565" />
-                  </TouchableOpacity>
+                    {item.activityType}
+                  </Text>
+                  <View style={{ flexDirection: "row" }}>
+                    <View style={{ width: 112 }}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 12,
+                          color: isDark ? "#ccc" : "#444",
+                          marginBottom: 4,
+                        }}
+                      >
+                        Location: {item.location}
+                      </Text>
+                      {item.duration && (
+                        <Text
+                          style={{
+                            fontFamily: "Poppins-Regular",
+                            fontSize: 12,
+                            color: isDark ? "#ccc" : "#444",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Duration: {item.duration}
+                        </Text>
+                      )}
+                      {item.deadline && (
+                        <Text
+                          style={{
+                            fontFamily: "Poppins-Regular",
+                            fontSize: 12,
+                            color: isDark ? "#ccc" : "#444",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Deadline: {item.deadline}
+                        </Text>
+                      )}
+                    </View>
+                    <View style={{ flex: 1, marginLeft: 8 }}>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-SemiBold",
+                          fontSize: 14,
+                          color: isDark ? "#fff" : "#111",
+                          marginBottom: 4,
+                        }}
+                      >
+                        {item.title}
+                      </Text>
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 12,
+                          color: isDark ? "#bbb" : "#333",
+                          marginBottom: 8,
+                        }}
+                      >
+                        {item.description}
+                      </Text>
+                      {item.apply && (
+                        <TouchableOpacity
+                          onPress={async () => {
+                            if (item.apply) {
+                              await WebBrowser.openBrowserAsync(item.apply);
+                            }
+                          }}
+                        >
+                          <Text
+                            style={{
+                              color: "#5b55f6",
+                              textDecorationLine: "underline",
+                              fontSize: 13,
+                            }}
+                          >
+                            Apply Here
+                          </Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      justifyContent: "flex-end",
+                      marginTop: 8,
+                    }}
+                  >
+                    <TouchableOpacity
+                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                      onPress={() => getAIReasons(item)}
+                      style={{ marginRight: 16 }}
+                    >
+                      <MaterialCommunityIcons
+                        name="robot"
+                        size={24}
+                        color="#5b55f6"
+                      />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                      onPress={() => deleteOpportunity(item.id)}
+                    >
+                      <FontAwesome name="trash" size={22} color="#f56565" />
+                    </TouchableOpacity>
+                  </View>
                 </View>
-              </View>
+              </TouchableOpacity>
             )}
           />
         )}
@@ -388,6 +446,177 @@ export default function Saved_opportunities() {
               title="Close"
               onPress={() => setShowAIReasonsModal(false)}
             />
+          </View>
+        </ReactNativeModal>
+
+        <ReactNativeModal
+          isVisible={selectedOpportunity !== null}
+          backdropTransitionOutTiming={1}
+          useNativeDriver={true}
+          useNativeDriverForBackdrop={true}
+          onBackdropPress={() => setSelectedOpportunity(null)}
+          style={{ marginTop: 60, marginHorizontal: 10 }}
+        >
+          <View
+            style={{
+              backgroundColor: isDark ? "#1e1e1e" : "#FFF",
+              borderRadius: 12,
+              padding: 16,
+              maxHeight: "80%",
+            }}
+          >
+            <TouchableOpacity
+              onPress={() => setSelectedOpportunity(null)}
+              style={{ position: "absolute", top: 16, right: 16, zIndex: 1 }}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={24}
+                color={isDark ? "#fff" : "#000"}
+              />
+            </TouchableOpacity>
+
+            <Text
+              style={{
+                fontSize: 22,
+                fontWeight: "700",
+                color: isDark ? "#fff" : "#000",
+                marginBottom: 12,
+              }}
+            >
+              {selectedOpportunity?.title}
+            </Text>
+
+            <ScrollView>
+              {[
+                ["School", selectedOpportunity?.school],
+                ["Career Field", selectedOpportunity?.careerField],
+                ["Activity Type", selectedOpportunity?.activityType],
+                ["Location", selectedOpportunity?.location],
+                ["Duration", selectedOpportunity?.duration],
+                ["Deadline", selectedOpportunity?.deadline],
+                ["Grade Requirements", selectedOpportunity?.gradeRequirements],
+                ["Race Requirements", selectedOpportunity?.raceRequirements],
+                [
+                  "Gender Requirements",
+                  selectedOpportunity?.genderRequirements,
+                ],
+                ["Age Requirements", selectedOpportunity?.ageRequirements],
+                ["Primary City", selectedOpportunity?.primaryCity],
+                ["Min GPA", selectedOpportunity?.minGPA],
+                ["Min SAT", selectedOpportunity?.minSAT],
+                ["Min ACT", selectedOpportunity?.minACT],
+                ["Min PSAT", selectedOpportunity?.minPSAT],
+                ["Selectivity Level", selectedOpportunity?.selectivityLevel],
+                ["Hours per Week", selectedOpportunity?.hoursPerWeek],
+                ["Added On", selectedOpportunity?.createdAt],
+              ].map(
+                ([label, value], idx) =>
+                  value !== undefined && (
+                    <Text
+                      key={idx}
+                      style={{
+                        fontSize: 14,
+                        marginBottom: 8,
+                        color: isDark ? "#ddd" : "#000",
+                      }}
+                    >
+                      <Text
+                        style={{
+                          fontWeight: "600",
+                          color: isDark ? "#aaa" : "#000",
+                        }}
+                      >
+                        {label}:
+                      </Text>{" "}
+                      {value}
+                    </Text>
+                  ),
+              )}
+
+              <Text
+                style={{
+                  fontSize: 14,
+                  marginBottom: 8,
+                  color: isDark ? "#ddd" : "#000",
+                }}
+              >
+                <Text
+                  style={{ fontWeight: "600", color: isDark ? "#aaa" : "#000" }}
+                >
+                  Prestige:
+                </Text>{" "}
+                {renderStars(selectedOpportunity?.prestige)}
+              </Text>
+
+              {[
+                ["Only FRL Students", selectedOpportunity?.onlyFRLStudents],
+                ["Only First Gen", selectedOpportunity?.onlyFirstGen],
+                [
+                  "Has Leadership Roles",
+                  selectedOpportunity?.hasLeadershipRoles,
+                ],
+                ["Outside US", selectedOpportunity?.outsideUS],
+              ].map(([label, value], idx) => (
+                <Text
+                  key={idx}
+                  style={{
+                    fontSize: 14,
+                    marginBottom: 8,
+                    color: isDark ? "#ddd" : "#000",
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      color: isDark ? "#aaa" : "#000",
+                    }}
+                  >
+                    {label}:
+                  </Text>{" "}
+                  {value ? "Yes" : "No"}
+                </Text>
+              ))}
+
+              {selectedOpportunity?.apply && (
+                <View
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    marginBottom: 8,
+                  }}
+                >
+                  <Text
+                    style={{
+                      fontWeight: "600",
+                      color: isDark ? "#aaa" : "#000",
+                    }}
+                  >
+                    Apply:
+                  </Text>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      if (selectedOpportunity?.apply) {
+                        await WebBrowser.openBrowserAsync(
+                          selectedOpportunity.apply,
+                        );
+                      }
+                    }}
+                    style={{ marginLeft: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: "#3B82F6",
+                        textDecorationLine: "underline",
+                        fontSize: 14,
+                      }}
+                    >
+                      {selectedOpportunity.apply}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
           </View>
         </ReactNativeModal>
       </SignedIn>
