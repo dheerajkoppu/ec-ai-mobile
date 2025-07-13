@@ -22,7 +22,6 @@ export async function POST(request: Request) {
       !hours_per_week ||
       !weeks_per_year ||
       !roles ||
-      !description ||
       !grades
     ) {
       return Response.json(

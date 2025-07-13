@@ -20,6 +20,7 @@ import CustomButton from "@/components/CustomButton";
 import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface Opportunity {
   id: string;
@@ -140,19 +141,25 @@ export default function Saved_opportunities() {
         customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
-        // Show paywall if not subscribed
-        const result = await RevenueCatUI.presentPaywallIfNeeded({
-          requiredEntitlementIdentifier: "premium",
-        });
+        const aiUsageKey = `ai_reason_used_${user?.id}`;
 
-        if (
-          result === PAYWALL_RESULT.PURCHASED ||
-          result === PAYWALL_RESULT.RESTORED
-        ) {
-          return await getAIReasons(opportunity); // Retry after upgrade
-        } else {
-          return;
+        const hasUsed = await AsyncStorage.getItem(aiUsageKey);
+        if (hasUsed) {
+          const result = await RevenueCatUI.presentPaywallIfNeeded({
+            requiredEntitlementIdentifier: "premium",
+          });
+
+          if (
+            result === PAYWALL_RESULT.PURCHASED ||
+            result === PAYWALL_RESULT.RESTORED
+          ) {
+            return await getAIReasons(opportunity); // Retry after upgrade
+          } else {
+            return;
+          }
         }
+
+        await AsyncStorage.setItem(aiUsageKey, "1"); // mark AI used
       }
 
       const response = await fetch("https://ec-ai.expo.app/getaireasons", {

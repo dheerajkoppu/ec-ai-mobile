@@ -23,6 +23,7 @@ import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
+import NativeAdCard from "@/components/NativeAdCard";
 
 interface Opportunity {
   id: string;
@@ -54,6 +55,8 @@ const Opportunities = () => {
   const [error, setError] = useState<string | null>(null);
   useState<Opportunity | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
+  const [isPremium, setIsPremium] = useState(false);
+
   const [canSwipe, setCanSwipe] = useState(true);
   const [reportingOp, setReportingOp] = useState<Opportunity | null>(null);
   const [reportReason, setReportReason] = useState<string>("");
@@ -111,10 +114,9 @@ const Opportunities = () => {
   const checkPremiumAndUnlock = async () => {
     try {
       const info = await Purchases.getCustomerInfo();
-      const isPremium = info.entitlements.active["premium"] !== undefined;
-      if (isPremium) {
-        setCanSwipe(true);
-      }
+      const hasPremium = info.entitlements.active["premium"] !== undefined;
+      setCanSwipe(true); // keep unlimited swipes
+      setIsPremium(hasPremium); // 🔑 track premium status
     } catch (error) {
       console.error("Failed to check premium status:", error);
     }
@@ -196,48 +198,15 @@ const Opportunities = () => {
     const opportunity = opportunities[i];
 
     try {
-      const customerInfo = await Purchases.getCustomerInfo();
-      const isPremium =
-        customerInfo.entitlements.active["premium"] !== undefined;
-
-      // Reset swipe count if it's a new day
+      // Always allow swipes — no premium check or alert
       if (lastSwipeDate !== today) {
         setSwipeCount(1);
         setLastSwipeDate(today);
         await fetchOpportunities();
-      } else if (swipeCount < 5 || isPremium) {
+      } else {
         const updated = swipeCount + 1;
         setSwipeCount(updated);
-        if (updated % 5 === 0) await fetchOpportunities();
-      } else {
-        // Block further swipes
-        setCanSwipe(false); // 🔒 lock swiper
-        Alert.alert(
-          "Swipe Limit Reached",
-          "You’ve used all 5 free swipes today. Upgrade to premium for unlimited access.",
-          [
-            {
-              text: "OK",
-              onPress: async () => {
-                const result = await RevenueCatUI.presentPaywallIfNeeded({
-                  requiredEntitlementIdentifier: "premium",
-                });
-
-                if (
-                  result === PAYWALL_RESULT.PURCHASED ||
-                  result === PAYWALL_RESULT.RESTORED
-                ) {
-                  setCanSwipe(true);
-                  const updated = swipeCount + 1;
-                  setSwipeCount(updated);
-                  if (updated % 5 === 0) await fetchOpportunities();
-                }
-              },
-            },
-          ],
-        );
-
-        return; // ❌ prevent swipe logging or card index update
+        if (updated % 10 === 0) await fetchOpportunities();
       }
 
       if (liked) await handleSave(opportunity);
@@ -266,38 +235,27 @@ const Opportunities = () => {
 
   const handleSave = async (op: Opportunity) => {
     if (!user) return;
+
     try {
       const res = await fetch("https://ec-ai.expo.app/getsavedopportunities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id }),
       });
+
       const json = await res.json();
       const savedIds = new Set(json?.data?.map((item: any) => item.id));
-      if (savedIds.has(op.id)) return;
 
-      const customerInfo = await Purchases.getCustomerInfo();
-      const isPremium =
-        customerInfo.entitlements.active["premium"] !== undefined;
+      if (savedIds.has(op.id)) return; // Already saved
 
-      if (savedIds.size >= 3 && !isPremium) {
-        const result = await RevenueCatUI.presentPaywallIfNeeded({
-          requiredEntitlementIdentifier: "premium",
-        });
-        if (
-          result !== PAYWALL_RESULT.PURCHASED &&
-          result !== PAYWALL_RESULT.RESTORED
-        )
-          return;
-      }
-
+      // No more premium check or limit — save unconditionally
       await fetch("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
       });
     } catch (err) {
-      console.error("Error saving opportunity or presenting paywall:", err);
+      console.error("Error saving opportunity:", err);
     }
   };
 
@@ -376,87 +334,94 @@ const Opportunities = () => {
         cardVerticalMargin={20}
         backgroundColor="transparent"
         containerStyle={{ flex: 1, marginTop: 150 }}
-        renderCard={(item) => (
-          <View>
-            <ImageBackground
-              source={{ uri: item.pictureurl }}
-              style={{
-                width: CARD_WIDTH,
-                height: CARD_HEIGHT,
-                backgroundColor: "#FFF",
-                borderRadius: 12,
-                padding: 16,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 8,
-                elevation: 4,
-                alignSelf: "center",
-              }}
-              imageStyle={{ borderRadius: 12 }}
-            >
-              <View
+        renderCard={(item, index) => {
+          // Show ad every 3 swipes (index 2, 5, 8, ...)
+          if (!isPremium && (index + 1) % 3 === 0) {
+            return <NativeAdCard />;
+          }
+
+          return (
+            <View>
+              <ImageBackground
+                source={{ uri: item.pictureurl }}
                 style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
+                  width: CARD_WIDTH,
+                  height: CARD_HEIGHT,
+                  backgroundColor: "#FFF",
+                  borderRadius: 12,
                   padding: 16,
-                  backgroundColor: "rgba(0, 0, 0, 0.5)",
-                  borderBottomLeftRadius: 12,
-                  borderBottomRightRadius: 12,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 8,
+                  elevation: 4,
+                  alignSelf: "center",
                 }}
+                imageStyle={{ borderRadius: 12 }}
               >
-                <Text className="text-white text-xl font-PoppinsBold mb-0.5">
-                  {item.title}
-                </Text>
-                <Text className="text-white text-md font-PoppinsRegular mb-1">
-                  <Text className="text-white text-md font-PoppinsSemiBold">
-                    Prestige:
-                  </Text>{" "}
-                  {renderStars(item.prestige)}
-                </Text>
-                <Text className="text-white text-md font-PoppinsRegular">
-                  <Text className="text-white text-md font-PoppinsSemiBold">
-                    Activity Type:
-                  </Text>{" "}
-                  {item.activityType}
-                </Text>
-                {item.description && (
+                <View
+                  style={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    padding: 16,
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    borderBottomLeftRadius: 12,
+                    borderBottomRightRadius: 12,
+                  }}
+                >
+                  <Text className="text-white text-xl font-PoppinsBold mb-0.5">
+                    {item.title}
+                  </Text>
+                  <Text className="text-white text-md font-PoppinsRegular mb-1">
+                    <Text className="text-white text-md font-PoppinsSemiBold">
+                      Prestige:
+                    </Text>{" "}
+                    {renderStars(item.prestige)}
+                  </Text>
                   <Text className="text-white text-md font-PoppinsRegular">
                     <Text className="text-white text-md font-PoppinsSemiBold">
-                      Description:
+                      Activity Type:
                     </Text>{" "}
-                    {item.description}
+                    {item.activityType}
                   </Text>
-                )}
-              </View>
-            </ImageBackground>
+                  {item.description && (
+                    <Text className="text-white text-md font-PoppinsRegular">
+                      <Text className="text-white text-md font-PoppinsSemiBold">
+                        Description:
+                      </Text>{" "}
+                      {item.description}
+                    </Text>
+                  )}
+                </View>
+              </ImageBackground>
 
-            {/* Report icon */}
-            <TouchableOpacity
-              style={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                zIndex: 2,
-              }}
-              onPress={() => openReport(item)}
-            >
-              <View
-                className={`p-1 rounded-full ${
-                  isDark ? "bg-white/20" : "bg-white/70"
-                }`}
+              {/* Report icon */}
+              <TouchableOpacity
+                style={{
+                  position: "absolute",
+                  top: 8,
+                  right: 8,
+                  zIndex: 2,
+                }}
+                onPress={() => openReport(item)}
               >
-                <MaterialCommunityIcons
-                  name="flag-outline"
-                  size={24}
-                  color={isDark ? "#fff" : "#000"}
-                />
-              </View>
-            </TouchableOpacity>
-          </View>
-        )}
+                <View
+                  className={`p-1 rounded-full ${
+                    isDark ? "bg-white/20" : "bg-white/70"
+                  }`}
+                >
+                  <MaterialCommunityIcons
+                    name="flag-outline"
+                    size={24}
+                    color={isDark ? "#fff" : "#000"}
+                  />
+                </View>
+              </TouchableOpacity>
+            </View>
+          );
+        }}
       />
 
       <ReactNativeModal

@@ -384,7 +384,7 @@ const ActivityTabs = () => {
               ))}
             </View>
             <InputField
-              label="Description / Notes"
+              label="Description / Notes *"
               value={description}
               placeholder="ex. Grew club 7x..."
               onChangeText={setDescription}
