@@ -5,14 +5,9 @@ import { useEffect } from "react";
 import "react-native-reanimated";
 import { tokenCache } from "@/lib/auth";
 import RevenueCatInit from "@/components/RevenueCatInit";
-
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
-
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 import { Platform } from "react-native";
-
-// ✅ NEW: Import AdMob
-import mobileAds from "react-native-google-mobile-ads";
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const revenuecatApiKey = Platform.select({
@@ -55,23 +50,22 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
 
-    // RevenueCat Initialization
+    // RevenueCat
     if (revenuecatApiKey) {
       Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
       Purchases.configure({ apiKey: revenuecatApiKey });
     }
 
-    // ✅ AdMob Initialization
-    mobileAds()
-      .initialize()
-      .then(() => {
-        console.log("AdMob initialized");
-      });
+    // ✅ Safe AdMob initialization (only on native)
+    if (Platform.OS !== "web") {
+      const mobileAds = require("react-native-google-mobile-ads").default;
+      mobileAds()
+        .initialize()
+        .then(() => console.log("AdMob initialized"));
+    }
   }, [loaded]);
 
-  if (!loaded) {
-    return null;
-  }
+  if (!loaded) return null;
 
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>

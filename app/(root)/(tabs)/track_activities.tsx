@@ -15,7 +15,6 @@ import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import ReactNativeModal from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
 import { useFetch, fetchAPI } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
@@ -243,25 +242,18 @@ const TrackActivities = () => {
         customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
-        const aiUsageKey = `ai_desc_used_${user?.id}`;
-        const hasUsed = await AsyncStorage.getItem(aiUsageKey);
+        const result = await RevenueCatUI.presentPaywallIfNeeded({
+          requiredEntitlementIdentifier: "premium",
+        });
 
-        if (hasUsed) {
-          const result = await RevenueCatUI.presentPaywallIfNeeded({
-            requiredEntitlementIdentifier: "premium",
-          });
-
-          if (
-            result === PAYWALL_RESULT.PURCHASED ||
-            result === PAYWALL_RESULT.RESTORED
-          ) {
-            return await getAIDescription(activity); // Retry after upgrade
-          } else {
-            return;
-          }
+        if (
+          result === PAYWALL_RESULT.PURCHASED ||
+          result === PAYWALL_RESULT.RESTORED
+        ) {
+          return await getAIDescription(activity); // Retry after upgrade
+        } else {
+          return;
         }
-
-        await AsyncStorage.setItem(aiUsageKey, "1"); // Mark as used
       }
 
       const response = await fetch("https://ec-ai.expo.app/getaidescription", {

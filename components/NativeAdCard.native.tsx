@@ -13,11 +13,11 @@ import {
 const CARD_WIDTH = 340;
 const CARD_HEIGHT = 520;
 
-export default function NativeAdCard() {
+export default function NativeAdCardNative() {
   const [nativeAd, setNativeAd] = useState<NativeAd | null>(null);
 
   useEffect(() => {
-    NativeAd.createForAdRequest(TestIds.NATIVE)
+    NativeAd.createForAdRequest("ca-app-pub-4992118254778524/1100033441")
       .then(setNativeAd)
       .catch(console.error);
 

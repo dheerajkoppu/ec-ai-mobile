@@ -14,10 +14,10 @@ import { useColorScheme } from "react-native";
 import InputField from "@/components/InputField";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import * as Haptics from "expo-haptics";
+import ReactNativeModal from "react-native-modal";
 
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
-import ReactNativeModal from "react-native-modal";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
