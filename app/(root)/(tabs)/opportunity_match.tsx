@@ -19,10 +19,11 @@ import ReactNativeModal from "react-native-modal";
 import Swiper from "react-native-deck-swiper";
 import { useUser } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
+// TypeScript resolves the platform suffixes here, but eslint-import-resolver-typescript does not.
+// eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
 
 interface Opportunity {
@@ -499,8 +500,12 @@ const Opportunities = () => {
                 keyboardShouldPersistTaps="never"
                 value={reportDetails}
                 onChangeText={setReportDetails}
-                containerStyle={isDark ? "bg-[#1e1e1e] border-gray-700" : ""}
-                inputStyle={isDark ? "text-white" : ""}
+                containerStyle={
+                  isDark
+                    ? { backgroundColor: "#1e1e1e", borderColor: "#374151" }
+                    : undefined
+                }
+                inputStyle={isDark ? { color: "#ffffff" } : undefined}
               />
             )}
 

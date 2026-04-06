@@ -1,4 +1,10 @@
-import { TextInputProps, TouchableOpacityProps } from "react-native";
+import {
+  StyleProp,
+  TextInputProps,
+  TextStyle,
+  TouchableOpacityProps,
+  ViewStyle,
+} from "react-native";
 
 declare interface Driver {
   driver_id: number;
@@ -100,10 +106,10 @@ declare interface InputFieldProps extends TextInputProps {
   label: any;
   icon?: any;
   secureTextEntry?: boolean;
-  labelStyle?: string;
-  containerStyle?: string;
+  labelStyle?: StyleProp<TextStyle>;
+  containerStyle?: StyleProp<ViewStyle>;
   maxLength?: number;
-  inputStyle?: string;
+  inputStyle?: StyleProp<TextStyle>;
   iconStyle?: string;
   className?: string;
   keyboardShouldPersistTaps?: string;

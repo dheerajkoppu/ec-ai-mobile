@@ -36,41 +36,45 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
       if (value !== undefined && value !== local) {
         setLocal(value);
       }
-    }, [value]);
+    }, [local, value]);
 
     return (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <View className="my-2 w-full">
           {label && (
             <Text
-              style={{
-                fontSize: 18,
-                fontFamily: "Poppins-Bold",
-                marginBottom: 8,
-                color: isDark ? "#ffffff" : "#000000",
-                ...labelStyle,
-              }}
+              style={[
+                {
+                  fontSize: 18,
+                  fontFamily: "Poppins-Bold",
+                  marginBottom: 8,
+                  color: isDark ? "#ffffff" : "#000000",
+                },
+                labelStyle,
+              ]}
             >
               {label}
             </Text>
           )}
           <View
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
-              borderRadius: 12,
-              borderWidth: 1.5,
-              borderColor: isFocused
-                ? isDark
-                  ? "#6C5CE7" // light blue for dark mode
-                  : "#5b55f6" // your primary in light mode
-                : isDark
-                  ? "#444"
-                  : "#e5e7eb",
-              padding: 16,
-              ...containerStyle,
-            }}
+            style={[
+              {
+                flexDirection: "row",
+                alignItems: "center",
+                backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                borderRadius: 12,
+                borderWidth: 1.5,
+                borderColor: isFocused
+                  ? isDark
+                    ? "#6C5CE7"
+                    : "#5b55f6"
+                  : isDark
+                    ? "#444"
+                    : "#e5e7eb",
+                padding: 16,
+              },
+              containerStyle,
+            ]}
           >
             {icon && (
               <Image source={icon} className={`w-6 h-6 mr-3 ${iconStyle}`} />
@@ -84,14 +88,16 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
               }}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              style={{
-                fontSize: 15,
-                flex: 1,
-                fontFamily: "Poppins-Regular",
-                textAlign: "left",
-                color: isDark ? "#ffffff" : "#000000",
-                ...inputStyle,
-              }}
+              style={[
+                {
+                  fontSize: 15,
+                  flex: 1,
+                  fontFamily: "Poppins-Regular",
+                  textAlign: "left",
+                  color: isDark ? "#ffffff" : "#000000",
+                },
+                inputStyle,
+              ]}
               placeholderTextColor={isDark ? "#888888" : "#A0A3BD"}
               secureTextEntry={secureTextEntry}
               {...props}

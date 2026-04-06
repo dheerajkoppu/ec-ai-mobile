@@ -36,7 +36,7 @@ const TrackActivities = () => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [sortOption, setSortOption] = useState<string>("mostRecent");
+  const [, setSortOption] = useState<string>("mostRecent");
   const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);

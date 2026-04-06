@@ -2,8 +2,8 @@
   "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
-    "moduleResolution": "node", // ✅ tell TS to use Node resolution rules
-    "moduleSuffixes": [         // ✅ allow platform-specific files
+    "moduleResolution": "bundler",
+    "moduleSuffixes": [
       ".native",
       ".ios",
       ".android",

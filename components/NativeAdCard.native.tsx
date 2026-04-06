@@ -7,7 +7,6 @@ import {
   NativeAssetType,
   NativeMediaView,
   NativeAdEventType,
-  TestIds,
 } from "react-native-google-mobile-ads";
 
 const CARD_WIDTH = 340;
@@ -17,12 +16,17 @@ export default function NativeAdCardNative() {
   const [nativeAd, setNativeAd] = useState<NativeAd | null>(null);
 
   useEffect(() => {
+    let loadedAd: NativeAd | null = null;
+
     NativeAd.createForAdRequest("ca-app-pub-4992118254778524/1100033441")
-      .then(setNativeAd)
+      .then((ad) => {
+        loadedAd = ad;
+        setNativeAd(ad);
+      })
       .catch(console.error);
 
     return () => {
-      nativeAd?.destroy();
+      loadedAd?.destroy();
     };
   }, []);
 

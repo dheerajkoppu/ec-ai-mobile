@@ -1,4 +1,5 @@
 import { router } from "expo-router";
+import type { ComponentProps } from "react";
 import { useRef, useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -6,8 +7,26 @@ import Swiper from "react-native-swiper";
 import CustomButton from "@/components/CustomButton";
 import { useOnboardingData } from "@/constants";
 import { useColorScheme } from "react-native";
-import { Video } from "expo-av";
+import { useVideoPlayer, VideoView } from "expo-video";
 import * as Haptics from "expo-haptics";
+
+function OnboardingVideo({ uri }: { uri: string }) {
+  const player = useVideoPlayer({ uri }, (videoPlayer) => {
+    videoPlayer.loop = true;
+    videoPlayer.muted = true;
+    videoPlayer.play();
+  });
+  const videoViewPlayer = player as ComponentProps<typeof VideoView>["player"];
+
+  return (
+    <VideoView
+      player={videoViewPlayer}
+      nativeControls={false}
+      contentFit="cover"
+      style={{ width: "84.32432228%", height: "112.098789%" }}
+    />
+  );
+}
 
 const Home = () => {
   const swiperRef = useRef<Swiper>(null);
@@ -48,15 +67,7 @@ const Home = () => {
             key={item.id}
             className="flex items-center justify-center w-full h-full"
           >
-            <Video
-              source={{ uri: item.video }}
-              rate={1.0}
-              volume={1.0}
-              isMuted={true}
-              shouldPlay={true}
-              isLooping={true}
-              style={{ width: "84.32432228%", height: "112.098789%" }}
-            />
+            <OnboardingVideo uri={item.video} />
           </View>
         ))}
       </Swiper>

@@ -83,8 +83,12 @@ const Sign_In = () => {
             value={form.email}
             onSubmitEditing={() => passwordRef.current?.focus()}
             onChangeText={(value) => setForm({ ...form, email: value })}
-            containerStyle={isDark ? "bg-[#1e1e1e] border-gray-700" : ""}
-            inputStyle={isDark ? "text-white" : ""}
+            containerStyle={
+              isDark
+                ? { backgroundColor: "#1e1e1e", borderColor: "#374151" }
+                : undefined
+            }
+            inputStyle={isDark ? { color: "#ffffff" } : undefined}
           />
 
           <View style={{ position: "relative" }}>

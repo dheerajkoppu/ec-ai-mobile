@@ -58,10 +58,12 @@ export default function RootLayout() {
 
     // ✅ Safe AdMob initialization (only on native)
     if (Platform.OS !== "web") {
-      const mobileAds = require("react-native-google-mobile-ads").default;
-      mobileAds()
-        .initialize()
-        .then(() => console.log("AdMob initialized"));
+      import("react-native-google-mobile-ads")
+        .then(({ default: mobileAds }) => mobileAds().initialize())
+        .then(() => console.log("AdMob initialized"))
+        .catch((error) => {
+          console.error("AdMob initialization failed", error);
+        });
     }
   }, [loaded]);
 
