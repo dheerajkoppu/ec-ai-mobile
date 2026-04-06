@@ -3,14 +3,17 @@ import {
   View,
   Text,
   TouchableOpacity,
-  SafeAreaView,
   ActivityIndicator,
   Dimensions,
   ImageBackground,
+  Platform,
+  StyleSheet,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import { useColorScheme } from "react-native";
+import { GlassView } from "expo-glass-effect";
 import InputField from "@/components/InputField";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import * as Haptics from "expo-haptics";
@@ -38,7 +41,25 @@ interface Opportunity {
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 520;
+const REPORT_BUTTON_SIZE = 38;
+const REPORT_ICON_COLOR = "#5B55F6";
 
+const styles = StyleSheet.create({
+  reportButtonShell: {
+    width: REPORT_BUTTON_SIZE,
+    height: REPORT_BUTTON_SIZE,
+    borderRadius: REPORT_BUTTON_SIZE / 2,
+    alignItems: "center",
+    justifyContent: "center",
+    overflow: "hidden",
+  },
+  reportButtonShadow: {
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 14,
+  },
+});
 const renderStars = (rating?: number) => {
   if (rating === undefined || rating === null) return "N/A";
   const fullStars = Math.round(rating);
@@ -51,6 +72,19 @@ const Opportunities = () => {
   const { user } = useUser();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const reportButtonStyle = [
+    styles.reportButtonShell,
+    Platform.OS === "ios" ? styles.reportButtonShadow : null,
+    {
+      backgroundColor: isDark
+        ? "rgba(15, 18, 34, 0.28)"
+        : "rgba(255, 255, 255, 0.38)",
+      borderWidth: StyleSheet.hairlineWidth,
+      borderColor: isDark
+        ? "rgba(255, 255, 255, 0.12)"
+        : "rgba(255, 255, 255, 0.48)",
+    },
+  ];
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -263,6 +297,7 @@ const Opportunities = () => {
   if (loading) {
     return (
       <SafeAreaView
+        edges={["top", "left", "right"]}
         style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
       >
         <ActivityIndicator size="large" color="#5b55f6" />
@@ -273,6 +308,7 @@ const Opportunities = () => {
   if (error) {
     return (
       <SafeAreaView
+        edges={["top", "left", "right"]}
         style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
       >
         <Text style={{ color: "red", textAlign: "center", marginTop: 20 }}>
@@ -284,6 +320,7 @@ const Opportunities = () => {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={{
         flex: 1,
         paddingHorizontal: 16,
@@ -408,17 +445,31 @@ const Opportunities = () => {
                 }}
                 onPress={() => openReport(item)}
               >
-                <View
-                  className={`p-1 rounded-full ${
-                    isDark ? "bg-white/20" : "bg-white/70"
-                  }`}
-                >
-                  <MaterialCommunityIcons
-                    name="flag-outline"
-                    size={24}
-                    color={isDark ? "#fff" : "#000"}
-                  />
-                </View>
+                {Platform.OS === "ios" ? (
+                  <GlassView
+                    glassEffectStyle="clear"
+                    tintColor={
+                      isDark
+                        ? "rgba(255, 255, 255, 0.05)"
+                        : "rgba(255, 255, 255, 0.02)"
+                    }
+                    style={reportButtonStyle}
+                  >
+                    <MaterialCommunityIcons
+                      name="flag-outline"
+                      size={20}
+                      color={REPORT_ICON_COLOR}
+                    />
+                  </GlassView>
+                ) : (
+                  <View style={reportButtonStyle}>
+                    <MaterialCommunityIcons
+                      name="flag-outline"
+                      size={20}
+                      color={REPORT_ICON_COLOR}
+                    />
+                  </View>
+                )}
               </TouchableOpacity>
             </View>
           );

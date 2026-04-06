@@ -260,6 +260,9 @@ PODS:
     - ExpoModulesCore
   - ExpoSystemUI (55.0.13):
     - ExpoModulesCore
+  - ExpoUI (55.0.9):
+    - ExpoModulesCore
+    - React-RCTFabric
   - ExpoVideo (55.0.13):
     - ExpoModulesCore
   - ExpoWebBrowser (55.0.12):
@@ -2218,6 +2221,28 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - RNDateTimePicker (8.6.0):
+    - hermes-engine
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-Core-prebuilt
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - ReactNativeDependencies
+    - Yoga
   - RNGestureHandler (2.30.1):
     - hermes-engine
     - RCTRequired
@@ -2510,6 +2535,7 @@ DEPENDENCIES:
   - ExpoStoreReview (from `../node_modules/expo-store-review/ios`)
   - ExpoSymbols (from `../node_modules/expo-symbols/ios`)
   - ExpoSystemUI (from `../node_modules/expo-system-ui/ios`)
+  - "ExpoUI (from `../node_modules/@expo/ui/ios`)"
   - ExpoVideo (from `../node_modules/expo-video/ios`)
   - ExpoWebBrowser (from `../node_modules/expo-web-browser/ios`)
   - EXStructuredHeaders (from `../node_modules/expo-structured-headers/ios`)
@@ -2591,6 +2617,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
+  - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNGoogleMobileAds (from `../node_modules/react-native-google-mobile-ads`)
   - RNPaywalls (from `../node_modules/react-native-purchases-ui`)
@@ -2684,6 +2711,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/expo-symbols/ios"
   ExpoSystemUI:
     :path: "../node_modules/expo-system-ui/ios"
+  ExpoUI:
+    :path: "../node_modules/@expo/ui/ios"
   ExpoVideo:
     :path: "../node_modules/expo-video/ios"
   ExpoWebBrowser:
@@ -2845,6 +2874,8 @@ EXTERNAL SOURCES:
     :podspec: "../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   RNCAsyncStorage:
     :path: "../node_modules/@react-native-async-storage/async-storage"
+  RNDateTimePicker:
+    :path: "../node_modules/@react-native-community/datetimepicker"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
   RNGoogleMobileAds:
@@ -2896,6 +2927,7 @@ SPEC CHECKSUMS:
   ExpoStoreReview: 2414090702bd2747f882156e61b59ff0d70b11ab
   ExpoSymbols: 8b63e859ba013df1f2fc666f535fddb3d5270569
   ExpoSystemUI: 4d04b94370a12492d7a8f3ef9202bbedab434497
+  ExpoUI: e8df9cbe9923d9357c6e6c1d41bbf4270f048a30
   ExpoVideo: 23d138396eb9af108fbe2f1aa7345d809d21e577
   ExpoWebBrowser: c24affc884b7cb6cbd6b84a1528665c4bc6e8f48
   EXStructuredHeaders: 93ad4f31a2eec124428675e28aca11de243ee1e4
@@ -2986,6 +3018,7 @@ SPEC CHECKSUMS:
   RevenueCat: 2d3639d30b8a71cbfe3d99cef8243c602793e0ec
   RevenueCatUI: 80bec9099c200c254c0ec0025b4fb83a85fbacce
   RNCAsyncStorage: c8407cc394627a3a4cf56b457d594bfa822b6ab8
+  RNDateTimePicker: 39207e620903192715b66fc2dbae4025a9d554b8
   RNGestureHandler: 4773ef29c28ddd856de30bdc7048edad8506ba73
   RNGoogleMobileAds: 715067322d080ac5bfb7113cc8596018062959c4
   RNPaywalls: 0a2c82f5becea1e91e2aba0b84be9c2dda03c358

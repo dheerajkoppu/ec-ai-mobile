@@ -17,6 +17,7 @@ import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReactNativeModal from "react-native-modal";
 import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
+import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
 import Purchases from "react-native-purchases";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
@@ -216,6 +217,7 @@ export default function Saved_opportunities() {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={{
         flex: 1,
         backgroundColor: isDark ? "#121212" : "#F5F7FA",
@@ -260,7 +262,7 @@ export default function Saved_opportunities() {
             refreshControl={
               <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
             }
-            contentContainerStyle={{ paddingBottom: 120 }}
+            contentContainerStyle={{ paddingBottom: 24 }}
             renderItem={({ item }) => (
               <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
                 <View
@@ -381,7 +383,13 @@ export default function Saved_opportunities() {
                     </TouchableOpacity>
                     <TouchableOpacity
                       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                      onPress={() => deleteOpportunity(item.id)}
+                      onPress={() =>
+                        confirmDestructiveAction({
+                          title: "Delete Saved Opportunity",
+                          message: `Delete "${item.title}" from your saved opportunities?`,
+                          onConfirm: () => deleteOpportunity(item.id),
+                        })
+                      }
                     >
                       <FontAwesome name="trash" size={22} color="#f56565" />
                     </TouchableOpacity>

@@ -3,9 +3,12 @@ import { router } from "expo-router";
 import { Alert, Image, View, useColorScheme } from "react-native";
 import * as Haptics from "expo-haptics";
 import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { appleOAuth } from "@/lib/auth";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const AppleAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });

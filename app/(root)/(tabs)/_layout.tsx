@@ -1,197 +1,102 @@
-import { Tabs } from "expo-router";
-import { Image, View, TouchableOpacity, useColorScheme } from "react-native";
-import { useUser } from "@clerk/clerk-expo";
-import { useNavigation } from "@react-navigation/native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Haptics from "expo-haptics";
-import { ComponentProps } from "react";
+import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { DynamicColorIOS, Platform, useColorScheme } from "react-native";
 
-type IconName = ComponentProps<typeof MaterialCommunityIcons>["name"];
+const BRAND_COLOR = "#5B55F6";
+const BRAND_COLOR_DARK = "#8D88FF";
 
-type TabIconProps = {
-  filledIconName: IconName;
-  outlineIconName: IconName;
-  filledImageSource?: any;
-  outlineImageSource?: any;
-  focused: boolean;
-  screenName: string;
-  isProfile?: boolean;
-  profileImage?: string;
+const getSelectedTabColor = () => {
+  if (Platform.OS === "ios") {
+    return DynamicColorIOS({
+      light: BRAND_COLOR,
+      dark: BRAND_COLOR_DARK,
+    });
+  }
+
+  return BRAND_COLOR_DARK;
 };
 
-const TabIcon = ({
-  filledIconName,
-  outlineIconName,
-  filledImageSource,
-  outlineImageSource,
-  focused,
-  screenName,
-  isProfile,
-  profileImage,
-}: TabIconProps) => {
-  const navigation = useNavigation();
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
-  const icon = focused ? filledIconName : outlineIconName;
-  const size = 53;
-  const purple = "#5b55f6";
+const getDefaultTabColor = (isDark: boolean) => {
+  if (Platform.OS === "ios") {
+    return DynamicColorIOS({
+      light: "#8F8AB8",
+      dark: "#A9A5D9",
+    });
+  }
 
-  return (
-    <TouchableOpacity
-      onPress={async () => {
-        if (!focused) {
-          await Haptics.selectionAsync();
-          navigation.navigate(screenName as never);
-        }
-      }}
-      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-      activeOpacity={1}
-    >
-      <View
-        style={{
-          width: size,
-          height: size,
-          borderRadius: size / 2,
-          backgroundColor: isDark ? "#1a1a1a" : "white",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        {isProfile && profileImage ? (
-          <View
-            style={{
-              borderWidth: focused ? 2 : 0,
-              borderColor: purple,
-              borderRadius: size / 2,
-              padding: focused ? 2 : 0,
-            }}
-          >
-            <Image
-              source={{ uri: profileImage }}
-              style={{
-                width: size - 16,
-                height: size - 16,
-                borderRadius: (size - 16) / 2,
-              }}
-            />
-          </View>
-        ) : filledImageSource && outlineImageSource ? (
-          <Image
-            source={focused ? filledImageSource : outlineImageSource}
-            style={{
-              width: 28,
-              height: 28,
-              resizeMode: "contain",
-            }}
-          />
-        ) : (
-          <MaterialCommunityIcons name={icon} size={28} color={purple} />
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+  return isDark ? "#A9A5D9" : "#8F8AB8";
 };
 
 const Layout = () => {
-  const { user } = useUser();
-  const scheme = useColorScheme();
-  const isDark = scheme === "dark";
-  const profileImage = user?.imageUrl;
+  const isDark = useColorScheme() === "dark";
+  const selectedColor = getSelectedTabColor();
+  const defaultColor = getDefaultTabColor(isDark);
+  const nativeTabsProps =
+    Platform.OS === "ios"
+      ? {
+          minimizeBehavior: "never" as const,
+          backgroundColor: "transparent",
+        }
+      : {
+          backgroundColor: isDark ? "#121126" : "#F3F1FF",
+          indicatorColor: BRAND_COLOR,
+          rippleColor: "rgba(91, 85, 246, 0.12)",
+        };
 
   return (
-    <Tabs
-      initialRouteName="saved_opportunities"
-      screenOptions={{
-        tabBarShowLabel: false,
-        tabBarStyle: {
-          backgroundColor: isDark ? "#121212" : "#F5F7FA",
-          paddingBottom: 50,
-          height: 100,
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          flexDirection: "row",
-          position: "absolute",
-          borderTopColor: isDark ? "#2a2a2a" : "#e0e0e0",
-        },
-        tabBarItemStyle: {
-          paddingVertical: 20,
+    <NativeTabs
+      {...nativeTabsProps}
+      iconColor={{
+        default: defaultColor,
+        selected: selectedColor,
+      }}
+      labelStyle={{
+        default: { color: defaultColor },
+        selected: { color: selectedColor },
+      }}
+      screenListeners={{
+        tabPress: () => {
+          void Haptics.selectionAsync().catch(() => undefined);
         },
       }}
     >
-      <Tabs.Screen
-        name="opportunity_match"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              filledIconName="home"
-              outlineIconName="home-outline"
-              screenName="opportunity_match"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="track_activities"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              filledIconName="clipboard-list"
-              outlineIconName="clipboard-list-outline"
-              screenName="track_activities"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="add_activity"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              filledIconName="plus-thick"
-              outlineIconName="plus-outline"
-              screenName="add_activity"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="saved_opportunities"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              filledIconName="star"
-              outlineIconName="star-outline"
-              screenName="saved_opportunities"
-            />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          headerShown: false,
-          tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              filledIconName="account"
-              outlineIconName="account-outline"
-              screenName="profile"
-              isProfile
-              profileImage={profileImage}
-            />
-          ),
-        }}
-      />
-    </Tabs>
+      <NativeTabs.Trigger name="opportunity_match">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "house", selected: "house.fill" }}
+          md="home"
+        />
+        <NativeTabs.Trigger.Label>Match</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="track_activities">
+        <NativeTabs.Trigger.Icon sf="checklist" md="checklist" />
+        <NativeTabs.Trigger.Label>Track</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="add_activity">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "plus.circle", selected: "plus.circle.fill" }}
+          md="add_circle"
+        />
+        <NativeTabs.Trigger.Label>Add</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="saved_opportunities">
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "star", selected: "star.fill" }}
+          md="star"
+        />
+        <NativeTabs.Trigger.Label>Saved</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile" disableTransparentOnScrollEdge>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: "person.circle", selected: "person.circle.fill" }}
+          md="person"
+        />
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 };
 

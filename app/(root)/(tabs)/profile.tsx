@@ -13,10 +13,10 @@ import {
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { SafeAreaView } from "react-native-safe-area-context";
-import ReactNativeModal from "react-native-modal";
 import * as Linking from "expo-linking";
 import * as ImagePicker from "expo-image-picker";
 import CustomButton from "@/components/CustomButton";
+import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
@@ -94,9 +94,7 @@ const Profile = () => {
     }
   };
 
-  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const email = user?.primaryEmailAddress?.emailAddress;
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isPremium, setIsPremium] = useState(false);
   const downloadPDF = async (): Promise<boolean> => {
     if (!email) {
@@ -238,11 +236,16 @@ const Profile = () => {
 
   return (
     <SafeAreaView
-      className="flex-1 px-4 py-6 pb-10"
-      style={{ backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+      edges={["top", "left", "right"]}
+      style={{
+        flex: 1,
+        backgroundColor: isDark ? "#121212" : "#F5F7FA",
+        paddingHorizontal: 16,
+        paddingTop: 24,
+      }}
     >
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 24 }}
         showsVerticalScrollIndicator={false}
       >
         <View className="items-center mb-6 relative">
@@ -445,7 +448,12 @@ const Profile = () => {
             title="Log Out"
             onPress={async () => {
               await Haptics.selectionAsync();
-              setShowSignOutModal(true);
+              confirmDestructiveAction({
+                title: "Log Out",
+                message: "Are you sure you want to log out?",
+                confirmLabel: "Log Out",
+                onConfirm: handleSignOut,
+              });
             }}
             bgVariant="danger"
             className="mb-4 shadow-md"
@@ -455,95 +463,17 @@ const Profile = () => {
             title="Delete Account"
             onPress={async () => {
               await Haptics.selectionAsync();
-              setShowDeleteModal(true);
+              confirmDestructiveAction({
+                title: "Delete Account",
+                message:
+                  "Are you sure you want to delete your account? This action cannot be undone.",
+                onConfirm: deleteAccount,
+              });
             }}
             className="shadow-md"
           />
         </View>
       </ScrollView>
-      {/* Sign Out Confirmation Modal */}
-      <ReactNativeModal
-        useNativeDriver={true}
-        backdropTransitionOutTiming={1}
-        useNativeDriverForBackdrop={true}
-        isVisible={showSignOutModal}
-      >
-        <View
-          className="px-7 py-9 rounded-2xl"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-PoppinsSemiBold text-center mb-4"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Confirm Logout
-          </Text>
-          <Text
-            className="text-base font-Poppins text-center mb-6"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Are you sure you want to log out?
-          </Text>
-          <View className="flex-row justify-between">
-            <CustomButton
-              title="Cancel"
-              onPress={() => setShowSignOutModal(false)}
-              className="w-1/2 p-2 rounded-lg mr-2 font-PoppinsRegular shadow-md"
-            />
-            <CustomButton
-              title="Logout"
-              onPress={async () => {
-                setShowSignOutModal(false);
-                await handleSignOut();
-              }}
-              bgVariant="danger"
-              className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"
-            />
-          </View>
-        </View>
-      </ReactNativeModal>
-      {/* Delete Account Confirmation Modal */}
-      <ReactNativeModal
-        isVisible={showDeleteModal}
-        backdropTransitionOutTiming={1}
-        useNativeDriver={true}
-        useNativeDriverForBackdrop={true}
-      >
-        <View
-          className="px-7 py-9 rounded-2xl"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-PoppinsSemiBold text-center mb-4"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Confirm Delete Account
-          </Text>
-          <Text
-            className="text-base font-font-Poppins text-center mb-6"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Are you sure you want to delete your account? This action cannot be
-            undone.
-          </Text>
-          <View className="flex-row justify-between">
-            <CustomButton
-              title="Cancel"
-              onPress={() => setShowDeleteModal(false)}
-              className="w-1/2 p-2 rounded-lg mr-2 font-PoppinsRegular shadow-md"
-            />
-            <CustomButton
-              title="Delete"
-              onPress={async () => {
-                setShowDeleteModal(false);
-                await deleteAccount();
-              }}
-              bgVariant="danger"
-              className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"
-            />
-          </View>
-        </View>
-      </ReactNativeModal>
     </SafeAreaView>
   );
 };

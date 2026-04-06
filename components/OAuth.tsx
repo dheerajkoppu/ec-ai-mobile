@@ -1,12 +1,15 @@
 import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Text, View } from "react-native";
-import * as Haptics from "expo-haptics"; // <-- import haptics
+import * as Haptics from "expo-haptics";
 import * as AuthSession from "expo-auth-session";
+import * as WebBrowser from "expo-web-browser";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
 import { googleOAuth } from "@/lib/auth";
 import { useColorScheme } from "react-native";
+
+WebBrowser.maybeCompleteAuthSession();
 
 const OAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });

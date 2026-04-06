@@ -1,12 +1,6 @@
 import React, { useState } from "react";
-import {
-  Text,
-  TouchableOpacity,
-  View,
-  Alert,
-  Pressable,
-  TextInput,
-} from "react-native";
+import { Text, TouchableOpacity, View, Alert, Pressable } from "react-native";
+import { Host, DatePicker } from "@expo/ui/swift-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
@@ -212,6 +206,7 @@ const ActivityTabs = () => {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       style={{
         flex: 1,
         backgroundColor: isDark ? "#121212" : "#F5F7FA",
@@ -470,68 +465,36 @@ const DateInputField = ({
   logDate: Date;
   setLogDate: (date: Date) => void;
 }) => {
-  const isDark = useColorScheme() === "dark"; // Add this line
-  const [dateText, setDateText] = useState<string>(
-    logDate.toLocaleDateString("en-US"),
-  );
-
-  const formatDate = (text: string) => {
-    const digits = text.replace(/\D/g, "");
-    if (digits.length <= 2) return digits;
-    if (digits.length <= 4) return `${digits.slice(0, 2)}/${digits.slice(2)}`;
-    if (digits.length <= 8)
-      return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
-    return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
-  };
-
-  const isValidDate = (dateString: string) => {
-    const [month, day, year] = dateString.split("/").map(Number);
-    if (month < 1 || month > 12 || day < 1 || year < 1000 || year > 9999)
-      return false;
-    const date = new Date(year, month - 1, day);
-    return (
-      date.getFullYear() === year &&
-      date.getMonth() === month - 1 &&
-      date.getDate() === day
-    );
-  };
-
-  const handleDateChange = (text: string) => {
-    const formattedText = formatDate(text);
-    setDateText(formattedText);
-    if (formattedText.length === 10 && isValidDate(formattedText)) {
-      const [month, day, year] = formattedText.split("/").map(Number);
-      setLogDate(new Date(year, month - 1, day));
-    }
-  };
+  const isDark = useColorScheme() === "dark";
 
   return (
-    <View>
+    <View
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 12,
+      }}
+    >
       <Text
-        className="font-medium text-lg font-PoppinsBold"
-        style={{ color: isDark ? "#ffffff" : "#000000" }}
-      >
-        Date of Activity <Text className="text-red-500">*</Text>
-      </Text>
-
-      <TextInput
-        value={dateText}
-        onChangeText={handleDateChange}
-        placeholder="MM/DD/YYYY"
-        keyboardType="numeric"
-        maxLength={10}
-        placeholderTextColor={isDark ? "#999" : "#888"} // optional
         style={{
-          backgroundColor: isDark ? "#1e1e1e" : "white",
-          color: isDark ? "white" : "black",
-          height: 40,
-          borderWidth: 1,
-          borderColor: isDark ? "#444" : "#ccc",
-          borderRadius: 8,
-          paddingHorizontal: 12,
-          marginTop: 4,
+          color: isDark ? "#fff" : "#000",
+          fontWeight: "600",
+          fontSize: 18,
+          fontFamily: "Poppins-Bold",
         }}
-      />
+      >
+        Date of Activity <Text style={{ color: "#ef4444" }}>*</Text>
+      </Text>
+      <Host matchContents>
+        <DatePicker
+          title=""
+          selection={logDate}
+          displayedComponents={["date"]}
+          range={{ end: new Date() }}
+          onDateChange={(date) => setLogDate(date)}
+        />
+      </Host>
     </View>
   );
 };

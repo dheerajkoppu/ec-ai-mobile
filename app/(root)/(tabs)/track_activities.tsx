@@ -16,6 +16,7 @@ import DropdownField from "@/components/DropdownField";
 import ReactNativeModal from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomButton from "@/components/CustomButton";
+import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
 import { useFetch, fetchAPI } from "@/lib/fetch";
 import { useUser } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
@@ -42,8 +43,6 @@ const TrackActivities = () => {
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
   const [showEditModal, setShowEditModal] = useState<boolean>(false);
-  const [deleteTarget, setDeleteTarget] = useState<Activity | null>(null);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [logs, setLogs] = useState<any[]>([]);
   const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
   const { fromAdd } = useLocalSearchParams();
@@ -151,22 +150,19 @@ const TrackActivities = () => {
     }
   };
 
-  const deleteActivity = async () => {
-    if (!deleteTarget) return;
+  const deleteActivity = async (activity: Activity) => {
     try {
       const res = await fetch("https://ec-ai.expo.app/deleteactivity", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ activityId: deleteTarget.id }),
+        body: JSON.stringify({ activityId: activity.id }),
       });
       if (!res.ok) {
         console.error("Delete failed with status", res.status);
         Alert.alert("Error", "Failed to delete activity.");
         return;
       }
-      setActivities((prev) => prev.filter((a) => a.id !== deleteTarget.id));
-      setShowDeleteModal(false);
-      setDeleteTarget(null);
+      setActivities((prev) => prev.filter((a) => a.id !== activity.id));
       Alert.alert("Deleted", "Activity deleted successfully.");
     } catch (error) {
       console.error("Delete error:", error);
@@ -298,6 +294,7 @@ const TrackActivities = () => {
 
   return (
     <SafeAreaView
+      edges={["top", "left", "right"]}
       className={`flex-1 px-4 py-6 ${isDark ? "bg-[#121212]" : "bg-primary-200"}`}
     >
       <Text
@@ -471,8 +468,11 @@ const TrackActivities = () => {
                 <TouchableOpacity
                   onPress={(e) => {
                     e.stopPropagation();
-                    setDeleteTarget(item);
-                    setShowDeleteModal(true);
+                    confirmDestructiveAction({
+                      title: "Delete Activity",
+                      message: `Delete "${item.name}"? This action cannot be undone.`,
+                      onConfirm: () => deleteActivity(item),
+                    });
                   }}
                 >
                   <MaterialCommunityIcons
@@ -486,48 +486,6 @@ const TrackActivities = () => {
           )}
         />
       )}
-      {/* Delete Activity Confirmation Modal */}
-      <ReactNativeModal
-        isVisible={showDeleteModal}
-        backdropTransitionOutTiming={1}
-        useNativeDriver={true}
-        useNativeDriverForBackdrop={true}
-      >
-        <View
-          className="bg-white px-7 py-9 rounded-2xl"
-          style={{ backgroundColor: isDark ? "#121212" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-PoppinsSemiBold text-center mb-4"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Confirm Delete
-          </Text>
-          <Text
-            className="text-base font-Poppins text-center mb-6"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            Are you sure you want to delete this activity? This action cannot be
-            undone.
-          </Text>
-          <View className="flex-row justify-between">
-            <CustomButton
-              title="Cancel"
-              onPress={() => {
-                setShowDeleteModal(false);
-                setDeleteTarget(null);
-              }}
-              className="w-1/2 p-2 rounded-lg mr-2 font-PoppinsRegular shadow-md"
-            />
-            <CustomButton
-              title="Delete"
-              onPress={deleteActivity}
-              bgVariant="danger"
-              className="w-1/2 p-2 rounded-lg ml-2 font-PoppinsRegular shadow-md"
-            />
-          </View>
-        </View>
-      </ReactNativeModal>
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
