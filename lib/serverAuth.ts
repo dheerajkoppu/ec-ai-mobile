@@ -22,11 +22,7 @@ export async function requireAuth(request: Request): Promise<string> {
   }
   try {
     const payload = await verifyToken(token, {
-      // If CLERK_JWT_KEY is set, verification is fully local (no network call).
-      // Get it from Clerk dashboard → Configure → API Keys → JWT public key.
-      ...(process.env.CLERK_JWT_KEY
-        ? { jwtKey: process.env.CLERK_JWT_KEY }
-        : { secretKey: process.env.CLERK_SECRET_KEY }),
+      secretKey: process.env.CLERK_SECRET_KEY,
     });
     return payload.sub;
   } catch (error) {

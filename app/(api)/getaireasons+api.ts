@@ -75,7 +75,7 @@ First Gen/FRL Only: ${opportunity.only_first_gen ? "Yes" : "No"}, ${opportunity.
 Outside US: ${opportunity.outside_us ? "Yes" : "No"}
     `.trim();
 
-    const reasons = await callOpenAI(prompt, "gpt-5-nano", 250);
+    const reasons = await callOpenAI(prompt);
     return new Response(JSON.stringify({ reasons }), { status: 200 });
   } catch (err: any) {
     console.error(err);
