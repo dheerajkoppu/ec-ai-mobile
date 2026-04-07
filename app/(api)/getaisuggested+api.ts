@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { callOpenAI } from "@/lib/openai";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -105,49 +106,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
 [[1, "reason1", "reason2", "reason3"], [2, "reason1", "reason2", "reason3"], [3, "reason1", "reason2", "reason3"]]
 `;
 
-    const chatResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-5-nano",
-          messages: [{ role: "user", content: prompt }],
-        }),
-      },
-    );
-
-    if (!chatResponse.ok) {
-      const errorText = await chatResponse.text();
-      console.error("Error calling OpenAI API:", errorText);
-      return new Response(
-        JSON.stringify({ error: "Error calling OpenAI API" }),
-        { status: 500 },
-      );
-    }
-
-    const rawResponse = await chatResponse.text();
-
-    let chatData;
-    try {
-      chatData = JSON.parse(rawResponse);
-    } catch {
-      return new Response(
-        JSON.stringify({ error: "Failed to parse JSON from ChatGPT API" }),
-        { status: 500 },
-      );
-    }
-
-    const responseText = chatData.choices?.[0]?.message?.content?.trim();
-    if (!responseText) {
-      return new Response(
-        JSON.stringify({ error: "No content in ChatGPT response" }),
-        { status: 500 },
-      );
-    }
+    const responseText = await callOpenAI(prompt, "gpt-5-nano");
 
     type Suggestion = [string, string, string, string];
     let suggestions: Suggestion[];

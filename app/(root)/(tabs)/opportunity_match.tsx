@@ -25,6 +25,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
+import { renderStars } from "@/lib/formatters";
 // TypeScript resolves the platform suffixes here, but eslint-import-resolver-typescript does not.
 // eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
@@ -60,12 +61,6 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
   },
 });
-const renderStars = (rating?: number) => {
-  if (rating === undefined || rating === null) return "N/A";
-  const fullStars = Math.round(rating);
-  return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
-};
-
 const Opportunities = () => {
   const [swipeCount, setSwipeCount] = useState(0);
   const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
@@ -89,7 +84,6 @@ const Opportunities = () => {
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  useState<Opportunity | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
 
@@ -160,10 +154,6 @@ const Opportunities = () => {
       console.error("Failed to check premium status:", error);
     }
   };
-
-  useEffect(() => {
-    (async () => await checkPremiumAndUnlock())();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {

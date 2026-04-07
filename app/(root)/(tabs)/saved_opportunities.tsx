@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { SignedIn, useUser, useAuth } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
+import { renderStars } from "@/lib/formatters";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReactNativeModal from "react-native-modal";
 import InputField from "@/components/InputField";
@@ -70,11 +71,6 @@ export default function Saved_opportunities() {
   const [loadingReason, setLoadingReason] = useState(false);
   const [pendingReasonsResult, setPendingReasonsResult] = useState(false);
 
-  const renderStars = (rating?: number) => {
-    if (rating === undefined || rating === null) return "N/A";
-    const fullStars = Math.round(rating);
-    return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
-  };
   // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
     try {
@@ -223,12 +219,6 @@ export default function Saved_opportunities() {
     await loadSavedOpportunities();
     setRefreshing(false);
   };
-
-  useEffect(() => {
-    if (user?.id) {
-      loadSavedOpportunities().catch(console.error);
-    }
-  }, [loadSavedOpportunities, user?.id]);
 
   useFocusEffect(
     useCallback(() => {

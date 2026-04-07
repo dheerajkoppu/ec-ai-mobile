@@ -9,14 +9,9 @@ const createTokenCache = (): TokenCache => {
     getToken: async (key: string) => {
       try {
         const item = await SecureStore.getItemAsync(key);
-        if (item) {
-          console.log(`${key} was used 🔐 \n`);
-        } else {
-          console.log("No values stored under key: " + key);
-        }
         return item;
       } catch (error) {
-        console.log("secure store get item error: ", error);
+        console.error("secure store get item error: ", error);
         await SecureStore.deleteItemAsync(key);
         return null;
       }
@@ -31,7 +26,7 @@ const createTokenCache = (): TokenCache => {
 export const tokenCache =
   Platform.OS !== "web" ? createTokenCache() : undefined;
 
-export const googleOAuth = async (startOAuthFlow: any) => {
+async function oauthSignIn(provider: "Google" | "Apple", startOAuthFlow: any) {
   try {
     const { createdSessionId, setActive, signUp } = await startOAuthFlow({
       redirectUrl: Linking.createURL("/(root)/(tabs)/opportunity_match"),
@@ -53,54 +48,7 @@ export const googleOAuth = async (startOAuthFlow: any) => {
         return {
           success: true,
           code: "success",
-          message: "You have successfully signed in with Google",
-          date: Date.now(), // ✅ Only returned when added to database
-        };
-      }
-
-      return {
-        success: true,
-        code: "success",
-        message: "You have successfully signed in with Google",
-      };
-    }
-
-    return {
-      success: false,
-      message: "An error occurred while signing in with Google",
-    };
-  } catch (err: any) {
-    console.log(err);
-    return {
-      success: false,
-      code: err.code,
-      message: err?.errors?.[0]?.longMessage ?? "Unknown error occurred.",
-    };
-  }
-};
-export const appleOAuth = async (startOAuthFlow: any) => {
-  try {
-    const { createdSessionId, setActive, signUp } = await startOAuthFlow({
-      redirectUrl: Linking.createURL("/(root)/(tabs)/opportunity_match"),
-    });
-
-    if (createdSessionId && setActive) {
-      await setActive({ session: createdSessionId });
-
-      if (signUp.createdUserId) {
-        await fetchAPI("https://ec-ai.expo.app/user", {
-          method: "POST",
-          body: JSON.stringify({
-            name: `${signUp.firstName ?? ""} ${signUp.lastName ?? ""}`.trim(),
-            email: signUp.emailAddress,
-            clerkId: signUp.createdUserId,
-          }),
-        });
-
-        return {
-          success: true,
-          code: "success",
-          message: "You have successfully signed in with Apple",
+          message: `You have successfully signed in with ${provider}`,
           date: Date.now(),
         };
       }
@@ -108,20 +56,26 @@ export const appleOAuth = async (startOAuthFlow: any) => {
       return {
         success: true,
         code: "success",
-        message: "You have successfully signed in with Apple",
+        message: `You have successfully signed in with ${provider}`,
       };
     }
 
     return {
       success: false,
-      message: "An error occurred while signing in with Apple",
+      message: `An error occurred while signing in with ${provider}`,
     };
   } catch (err: any) {
-    console.log(err);
+    console.error(err);
     return {
       success: false,
       code: err.code,
       message: err?.errors?.[0]?.longMessage ?? "Unknown error occurred.",
     };
   }
-};
+}
+
+export const googleOAuth = (startOAuthFlow: any) =>
+  oauthSignIn("Google", startOAuthFlow);
+
+export const appleOAuth = (startOAuthFlow: any) =>
+  oauthSignIn("Apple", startOAuthFlow);

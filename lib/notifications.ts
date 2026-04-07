@@ -1,10 +1,11 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import Constants from "expo-constants";
+import { Alert } from "react-native";
 
 export async function registerForPushNotificationsAsync() {
   if (!Device.isDevice) {
-    alert("Must use physical device for push notifications");
+    Alert.alert("Must use physical device for push notifications");
     return;
   }
 
@@ -17,11 +18,10 @@ export async function registerForPushNotificationsAsync() {
   }
 
   if (finalStatus !== "granted") {
-    alert("Failed to get push token for push notification!");
+    Alert.alert("Failed to get push token for push notification!");
     return;
   }
 
-  // ✅ Fixing `projectId` issue here
   const projectId =
     Constants.expoConfig?.extra?.eas?.projectId ??
     Constants.easConfig?.projectId;

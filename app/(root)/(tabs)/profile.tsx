@@ -32,18 +32,6 @@ const Profile = () => {
   const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const customerInfo = await Purchases.getCustomerInfo();
-        const hasPremium = !!customerInfo.entitlements.active["premium"];
-        setIsPremium(hasPremium);
-      } catch (error) {
-        console.error("Failed to check premium status:", error);
-      }
-    })();
-  }, []);
-
   useFocusEffect(
     useCallback(() => {
       (async () => {

@@ -1,8 +1,7 @@
-import { Resend } from "resend";
 import { createClerkClient } from "@clerk/backend";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
+import { resend, FROM_ADDRESS } from "@/lib/resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
 });
@@ -27,7 +26,7 @@ export async function POST(request: Request) {
     }
 
     await resend.emails.send({
-      from: "EC-AI <support@ec-ai.app>",
+      from: FROM_ADDRESS,
       to: "ask.ecai@gmail.com",
       subject: "User Data Request",
       text: `The user with email ${userEmail} has requested a copy of their user data. Please give their users table, activity table, and user saved opportunities table.`,

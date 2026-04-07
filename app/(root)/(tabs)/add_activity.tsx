@@ -11,6 +11,7 @@ import { useUser, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
+import { formatDateToYMD } from "@/lib/formatters";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -24,6 +25,7 @@ const ActivityTabs = () => {
   const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("add");
   const [activityName, setActivityName] = useState<string>("");
+  const [selectedActivityId, setSelectedActivityId] = useState<string>("");
   const scheme = useColorScheme();
 
   const [activityType, setActivityType] = useState<string>("");
@@ -104,14 +106,6 @@ const ActivityTabs = () => {
     }
   };
 
-  const formatDateToISO = (date: Date) => {
-    if (isNaN(date.getTime())) throw new Error("Invalid date");
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
-  };
-
   const handleAddActivity = async () => {
     if (
       !user?.primaryEmailAddress?.emailAddress ||
@@ -174,7 +168,7 @@ const ActivityTabs = () => {
   };
 
   const handleLogHours = async () => {
-    if (!activityName || !logDate || !logHours) {
+    if (!selectedActivityId || !logDate || !logHours) {
       Alert.alert("Missing Fields", "Please fill out all required fields.");
       return;
     }
@@ -203,14 +197,14 @@ const ActivityTabs = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          activity_id: activityName,
-          date_of_activity: formatDateToISO(logDate),
+          activity_id: selectedActivityId,
+          date_of_activity: formatDateToYMD(logDate),
           hours_logged: parsedHours,
           description: milestone,
         }),
       });
 
-      setActivityName("");
+      setSelectedActivityId("");
       setLogDate(new Date());
       setLogHours("");
       setMilestone("");
@@ -446,8 +440,10 @@ const ActivityTabs = () => {
               }
               placeholder="Select activity"
               data={formattedActivityNames}
-              value={activityName}
-              onChange={(item: DropdownItem) => setActivityName(item.value)}
+              value={selectedActivityId}
+              onChange={(item: DropdownItem) =>
+                setSelectedActivityId(item.value)
+              }
             />
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField

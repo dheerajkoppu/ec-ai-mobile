@@ -1,8 +1,6 @@
 import { sql } from "@/lib/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
-import { Resend } from "resend";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { resend, FROM_ADDRESS } from "@/lib/resend";
 
 export async function POST(request: Request) {
   let clerkId: string;
@@ -28,7 +26,7 @@ export async function POST(request: Request) {
     `;
 
     await resend.emails.send({
-      from: "EC-AI <support@ec-ai.app>",
+      from: FROM_ADDRESS,
       to: "ask.ecai@gmail.com",
       subject: "New Opportunity Report Submitted",
       text: `

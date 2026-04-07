@@ -1,10 +1,8 @@
 import PDFDocument from "pdfkit";
-import { Resend } from "resend";
 import { createClerkClient } from "@clerk/backend";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 import { sql } from "@/lib/db";
-
-const resend = new Resend(process.env.RESEND_API_KEY!);
+import { resend, FROM_ADDRESS } from "@/lib/resend";
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
 });
@@ -184,7 +182,7 @@ export async function POST(request: Request) {
 
     // Send email with generated PDF
     await resend.emails.send({
-      from: "EC-AI <support@ec-ai.app>",
+      from: FROM_ADDRESS,
       to: recipientEmail,
       replyTo: "ask.ecai@gmail.com",
       subject: "Your EC‑AI Activities PDF",
