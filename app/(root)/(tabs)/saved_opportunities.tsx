@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SignedIn, useUser } from "@clerk/clerk-expo";
+import { SignedIn, useUser, useAuth } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReactNativeModal from "react-native-modal";
@@ -55,6 +55,7 @@ interface Opportunity {
 
 export default function Saved_opportunities() {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
   const [savedOpportunities, setSavedOpportunities] = useState<Opportunity[]>(
     [],
@@ -67,6 +68,7 @@ export default function Saved_opportunities() {
   const [aiReasons, setAiReasons] = useState<string>("");
   const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
   const [loadingReason, setLoadingReason] = useState(false);
+  const [pendingReasonsResult, setPendingReasonsResult] = useState(false);
 
   const renderStars = (rating?: number) => {
     if (rating === undefined || rating === null) return "N/A";
@@ -75,13 +77,15 @@ export default function Saved_opportunities() {
   };
   // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
-    if (!user?.id) return;
-
     try {
+      const token = await getToken();
       const res = await fetch(`https://ec-ai.expo.app/getsavedopportunities`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       });
 
       const json = await res.json();
@@ -129,10 +133,11 @@ export default function Saved_opportunities() {
       console.error("Error loading saved opportunities:", error);
       setSavedOpportunities([]);
     }
-  }, [user?.id]);
+  }, [getToken]);
 
   // Fetch AI-generated personalized reasons for a specific opportunity
   const getAIReasons = async (opportunity: Opportunity) => {
+    if (loadingReason) return;
     try {
       setLoadingReason(true);
 
@@ -149,23 +154,42 @@ export default function Saved_opportunities() {
           result === PAYWALL_RESULT.PURCHASED ||
           result === PAYWALL_RESULT.RESTORED
         ) {
+          setLoadingReason(false);
           return await getAIReasons(opportunity); // Retry after upgrade
         } else {
           return; // User didn’t upgrade
         }
       }
 
+      const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/getaireasons", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ activity_id: opportunity.id }),
       });
 
       const result = await response.json();
-      setAiReasons(result.reasons || "No reasons available.");
-      setShowAIReasonsModal(true);
+
+      if (!response.ok) {
+        Alert.alert(
+          "Error",
+          result?.error || "Failed to get AI-generated reasons.",
+        );
+        return;
+      }
+
+      if (!result?.reasons) {
+        Alert.alert("Error", "No AI reasons were returned.");
+        return;
+      }
+
+      setAiReasons(result.reasons);
+      setPendingReasonsResult(true);
     } catch (error) {
-      console.error("Error fetching AI reasons:", error);
+      console.log("Error fetching AI reasons:", error);
       Alert.alert("Error", "Failed to get AI-generated reasons.");
     } finally {
       setLoadingReason(false);
@@ -174,12 +198,15 @@ export default function Saved_opportunities() {
 
   // Delete a saved opportunity by ID and update UI
   const deleteOpportunity = async (id: string) => {
-    if (!user) return;
     try {
+      const token = await getToken();
       const res = await fetch("https://ec-ai.expo.app/deletesavedopportunity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id, opportunity_id: id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ opportunity_id: id }),
       });
       if (!res.ok) {
         Alert.alert("Delete failed. Please try again.");
@@ -373,12 +400,13 @@ export default function Saved_opportunities() {
                     <TouchableOpacity
                       hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
                       onPress={() => getAIReasons(item)}
+                      disabled={loadingReason}
                       style={{ marginRight: 16 }}
                     >
                       <MaterialCommunityIcons
                         name="robot"
                         size={24}
-                        color="#5b55f6"
+                        color={loadingReason ? "#A9A5D9" : "#5b55f6"}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -624,6 +652,68 @@ export default function Saved_opportunities() {
                 </View>
               )}
             </ScrollView>
+          </View>
+        </ReactNativeModal>
+        {/* AI Loading Overlay */}
+        <ReactNativeModal
+          isVisible={loadingReason}
+          backdropOpacity={0.6}
+          backdropColor="#000"
+          useNativeDriver={true}
+          useNativeDriverForBackdrop={true}
+          animationIn="fadeIn"
+          animationOut="fadeOut"
+          animationInTiming={200}
+          animationOutTiming={200}
+          backdropTransitionInTiming={200}
+          backdropTransitionOutTiming={200}
+          style={{ margin: 0 }}
+          onModalHide={() => {
+            if (pendingReasonsResult) {
+              setPendingReasonsResult(false);
+              setShowAIReasonsModal(true);
+            }
+          }}
+        >
+          <View
+            style={{ flex: 1, justifyContent: "center", alignItems: "center" }}
+          >
+            <View
+              style={{
+                backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                borderRadius: 16,
+                paddingHorizontal: 40,
+                paddingVertical: 36,
+                alignItems: "center",
+                shadowColor: "#000",
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.2,
+                shadowRadius: 8,
+                elevation: 8,
+              }}
+            >
+              <ActivityIndicator size="large" color="#5b55f6" />
+              <Text
+                style={{
+                  fontFamily: "Poppins-SemiBold",
+                  fontSize: 16,
+                  color: isDark ? "#fff" : "#1f2937",
+                  marginTop: 16,
+                }}
+              >
+                Generating AI Summary
+              </Text>
+              <Text
+                style={{
+                  fontFamily: "Poppins-Regular",
+                  fontSize: 13,
+                  color: isDark ? "#aaa" : "#6b7280",
+                  marginTop: 6,
+                }}
+              >
+                This may take a moment...
+              </Text>
+            </View>
           </View>
         </ReactNativeModal>
       </SignedIn>

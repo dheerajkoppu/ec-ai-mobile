@@ -1,8 +1,7 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
 
 export async function POST(request: Request) {
   try {
-    const sql = neon(process.env.DATABASE_URL as string);
     // Fetch and aggregate all dropdown data into a single JSON object
     const [{ data }] = await sql`
       SELECT json_build_object(

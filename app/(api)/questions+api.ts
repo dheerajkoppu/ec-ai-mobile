@@ -1,8 +1,7 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
 
 export async function GET(request: Request) {
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
 
     // Run all reference data queries concurrently for efficiency
     const [

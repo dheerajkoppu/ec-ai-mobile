@@ -1,10 +1,16 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(process.env.DATABASE_URL as string);
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
+  try {
     const {
-      userEmail,
       name,
       gradeLevel,
       race,
@@ -32,17 +38,6 @@ export async function POST(request: Request) {
       agreeTerms,
     } = await request.json();
 
-    if (!userEmail) {
-      return new Response(
-        JSON.stringify({ error: "Missing required field: userEmail" }),
-        { status: 400 },
-      );
-    }
-
-    // Use email as fallback name in no name is provided
-    const finalName = name || userEmail;
-
-    // Convert numeric fields to proper types
     const ageInt = age ? parseInt(age) : null;
     const gpaWeightedNum = gpaWeighted ? parseFloat(gpaWeighted) : null;
     const gpaUnweightedNum = gpaUnweighted ? parseFloat(gpaUnweighted) : null;
@@ -50,7 +45,6 @@ export async function POST(request: Request) {
     const actScoreInt = actScore ? parseInt(actScore) : null;
     const psatScoreInt = psatScore ? parseInt(psatScore) : null;
 
-    // Normalize "yes"/"no" responses to booleans
     const toBool = (val: string | undefined) =>
       val && val.toLowerCase() === "yes";
     const firstGenCollege = toBool(firstGen);
@@ -62,10 +56,19 @@ export async function POST(request: Request) {
     const usedOtherECFinders = toBool(usedOtherApps);
     const agreedToTerms = toBool(agreeTerms);
 
-    // Wrap single value into array for TEXT[] column
     const extracurricularMotivation = ecReason ? [ecReason] : null;
 
-    // Perform UPDATE query to modify user profile based on email
+    // Use email as fallback name if none provided; look up email from clerk_id
+    const [userRow] = await sql`
+      SELECT email FROM users WHERE clerk_id = ${clerkId} LIMIT 1;
+    `;
+    if (!userRow) {
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
+      });
+    }
+    const finalName = name || userRow.email;
+
     const response = await sql`
       UPDATE users
       SET
@@ -94,12 +97,10 @@ export async function POST(request: Request) {
         referral_source = ${source},
         used_other_ec_finders = ${usedOtherECFinders},
         agreed_to_terms = ${agreedToTerms}
-      WHERE email = ${userEmail};
+      WHERE clerk_id = ${clerkId};
     `;
 
-    return new Response(JSON.stringify({ data: response }), {
-      status: 200,
-    });
+    return new Response(JSON.stringify({ data: response }), { status: 200 });
   } catch (error) {
     console.error("Error updating user profile:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {

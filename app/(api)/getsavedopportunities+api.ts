@@ -1,17 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { clerk_id } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!clerk_id) {
-      return new Response(JSON.stringify({ error: "Missing clerk ID" }), {
-        status: 400,
-      });
-    }
-
-    // Fetch all opportunities the user has saved
+  try {
     const opportunities = await sql`
       SELECT
         id,
@@ -44,11 +42,10 @@ export async function POST(request: Request) {
       WHERE id IN (
         SELECT opportunity_id
         FROM user_saved_opportunities
-        WHERE clerk_id = ${clerk_id}
+        WHERE clerk_id = ${clerkId}
       );
     `;
 
-    // Normalize field names for frontend compatibility
     const formatted = opportunities.map((op: any) => ({
       id: op.id,
       school: op.school,

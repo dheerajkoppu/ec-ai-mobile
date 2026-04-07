@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Text, TouchableOpacity, View, Alert, Pressable } from "react-native";
 import { Host, DatePicker } from "@expo/ui/swift-ui";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -7,7 +7,7 @@ import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 import { fetchAPI, useFetch } from "@/lib/fetch";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
@@ -21,6 +21,7 @@ type DropdownItem = {
 
 const ActivityTabs = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const [activeTab, setActiveTab] = useState<string>("add");
   const [activityName, setActivityName] = useState<string>("");
   const scheme = useColorScheme();
@@ -37,6 +38,25 @@ const ActivityTabs = () => {
   const [logDate, setLogDate] = useState<Date>(new Date());
   const [logHours, setLogHours] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    getToken()
+      .then((token) => {
+        if (isMounted) {
+          setAuthToken(token ?? null);
+        }
+      })
+      .catch((error) => {
+        console.error("Error loading auth token for activities:", error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [getToken]);
 
   // Fetch activity types for dropdown
   const { data: activitiesRaw } = useFetch(
@@ -47,20 +67,24 @@ const ActivityTabs = () => {
     : [];
 
   // Prepare request options to fetch activity names for current user
-  const activityNamesRequestOptions = user?.primaryEmailAddress?.emailAddress
-    ? {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.primaryEmailAddress.emailAddress,
-        }),
-      }
-    : undefined;
+  const activityNamesRequestOptions = useMemo(() => {
+    if (!authToken) return undefined;
+
+    return {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({}),
+    };
+  }, [authToken]);
 
   // Fetch previously added activity names
   const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
     "https://ec-ai.expo.app/getactivitynames",
     activityNamesRequestOptions,
+    { enabled: !!activityNamesRequestOptions },
   );
 
   const formattedActivityNames: DropdownItem[] = Array.isArray(activityNamesRaw)
@@ -104,11 +128,14 @@ const ActivityTabs = () => {
 
     try {
       setIsSubmitting(true);
+      const token = await getToken();
       await fetchAPI("https://ec-ai.expo.app/adduseractivity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          userEmail: user.primaryEmailAddress.emailAddress,
           name: activityName,
           activity_type: activityType,
           hours_per_week: timeSpent,
@@ -168,11 +195,14 @@ const ActivityTabs = () => {
 
     try {
       setIsSubmitting(true);
+      const token = await getToken();
       await fetchAPI("https://ec-ai.expo.app/loghours", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          user_id: user?.id,
           activity_id: activityName,
           date_of_activity: formatDateToISO(logDate),
           hours_logged: parsedHours,
@@ -189,10 +219,7 @@ const ActivityTabs = () => {
         {
           text: "OK",
           onPress: () => {
-            router.replace({
-              pathname: "/(root)/(tabs)/track_activities",
-              params: { fromAdd: "true" },
-            });
+            router.navigate("/(root)/(tabs)/track_activities?fromAdd=true");
           },
         },
       ]);

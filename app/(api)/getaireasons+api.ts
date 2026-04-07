@@ -1,6 +1,14 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { callOpenAI } from "@/lib/openai";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  try {
+    await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
   try {
     const { activity_id } = await request.json();
     if (!activity_id) {
@@ -9,9 +17,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const sql = neon(process.env.DATABASE_URL as string);
-
-    // Fetch the opportunity from the database by ID
     const [opportunity] = await sql`
       SELECT
         activity_name,
@@ -48,7 +53,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Construct a prompt for OpenAI to generate 3 reasons for joining this opportunity
     const prompt = `
 You are a top-tier college advisor helping high school students choose extracurriculars that will impress Ivy League admissions officers. Based on the opportunity info below, generate the top 3 compelling reasons a student should consider joining this opportunity. Focus on leadership, uniqueness, selectivity, skill development, or long-term impact. Format your response as a numbered list (1., 2., 3.). Do not exceed 600 characters total.
 
@@ -71,29 +75,7 @@ First Gen/FRL Only: ${opportunity.only_first_gen ? "Yes" : "No"}, ${opportunity.
 Outside US: ${opportunity.outside_us ? "Yes" : "No"}
     `.trim();
 
-    // Call OpenAI's API to generate the reasons
-    const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-nano",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!chatRes.ok) {
-      console.error(await chatRes.text());
-      return new Response(JSON.stringify({ error: "OpenAI API error" }), {
-        status: 500,
-      });
-    }
-
-    // Extract and return the generated reasons
-    const { choices } = await chatRes.json();
-    const reasons = choices?.[0]?.message?.content?.trim();
+    const reasons = await callOpenAI(prompt, "gpt-5-nano", 250);
     return new Response(JSON.stringify({ reasons }), { status: 200 });
   } catch (err: any) {
     console.error(err);

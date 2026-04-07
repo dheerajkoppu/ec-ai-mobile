@@ -18,7 +18,7 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import CustomButton from "@/components/CustomButton";
 import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
 import { useFetch, fetchAPI } from "@/lib/fetch";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
 import { useLocalSearchParams } from "expo-router";
 import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
@@ -31,8 +31,8 @@ const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
 const TrackActivities = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const email = user?.primaryEmailAddress?.emailAddress;
-  const userId = user?.id;
   const [activities, setActivities] = useState<Activity[]>([]);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -47,6 +47,7 @@ const TrackActivities = () => {
   const [showLogsModal, setShowLogsModal] = useState<boolean>(false);
   const { fromAdd } = useLocalSearchParams();
   const [hasRefetchedFromAdd, setHasRefetchedFromAdd] = useState(false);
+  const [authToken, setAuthToken] = useState<string | null>(null);
 
   // New state for the AI description modal
   const [aiDescription, setAiDescription] = useState<string>("");
@@ -56,6 +57,9 @@ const TrackActivities = () => {
     selectedActivityForAIDescription,
     setSelectedActivityForAIDescription,
   ] = useState<Activity | null>(null);
+  const [aiDescriptionLoading, setAiDescriptionLoading] =
+    useState<boolean>(false);
+  const [pendingAIResult, setPendingAIResult] = useState<boolean>(false);
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -66,14 +70,22 @@ const TrackActivities = () => {
     return `${year}-${month}-${day}`;
   };
 
+  // Load auth token once; Clerk caches it and refreshes automatically
+  React.useEffect(() => {
+    getToken().then((token) => setAuthToken(token));
+  }, [getToken]);
+
   const requestOptions = useMemo(() => {
-    if (!email) return undefined;
+    if (!authToken) return undefined;
     return {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      },
+      body: JSON.stringify({}),
     };
-  }, [email]);
+  }, [authToken]);
 
   const {
     data: fetchedActivities,
@@ -83,6 +95,7 @@ const TrackActivities = () => {
   } = useFetch<Activity[]>(
     "https://ec-ai.expo.app/getactivities",
     requestOptions,
+    { enabled: !!requestOptions },
   );
 
   const {
@@ -123,11 +136,14 @@ const TrackActivities = () => {
       };
 
       try {
+        const token = await getToken();
         await fetchAPI("https://ec-ai.expo.app/alteractivity", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
-            userEmail: email,
             activityId: editingActivity.id,
             name: updatedActivity.name,
             category: updatedActivity.category,
@@ -144,7 +160,7 @@ const TrackActivities = () => {
         setShowEditModal(false);
         Alert.alert("Success", "Activity updated successfully!");
       } catch (error) {
-        console.error("Update error:", error);
+        console.log("Update error:", error);
         Alert.alert("Error", "Failed to update activity.");
       }
     }
@@ -152,20 +168,24 @@ const TrackActivities = () => {
 
   const deleteActivity = async (activity: Activity) => {
     try {
+      const token = await getToken();
       const res = await fetch("https://ec-ai.expo.app/deleteactivity", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({ activityId: activity.id }),
       });
       if (!res.ok) {
-        console.error("Delete failed with status", res.status);
+        console.log("Delete failed with status", res.status);
         Alert.alert("Error", "Failed to delete activity.");
         return;
       }
       setActivities((prev) => prev.filter((a) => a.id !== activity.id));
       Alert.alert("Deleted", "Activity deleted successfully.");
     } catch (error) {
-      console.error("Delete error:", error);
+      console.log("Delete error:", error);
       Alert.alert("Error", "Failed to delete activity.");
     }
   };
@@ -202,36 +222,43 @@ const TrackActivities = () => {
   );
 
   const openLogs = async (activity: Activity) => {
-    if (!userId) {
-      Alert.alert("Error", "User not found");
-      return;
-    }
     try {
+      const token = await getToken();
       const response = await fetch(`https://ec-ai.expo.app/getactivitylogs`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId, activity_id: activity.id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ activity_id: activity.id }),
       });
       const result = await response.json();
-      if (result.data) {
-        setLogs(result.data);
-      } else {
+
+      if (!response.ok) {
+        Alert.alert("Error", result?.error || "Failed to fetch activity logs.");
+        return;
+      }
+
+      if (!Array.isArray(result.data) || result.data.length === 0) {
         setLogs([]);
         Alert.alert("Error", "No logs found for this activity.");
+        return;
       }
+
+      setLogs(result.data);
       setShowLogsModal(true);
     } catch (error) {
-      console.error("Error fetching logs:", error);
+      console.log("Error fetching logs:", error);
       Alert.alert("Error", "Failed to fetch activity logs.");
     }
   };
 
   const getAIDescription = async (activity: Activity) => {
-    if (!email) {
-      Alert.alert("Error", "No user email provided");
-      return;
-    }
-
+    if (aiDescriptionLoading) return;
+    setAiDescriptionLoading(true);
+    setShowAIDescriptionModal(false);
+    setSelectedActivityForAIDescription(null);
+    setAiDescription("");
     try {
       const customerInfo = await Purchases.getCustomerInfo();
       const isPremium =
@@ -246,26 +273,46 @@ const TrackActivities = () => {
           result === PAYWALL_RESULT.PURCHASED ||
           result === PAYWALL_RESULT.RESTORED
         ) {
+          setAiDescriptionLoading(false);
           return await getAIDescription(activity); // Retry after upgrade
         } else {
           return;
         }
       }
 
+      const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/getaidescription", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, activity_id: activity.id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ activity_id: activity.id }),
       });
 
       const result = await response.json();
 
+      if (!response.ok) {
+        Alert.alert(
+          "Error",
+          result?.error || "Failed to generate AI activity summary.",
+        );
+        return;
+      }
+
+      if (!result?.description) {
+        Alert.alert("Error", "No AI summary was returned.");
+        return;
+      }
+
       setSelectedActivityForAIDescription(activity);
-      setAiDescription(result.description || "No description available.");
-      setShowAIDescriptionModal(true);
+      setAiDescription(result.description);
+      setPendingAIResult(true);
     } catch (error) {
-      console.error("Error in getAIDescription:", error);
+      console.log("Error in getAIDescription:", error);
       Alert.alert("Error", "Something went wrong. Please try again.");
+    } finally {
+      setAiDescriptionLoading(false);
     }
   };
 
@@ -273,9 +320,13 @@ const TrackActivities = () => {
   const replaceAIDescription = async () => {
     if (!selectedActivityForAIDescription) return;
     try {
+      const token = await getToken();
       await fetchAPI("https://ec-ai.expo.app/updatedescription", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
           activityId: selectedActivityForAIDescription.id,
           description: aiDescription,
@@ -287,7 +338,7 @@ const TrackActivities = () => {
       setAiDescription("");
       Alert.alert("Success", "Activity description replaced successfully.");
     } catch (error) {
-      console.error("Error replacing description:", error);
+      console.log("Error replacing description:", error);
       Alert.alert("Error", "Failed to replace description.");
     }
   };
@@ -457,12 +508,13 @@ const TrackActivities = () => {
                     e.stopPropagation();
                     getAIDescription(item);
                   }}
+                  disabled={aiDescriptionLoading}
                   className="mr-4"
                 >
                   <MaterialCommunityIcons
                     name="robot"
                     size={24}
-                    color="#5b55f6"
+                    color={aiDescriptionLoading ? "#A9A5D9" : "#5b55f6"}
                   />
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -853,6 +905,72 @@ const TrackActivities = () => {
             title="Replace Current Description"
             onPress={replaceAIDescription}
           />
+        </View>
+      </ReactNativeModal>
+      {/* AI Loading Overlay */}
+      <ReactNativeModal
+        isVisible={aiDescriptionLoading}
+        backdropOpacity={0.6}
+        backdropColor="#000"
+        useNativeDriver={true}
+        useNativeDriverForBackdrop={true}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        animationInTiming={200}
+        animationOutTiming={200}
+        backdropTransitionInTiming={200}
+        backdropTransitionOutTiming={200}
+        style={{ margin: 0 }}
+        onModalHide={() => {
+          if (pendingAIResult) {
+            setPendingAIResult(false);
+            setShowAIDescriptionModal(true);
+          }
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+          }}
+        >
+          <View
+            style={{
+              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+              borderRadius: 16,
+              paddingHorizontal: 40,
+              paddingVertical: 36,
+              alignItems: "center",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.2,
+              shadowRadius: 8,
+              elevation: 8,
+            }}
+          >
+            <ActivityIndicator size="large" color="#5b55f6" />
+            <Text
+              style={{
+                fontFamily: "Poppins-SemiBold",
+                fontSize: 16,
+                color: isDark ? "#fff" : "#1f2937",
+                marginTop: 16,
+              }}
+            >
+              Generating AI Summary
+            </Text>
+            <Text
+              style={{
+                fontFamily: "Poppins-Regular",
+                fontSize: 13,
+                color: isDark ? "#aaa" : "#6b7280",
+                marginTop: 6,
+              }}
+            >
+              This may take a moment...
+            </Text>
+          </View>
         </View>
       </ReactNativeModal>
     </SafeAreaView>

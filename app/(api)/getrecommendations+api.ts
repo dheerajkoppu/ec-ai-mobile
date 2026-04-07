@@ -1,6 +1,6 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
-// Map time label to numeric scale for comparison
 function mapTimeRange(label: string): number {
   switch (label) {
     case "<2 hours":
@@ -16,7 +16,6 @@ function mapTimeRange(label: string): number {
   }
 }
 
-// Convert numeric hour value to a time label
 function hoursToLabel(hours: number): string {
   if (hours < 2) return "<2 hours";
   if (hours < 5) return "2-5 hours";
@@ -24,45 +23,36 @@ function hoursToLabel(hours: number): string {
   return "10+ hours";
 }
 
-// Score match between user interests and opportunity fields + time commitment
 function calculateMatchScore(
   user: { interests: string[]; time: string },
   opp: any,
 ): number {
   let score = 0;
-
-  // Match based on career interest
   if (
     user.interests &&
     opp.career_field &&
     user.interests.includes(opp.career_field)
   )
     score += 50;
-
-  // Match based on time commitment closeness
   const userBand = mapTimeRange(user.time);
   const oppBand = mapTimeRange(hoursToLabel(opp.hours_per_week || 0));
   const diff = Math.abs(userBand - oppBand);
   if (diff === 0) score += 50;
   else if (diff === 1) score += 25;
-
   return score;
 }
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { clerk_id } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!clerk_id) {
-      return new Response(JSON.stringify({ error: "Missing clerk ID" }), {
-        status: 400,
-      });
-    }
-
-    // Fetch user profile and all unsaved opportunities in parallel
+  try {
     const [userRaw, opportunitiesRaw] = await Promise.all([
-      sql`SELECT career_interest, weekly_commitment FROM users WHERE clerk_id = ${clerk_id} LIMIT 1;`,
+      sql`SELECT career_interest, weekly_commitment FROM users WHERE clerk_id = ${clerkId} LIMIT 1;`,
       sql`SELECT
             id,
             school,
@@ -96,7 +86,7 @@ export async function POST(request: Request) {
           WHERE id NOT IN (
             SELECT opportunity_id
             FROM user_saved_opportunities
-            WHERE clerk_id = ${clerk_id}
+            WHERE clerk_id = ${clerkId}
           );`,
     ]);
 
@@ -107,7 +97,6 @@ export async function POST(request: Request) {
       });
     }
 
-    // Parse interest string into array and extract time label
     const interests = user.career_interest
       ? user.career_interest
           .replace(/^{|}$/g, "")
@@ -116,7 +105,6 @@ export async function POST(request: Request) {
       : [];
     const time = user.weekly_commitment || "";
 
-    // Score and map each opportunity with matchScore
     const scored = opportunitiesRaw.map((op: any) => ({
       id: op.id,
       school: op.school,
@@ -157,7 +145,6 @@ export async function POST(request: Request) {
       matchScore: calculateMatchScore({ interests, time }, op),
     }));
 
-    // Sort by descending match score
     const sorted = scored.sort((a, b) => b.matchScore - a.matchScore);
 
     return new Response(JSON.stringify({ data: sorted }), { status: 200 });

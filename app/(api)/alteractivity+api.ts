@@ -1,10 +1,16 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
+  try {
     const {
-      userEmail,
       activityId,
       name,
       category,
@@ -15,30 +21,31 @@ export async function POST(request: Request) {
       description,
     } = await request.json();
 
-    if (!userEmail || !activityId) {
+    if (!activityId) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    // Update the activity if it belongs to the user with the given email
+    // Update only if the activity belongs to the authenticated user
     const updatedActivity = await sql`
-            UPDATE activities a
-            SET
-                name = ${name},
-                activity_type = ${category},
-                roles = ${roles},
-                grades = ${grade},
-                hours_per_week = ${hoursPerWeek},
-                weeks_per_year = ${weeksPerYear},
-                description = ${description}
-                FROM users u
-            WHERE a.user_id = u.id
-              AND u.email = ${userEmail}
-              AND a.id = ${activityId}
-                RETURNING a.id, a.name, a.activity_type, a.roles, a.grades, a.hours_per_week, a.weeks_per_year, a.description;
-        `;
+      UPDATE activities a
+      SET
+        name        = ${name},
+        activity_type = ${category},
+        roles       = ${roles},
+        grades      = ${grade},
+        hours_per_week  = ${hoursPerWeek},
+        weeks_per_year  = ${weeksPerYear},
+        description = ${description}
+      FROM users u
+      WHERE a.user_id = u.id
+        AND u.clerk_id = ${clerkId}
+        AND a.id = ${activityId}
+      RETURNING a.id, a.name, a.activity_type, a.roles, a.grades,
+                a.hours_per_week, a.weeks_per_year, a.description;
+    `;
 
     return new Response(JSON.stringify({ data: updatedActivity }), {
       status: 200,

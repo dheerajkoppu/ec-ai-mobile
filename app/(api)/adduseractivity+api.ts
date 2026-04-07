@@ -1,11 +1,16 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    // Extract fields from request body
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
+  try {
     const {
-      userEmail,
       name,
       activity_type,
       hours_per_week,
@@ -16,7 +21,6 @@ export async function POST(request: Request) {
     } = await request.json();
 
     if (
-      !userEmail ||
       !name ||
       !activity_type ||
       !hours_per_week ||
@@ -30,32 +34,30 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert new activity with user_id looked up from email
     const response = await sql`
-            INSERT INTO activities (
-                user_id,
-                name,
-                activity_type,
-                hours_per_week,
-                weeks_per_year,
-                roles,
-                description,
-                grades
-            )
-            VALUES (
-                           (SELECT id FROM users WHERE email = ${userEmail} LIMIT 1),
-                ${name},
-                ${activity_type},
-                ${hours_per_week},
-                ${weeks_per_year},
-                ${roles},
-                ${description},
-                ${grades}
-                );`;
+      INSERT INTO activities (
+        user_id,
+        name,
+        activity_type,
+        hours_per_week,
+        weeks_per_year,
+        roles,
+        description,
+        grades
+      )
+      VALUES (
+        (SELECT id FROM users WHERE clerk_id = ${clerkId} LIMIT 1),
+        ${name},
+        ${activity_type},
+        ${hours_per_week},
+        ${weeks_per_year},
+        ${roles},
+        ${description},
+        ${grades}
+      );
+    `;
 
-    return new Response(JSON.stringify({ data: response }), {
-      status: 201,
-    });
+    return new Response(JSON.stringify({ data: response }), { status: 201 });
   } catch (error) {
     console.error("Error creating activity:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

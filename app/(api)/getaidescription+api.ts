@@ -1,17 +1,23 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { callOpenAI } from "@/lib/openai";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const { email, activity_id } = await request.json();
-    if (!email || !activity_id) {
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
+  try {
+    const { activity_id } = await request.json();
+    if (!activity_id) {
       return new Response(JSON.stringify({ error: "Missing params" }), {
         status: 400,
       });
     }
 
-    const sql = neon(process.env.DATABASE_URL as string);
-
-    // Fetch activity name, roles, and all logged hour descriptions
     const [row] = await sql`
       SELECT
         a.name,
@@ -21,11 +27,15 @@ export async function POST(request: Request) {
       FROM users u
       JOIN activities a
         ON a.user_id = u.id
-       AND u.email = ${email}
+       AND u.clerk_id = ${clerkId}
        AND a.id = ${activity_id}
       LEFT JOIN hours_logged h
         ON h.activity_id = a.id
-      GROUP BY a.name, a.roles
+       AND (
+         h.user_id = u.clerk_id
+         OR h.user_id = u.id::text
+       )
+      GROUP BY a.name, a.roles, a.description
     `;
 
     if (!row) {
@@ -33,7 +43,7 @@ export async function POST(request: Request) {
         status: 404,
       });
     }
-    // Generate prompt from DB values
+
     const allLoggedDescriptions = (row.descriptions as string[]).join(" ");
     const prompt = `
 Act as an elite Ivy League admissions officer. Write a 150-character activity summary using the info below. Use numbers to quantify impact, strong verbs, and precise adjectives. Avoid filler. Focus on leadership, uniqueness, sustained commitment, and tangible results. Only use "I" as a pronoun. Do NOT explain anything. Return ONLY the 150-character summary. No intro or closing.
@@ -44,28 +54,7 @@ Roles: ${row.roles}
 All Logged Hours Descriptions: ${allLoggedDescriptions}
 `.trim();
 
-    // Call OpenAI for description generation
-    const chatRes = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-nano",
-        messages: [{ role: "user", content: prompt }],
-      }),
-    });
-
-    if (!chatRes.ok) {
-      console.error(await chatRes.text());
-      return new Response(JSON.stringify({ error: "OpenAI API error" }), {
-        status: 500,
-      });
-    }
-
-    const { choices } = await chatRes.json();
-    const description = choices?.[0]?.message?.content?.trim();
+    const description = await callOpenAI(prompt, "gpt-5-nano", 80);
     return new Response(JSON.stringify({ description }), { status: 200 });
   } catch (err: any) {
     console.error(err);

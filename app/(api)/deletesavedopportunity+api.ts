@@ -1,23 +1,27 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { clerk_id, opportunity_id } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!clerk_id || !opportunity_id) {
+  try {
+    const { opportunity_id } = await request.json();
+
+    if (!opportunity_id) {
       return new Response(
-        JSON.stringify({
-          error: "Missing required fields: clerk_id and opportunity_id",
-        }),
+        JSON.stringify({ error: "Missing required field: opportunity_id" }),
         { status: 400 },
       );
     }
 
-    // Delete the matching saved opportunity
     const response = await sql`
       DELETE FROM user_saved_opportunities
-      WHERE clerk_id = ${clerk_id} AND opportunity_id = ${opportunity_id};
+      WHERE clerk_id = ${clerkId} AND opportunity_id = ${opportunity_id};
     `;
 
     return new Response(JSON.stringify({ data: response }), { status: 200 });

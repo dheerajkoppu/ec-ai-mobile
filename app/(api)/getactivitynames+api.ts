@@ -1,22 +1,22 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { email } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!email) {
-      return Response.json({ error: "Missing user email" }, { status: 400 });
-    }
-
-    // Fetch activity IDs and names for the user
+  try {
     const activities = await sql`
       SELECT
         a.id,
         a.name
       FROM activities a
              JOIN users u ON a.user_id = u.id
-      WHERE u.email = ${email};
+      WHERE u.clerk_id = ${clerkId};
     `;
 
     return new Response(JSON.stringify({ data: activities }), { status: 200 });

@@ -16,7 +16,7 @@ import { useRef, useState } from "react";
 import { router } from "expo-router";
 import OAuth from "@/components/OAuth";
 import AppleAuth from "@/components/AppleAuth";
-import { useSignUp } from "@clerk/clerk-expo";
+import { useSignUp, useAuth } from "@clerk/clerk-expo";
 import { ReactNativeModal } from "react-native-modal";
 import { fetchAPI } from "@/lib/fetch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
@@ -24,6 +24,7 @@ import * as Haptics from "expo-haptics";
 
 const Sign_Up = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
+  const { getToken } = useAuth();
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const isDark = useColorScheme() === "dark";
@@ -80,16 +81,20 @@ const Sign_Up = () => {
       });
 
       if (signUpAttempt.status === "complete") {
+        await setActive({ session: signUpAttempt.createdSessionId });
+
+        const token = await getToken();
         await fetchAPI("https://ec-ai.expo.app/user", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             name: form.name,
             email: form.email,
-            clerkId: signUpAttempt.createdUserId,
           }),
         });
-
-        await setActive({ session: signUpAttempt.createdSessionId });
 
         setVerification({ ...verification, state: "success" });
       } else {

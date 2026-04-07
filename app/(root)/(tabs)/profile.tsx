@@ -1,4 +1,4 @@
-import { useUser, useClerk } from "@clerk/clerk-expo";
+import { useUser, useClerk, useAuth } from "@clerk/clerk-expo";
 import { useEffect, useState } from "react";
 import * as WebBrowser from "expo-web-browser";
 import {
@@ -29,6 +29,7 @@ import * as Haptics from "expo-haptics";
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
+  const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
 
   useEffect(() => {
@@ -97,64 +98,28 @@ const Profile = () => {
   const email = user?.primaryEmailAddress?.emailAddress;
   const [isPremium, setIsPremium] = useState(false);
   const downloadPDF = async (): Promise<boolean> => {
-    if (!email) {
-      Alert.alert("Missing Email", "We couldn't find your account email.");
-      return false;
-    }
-
     try {
-      // 0) Fetch user activities
-      const activityRes = await fetch("https://ec-ai.expo.app/getactivities", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
-
-      const activityJson = await activityRes.json();
-      const activities = activityJson.data;
-
-      if (!Array.isArray(activities)) {
-        console.error("Invalid activities array");
-        Alert.alert("Error", "Failed to fetch valid activities.");
-        return false;
-      }
-      if (activities.length === 0) {
-        Alert.alert(
-          "No Activities",
-          "You haven't added any activities yet. Please add activities before generating a PDF.",
-        );
-        return false;
-      }
-      // 1) Generate the PDF
-      const genRes = await fetchAPI(
+      const token = await getToken();
+      const response = await fetchAPI(
         "https://ec-ai.expo.app/generate-activities-pdf",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, activities }),
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
       );
 
-      if (!genRes?.pdfBase64) {
-        console.error("Invalid PDF response:", genRes);
-        Alert.alert("Error", "PDF generation failed.");
-        return false;
-      }
-
-      const { pdfBase64 } = genRes;
-
-      // 2) Send the email
-      const sendRes = await fetchAPI(
-        "https://ec-ai.expo.app/send-activities-email",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, pdfBase64 }),
-        },
-      );
-
-      if (!sendRes || sendRes.error) {
-        console.error("Email send failed:", sendRes);
+      if (!response?.sent) {
+        console.error("PDF/email failed:", response);
+        if (response?.error === "No activities found") {
+          Alert.alert(
+            "No Activities",
+            "You haven't added any activities yet. Please add activities before generating a PDF.",
+          );
+        } else {
+          Alert.alert("Error", "Something went wrong generating your PDF.");
+        }
         return false;
       }
       return true;
@@ -183,12 +148,12 @@ const Profile = () => {
     if (!user?.primaryEmailAddress?.emailAddress) return;
 
     try {
+      const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/exportdata", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userEmail: user.primaryEmailAddress.emailAddress,
-        }),
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       await response.json();
@@ -207,15 +172,15 @@ const Profile = () => {
   };
 
   const deleteAccount = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) return;
-
     try {
+      const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/deleteuser", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userEmail: user.primaryEmailAddress.emailAddress,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       });
 
       if (response.ok) {

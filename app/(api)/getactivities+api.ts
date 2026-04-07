@@ -1,15 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { email } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!email) {
-      return Response.json({ error: "Missing user email" }, { status: 400 });
-    }
-
-    // Fetch all activities for the user based on their email
+  try {
     const activities = await sql`
       SELECT
         a.id,
@@ -22,13 +22,12 @@ export async function POST(request: Request) {
         a.grades
       FROM activities a
              JOIN users u ON a.user_id = u.id
-      WHERE u.email = ${email}
+      WHERE u.clerk_id = ${clerkId}
       ORDER BY a.id ASC;
     `;
 
     let totalHoursPerWeek = 0;
 
-    // Format activities and calculate total weekly hours
     const formatted = activities.map((a: any) => {
       totalHoursPerWeek += a.hours_per_week;
       return {

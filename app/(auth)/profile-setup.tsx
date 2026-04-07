@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
@@ -273,6 +273,7 @@ const SlideWrapper: React.FC<{
 // ProfileSetup component
 const ProfileSetup: React.FC = () => {
   const { user } = useUser();
+  const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
@@ -333,15 +334,17 @@ const ProfileSetup: React.FC = () => {
   }
 
   useEffect(() => {
-    if (update === "true" && user?.primaryEmailAddress?.emailAddress) {
+    if (update === "true") {
       const fetchUserData = async () => {
         try {
+          const token = await getToken();
           const response = await fetch("https://ec-ai.expo.app/getuserdata", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              userEmail: user?.primaryEmailAddress?.emailAddress,
-            }),
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
           });
           const result = await response.json();
           if (response.ok && result?.user) {
@@ -419,22 +422,18 @@ const ProfileSetup: React.FC = () => {
       };
       fetchUserData();
     }
-  }, [update, user?.primaryEmailAddress?.emailAddress]);
+  }, [update, getToken]);
 
   const handleSubmit = async () => {
-    if (!user?.primaryEmailAddress?.emailAddress) {
-      Alert.alert("Error", "User information is missing.");
-      return;
-    }
-    const payload = {
-      userEmail: user.primaryEmailAddress.emailAddress,
-      ...formData,
-    };
     try {
+      const token = await getToken();
       const response = await fetchAPI("https://ec-ai.expo.app/userdata", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(formData),
       });
       if (response.ok) {
         router.replace("/(root)/(tabs)/opportunity_match");

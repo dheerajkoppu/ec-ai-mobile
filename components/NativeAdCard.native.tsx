@@ -23,7 +23,9 @@ export default function NativeAdCardNative() {
         loadedAd = ad;
         setNativeAd(ad);
       })
-      .catch(console.error);
+      .catch(() => {
+        setNativeAd(null);
+      });
 
     return () => {
       loadedAd?.destroy();

@@ -1,24 +1,30 @@
 import { useState, useEffect, useCallback } from "react";
 
-export const fetchAPI = async (url: string, options?: RequestInit) => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      new Error(`HTTP error! status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    console.log("Fetch error:", error);
-    throw error;
-  }
+type UseFetchConfig = {
+  enabled?: boolean;
 };
 
-export const useFetch = <T>(url: string, options?: RequestInit) => {
+export const fetchAPI = async (url: string, options?: RequestInit) => {
+  const response = await fetch(url, options);
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  return await response.json();
+};
+
+export const useFetch = <T>(
+  url: string,
+  options?: RequestInit,
+  config?: UseFetchConfig,
+) => {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const enabled = config?.enabled ?? true;
 
   const fetchData = useCallback(async () => {
+    if (!enabled) return;
+
     setLoading(true);
     setError(null);
 
@@ -30,11 +36,13 @@ export const useFetch = <T>(url: string, options?: RequestInit) => {
     } finally {
       setLoading(false);
     }
-  }, [url, options]);
+  }, [enabled, url, options]);
 
   useEffect(() => {
+    if (!enabled) return;
+
     fetchData();
-  }, [fetchData]);
+  }, [enabled, fetchData]);
 
   return { data, loading, error, refetch: fetchData };
 };

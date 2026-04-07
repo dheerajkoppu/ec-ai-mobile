@@ -36,6 +36,10 @@ const Layout = () => {
       ? {
           minimizeBehavior: "never" as const,
           backgroundColor: "transparent",
+          tintColor: DynamicColorIOS({
+            light: BRAND_COLOR,
+            dark: BRAND_COLOR_DARK,
+          }),
         }
       : {
           backgroundColor: isDark ? "#121126" : "#F3F1FF",

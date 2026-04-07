@@ -1,8 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
+  try {
     const { activityId, description } = await request.json();
 
     if (!activityId || description === undefined) {
@@ -12,17 +19,16 @@ export async function POST(request: Request) {
       );
     }
 
-    // Update only the description for the given activity ID.
+    // Update only if the activity belongs to the authenticated user
     const updated = await sql`
       UPDATE activities
       SET description = ${description}
       WHERE id = ${activityId}
+        AND user_id = (SELECT id FROM users WHERE clerk_id = ${clerkId} LIMIT 1)
       RETURNING id, description;
     `;
 
-    return new Response(JSON.stringify({ data: updated }), {
-      status: 200,
-    });
+    return new Response(JSON.stringify({ data: updated }), { status: 200 });
   } catch (error) {
     console.error("Error updating activity description:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });

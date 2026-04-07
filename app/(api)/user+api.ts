@@ -1,11 +1,18 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { name, email, clerkId } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!name || !email || !clerkId) {
+  try {
+    const { name, email } = await request.json();
+
+    if (!name || !email) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 },

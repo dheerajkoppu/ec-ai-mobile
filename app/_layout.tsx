@@ -61,9 +61,7 @@ export default function RootLayout() {
       import("react-native-google-mobile-ads")
         .then(({ default: mobileAds }) => mobileAds().initialize())
         .then(() => console.log("AdMob initialized"))
-        .catch((error) => {
-          console.error("AdMob initialization failed", error);
-        });
+        .catch(() => undefined);
     }
   }, [loaded]);
 

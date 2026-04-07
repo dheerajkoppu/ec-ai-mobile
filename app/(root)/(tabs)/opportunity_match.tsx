@@ -20,7 +20,7 @@ import * as Haptics from "expo-haptics";
 import ReactNativeModal from "react-native-modal";
 
 import Swiper from "react-native-deck-swiper";
-import { useUser } from "@clerk/clerk-expo";
+import { useUser, useAuth } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -70,6 +70,7 @@ const Opportunities = () => {
   const [swipeCount, setSwipeCount] = useState(0);
   const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
   const { user } = useUser();
+  const { getToken } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const reportButtonStyle = [
@@ -113,11 +114,14 @@ const Opportunities = () => {
   const submitReport = async () => {
     if (!reportingOp || !reportReason) return;
     try {
+      const token = await getToken();
       const res = await fetch("https://ec-ai.expo.app/reportopportunity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify({
-          clerk_id: user!.id,
           opportunity_id: reportingOp.id,
           reason: reportReason,
           details: reportDetails,
@@ -170,12 +174,16 @@ const Opportunities = () => {
   const fetchOpportunities = useCallback(async () => {
     if (!user) return;
     try {
+      const token = await getToken();
       const response = await fetch(
         "https://ec-ai.expo.app/getrecommendations",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ clerk_id: user.id }),
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
         },
       );
 
@@ -219,7 +227,7 @@ const Opportunities = () => {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, getToken]);
   useEffect(() => {
     if (!user) return;
 
@@ -252,16 +260,15 @@ const Opportunities = () => {
   };
 
   const logSwipe = async (opportunityId: string, liked: boolean) => {
-    if (!user?.id) return;
     try {
+      const token = await getToken();
       await fetch("https://ec-ai.expo.app/logswipe", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userClerkId: user.id,
-          opportunityId,
-          liked,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ opportunityId, liked }),
       });
     } catch (err) {
       console.error("Swipe log failed:", err);
@@ -272,10 +279,14 @@ const Opportunities = () => {
     if (!user) return;
 
     try {
+      const token = await getToken();
       const res = await fetch("https://ec-ai.expo.app/getsavedopportunities", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({}),
       });
 
       const json = await res.json();
@@ -286,8 +297,11 @@ const Opportunities = () => {
       // No more premium check or limit — save unconditionally
       await fetch("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ clerk_id: user.id, opportunity_id: op.id }),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ opportunity_id: op.id }),
       });
     } catch (err) {
       console.error("Error saving opportunity:", err);

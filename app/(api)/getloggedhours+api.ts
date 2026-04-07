@@ -1,45 +1,53 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { user_id } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!user_id) {
-      return new Response(JSON.stringify({ error: "Missing user ID" }), {
-        status: 400,
-      });
-    }
-
-    // Fetch the 3 most recent activity logs for the user
+  try {
     const recentLogs = await sql`
-      SELECT description, date_of_activity
-      FROM hours_logged
-      WHERE user_id = ${user_id}
-      ORDER BY date_of_activity DESC
-        LIMIT 3;
+      SELECT hl.description, hl.date_of_activity
+      FROM users u
+      JOIN activities a
+        ON a.user_id = u.id
+      JOIN hours_logged hl
+        ON hl.activity_id = a.id
+      WHERE u.clerk_id = ${clerkId}
+        AND (
+          hl.user_id = u.clerk_id
+          OR hl.user_id = u.id::text
+        )
+      ORDER BY hl.date_of_activity DESC
+      LIMIT 3;
     `;
 
-    // Aggregate total hours logged by the user
     const totalHoursResult = await sql`
-      SELECT SUM(hours_logged) as total_hours
-      FROM hours_logged
-      WHERE user_id = ${user_id};
+      SELECT SUM(hl.hours_logged) as total_hours
+      FROM users u
+      JOIN activities a
+        ON a.user_id = u.id
+      JOIN hours_logged hl
+        ON hl.activity_id = a.id
+      WHERE u.clerk_id = ${clerkId}
+        AND (
+          hl.user_id = u.clerk_id
+          OR hl.user_id = u.id::text
+        );
     `;
 
-    // Fallback to 0 if no hours are logged
     const total_hours =
       totalHoursResult[0]?.total_hours !== null
         ? parseFloat(totalHoursResult[0].total_hours)
         : 0;
 
-    return new Response(
-      JSON.stringify({
-        data: recentLogs,
-        total_hours,
-      }),
-      { status: 200 },
-    );
+    return new Response(JSON.stringify({ data: recentLogs, total_hours }), {
+      status: 200,
+    });
   } catch (error) {
     console.error("Error fetching logged hours:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {

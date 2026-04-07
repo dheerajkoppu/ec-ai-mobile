@@ -1,23 +1,28 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { userClerkId, opportunityId, liked } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    // Ensure required fields are provided
-    if (!userClerkId || !opportunityId || liked === undefined) {
+  try {
+    const { opportunityId, liked } = await request.json();
+
+    if (!opportunityId || liked === undefined) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 },
       );
     }
 
-    // Record the swipe action in the user_swipes table
     const inserted = await sql`
       INSERT INTO user_swipes (user_clerk_id, opportunity_id, liked)
-      VALUES (${userClerkId}, ${opportunityId}, ${liked})
-        RETURNING *;
+      VALUES (${clerkId}, ${opportunityId}, ${liked})
+      RETURNING *;
     `;
 
     return new Response(JSON.stringify({ data: inserted }), { status: 200 });

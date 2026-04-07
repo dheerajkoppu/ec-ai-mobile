@@ -1,22 +1,30 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { user_id, activity_id } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!user_id || !activity_id) {
+  try {
+    const { activity_id } = await request.json();
+
+    if (!activity_id) {
       return new Response(JSON.stringify({ error: "Missing fields" }), {
         status: 400,
       });
     }
 
-    // Fetch logged hours for the specified user and activity
+    // Hours logs are keyed by Clerk user IDs in this table.
     const logs = await sql`
-      SELECT date_of_activity, hours_logged, description
-      FROM hours_logged
-      WHERE user_id = ${user_id} AND activity_id = ${activity_id}
-      ORDER BY date_of_activity DESC;
+      SELECT hl.date_of_activity, hl.hours_logged, hl.description
+      FROM hours_logged hl
+      WHERE hl.user_id = ${clerkId}
+        AND hl.activity_id = ${activity_id}
+      ORDER BY hl.date_of_activity DESC;
     `;
 
     return new Response(JSON.stringify({ data: logs }), { status: 200 });

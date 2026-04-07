@@ -1,17 +1,15 @@
-import { neon } from "@neondatabase/serverless";
+import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  let clerkId: string;
   try {
-    const sql = neon(`${process.env.DATABASE_URL}`);
-    const { userEmail } = await request.json();
+    clerkId = await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
-    if (!userEmail) {
-      return new Response(JSON.stringify({ error: "Missing user email" }), {
-        status: 400,
-      });
-    }
-
-    // Fetch user profile fields based on email
+  try {
     const userData = await sql`
       SELECT
         age,
@@ -45,8 +43,8 @@ export async function POST(request: Request) {
         wants_notifications,
         agreed_to_terms
       FROM users
-      WHERE email = ${userEmail}
-        LIMIT 1;
+      WHERE clerk_id = ${clerkId}
+      LIMIT 1;
     `;
 
     if (!userData || userData.length === 0) {
@@ -55,10 +53,7 @@ export async function POST(request: Request) {
       });
     }
 
-    const user = userData[0];
-
-    // Return user object for frontend or personalization logic
-    return new Response(JSON.stringify({ user }), { status: 200 });
+    return new Response(JSON.stringify({ user: userData[0] }), { status: 200 });
   } catch (error) {
     console.error("Error fetching user data:", error);
     return new Response(JSON.stringify({ error: "Internal Server Error" }), {
