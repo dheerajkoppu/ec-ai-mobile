@@ -1,50 +1,117 @@
-# Welcome to your Expo app 👋
+# EC-AI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+An AI-powered extracurricular activity tracker for students. Discover opportunities, log activities, track hours, and get AI-driven recommendations — all in one app.
 
-## Get started
+## Tech Stack
 
-1. Install dependencies
+| Category      | Library                                               |
+| ------------- | ----------------------------------------------------- |
+| Framework     | Expo SDK 55, React Native 0.83.4, React 19            |
+| Routing       | expo-router v5 (file-based)                           |
+| Styling       | NativeWind v2 (Tailwind CSS)                          |
+| Auth          | Clerk (`@clerk/clerk-expo`)                           |
+| Database      | Neon serverless Postgres (`@neondatabase/serverless`) |
+| Subscriptions | RevenueCat (`react-native-purchases` v8)              |
+| Ads           | Google AdMob (`react-native-google-mobile-ads`)       |
+| Email         | Resend                                                |
+| File uploads  | UploadThing                                           |
 
-   ```bash
-   npm install
-   ```
+New Architecture is enabled (`newArchEnabled: true`).
 
-2. Start the app
+## Features
 
-   ```bash
-    npx expo start
-   ```
+- **Opportunity Match** — swipe-deck interface for discovering extracurricular opportunities with AI-generated match reasons
+- **Track Activities** — log and manage your extracurricular activities
+- **Add Activity** — add new activities with descriptions and metadata
+- **Saved Opportunities** — bookmark opportunities for later
+- **Profile** — manage your account, export data as PDF, and email activity reports
 
-In the output, you'll find options to open the app in a
+## Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+app/
+  _layout.tsx              # Root layout (fonts, auth provider)
+  index.tsx                # Entry redirect
+  (auth)/                  # Auth screens (welcome, sign-in, sign-up, profile-setup)
+  (root)/
+    (tabs)/                # Main 5-tab navigation
+      opportunity_match.tsx
+      track_activities.tsx
+      add_activity.tsx
+      saved_opportunities.tsx
+      profile.tsx
+    _layout.tsx
+  (api)/                   # 29 API route handlers (+api.ts)
+components/                # Shared UI components
+assets/                    # Images, fonts
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+### Prerequisites
 
-To learn more about developing your project with Expo, look at the following resources:
+- Node.js 18+
+- Expo CLI: `npm install -g expo-cli`
+- iOS: Xcode + iOS Simulator, or physical device
+- Android: Android Studio + emulator, or physical device
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Environment Variables
 
-## Join the community
+Create a `.env` file in the project root:
 
-Join our community of developers creating universal apps.
+```env
+EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY=
+DATABASE_URL=
+REVENUECAT_IOS_KEY=
+REVENUECAT_ANDROID_KEY=
+RESEND_API_KEY=
+UPLOADTHING_TOKEN=
+ANTHROPIC_API_KEY=
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Install & Run
+
+```bash
+npm install
+npx expo start
+```
+
+Then press `i` for iOS simulator, `a` for Android emulator, or scan the QR code with Expo Go.
+
+### Build for Device
+
+```bash
+# iOS
+npx expo run:ios
+
+# Android
+npx expo run:android
+```
+
+### EAS Build
+
+```bash
+npx eas build --platform ios
+npx eas build --platform android
+```
+
+The EAS project ID is `a31952ea-e220-4629-8d9e-7efbbb3c8b30`.
+
+## API Routes
+
+All API routes live under `app/(api)/` and follow Expo Router's `+api.ts` convention. They run as server functions and connect to the Neon database.
+
+Key endpoints:
+
+- `getrecommendations` — AI-powered activity recommendations
+- `getopportunities` — fetch and filter opportunities
+- `logswipe` — record swipe interactions for ML feedback
+- `generate-activities-pdf` — generate a PDF report of logged activities
+- `send-activities-email` — email activity report via Resend
+- `exportdata` — export user data
+
+## Linting
+
+```bash
+npm run lint
+```
