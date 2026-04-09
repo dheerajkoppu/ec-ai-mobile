@@ -8,22 +8,8 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  Platform,
+  ScrollView,
 } from "react-native";
-import {
-  Host,
-  Menu,
-  Button as SwiftUIButton,
-  HStack,
-  Text as SwiftText,
-  Image as SwiftImage,
-} from "@expo/ui/swift-ui";
-import {
-  bold,
-  buttonStyle,
-  controlSize,
-  foregroundStyle,
-} from "@expo/ui/swift-ui/modifiers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Activity } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -62,7 +48,6 @@ const TrackActivities = () => {
   const borderColor = isDark ? "#3f3f46" : "#d1d5db";
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
-  const [showSortModal, setShowSortModal] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
@@ -273,10 +258,6 @@ const TrackActivities = () => {
     setSortOption(option);
   };
 
-  const showSortOptions = () => {
-    setShowSortModal(true);
-  };
-
   const filteredActivities = activities.filter((activity) =>
     activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
@@ -428,107 +409,46 @@ const TrackActivities = () => {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-      <View className="flex-row mb-4">
-        {Platform.OS === "ios" &&
-        !showEditModal &&
-        !showLogsModal &&
-        !showAIDescriptionModal ? (
-          <Host
-            matchContents={{ vertical: true }}
-            colorScheme={isDark ? "dark" : "light"}
-            style={{ minWidth: 200, minHeight: 44 }}
-          >
-            <Menu
-              label={
-                <HStack spacing={4}>
-                  <HStack spacing={0}>
-                    <SwiftText
-                      modifiers={[
-                        foregroundStyle(isDark ? "#f5f5f5" : "#111827"),
-                        bold(),
-                      ]}
-                    >
-                      {"Sort: "}
-                    </SwiftText>
-                    <SwiftText
-                      modifiers={[
-                        foregroundStyle(isDark ? "#f5f5f5" : "#111827"),
-                      ]}
-                    >
-                      {sortLabels[sortOption]}
-                    </SwiftText>
-                  </HStack>
-                  <SwiftImage
-                    systemName="chevron.up.chevron.down"
-                    size={10}
-                    color={isDark ? "#a1a1aa" : "#6b7280"}
-                  />
-                </HStack>
-              }
-              modifiers={[buttonStyle("bordered"), controlSize("small")]}
-            >
-              {sortChoices.map((choice) => (
-                <SwiftUIButton
-                  key={choice.key}
-                  label={choice.label}
-                  systemImage={
-                    sortOption === choice.key ? "checkmark" : undefined
-                  }
-                  onPress={() => sortActivities(choice.key)}
-                />
-              ))}
-            </Menu>
-          </Host>
-        ) : (
-          <TouchableOpacity
-            onPress={showSortOptions}
-            style={{
-              backgroundColor: surfaceColor,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor,
-              paddingHorizontal: 12,
-              paddingVertical: 7,
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "space-between",
-              shadowColor: "#000",
-              shadowOffset: { width: 0, height: 6 },
-              shadowOpacity: isDark ? 0.2 : 0.08,
-              shadowRadius: 12,
-              elevation: 2,
-            }}
-          >
-            <View>
-              <Text
-                style={{
-                  color: primaryTextColor,
-                  fontFamily: "Poppins-Regular",
-                  fontSize: 13,
-                }}
-              >
-                <Text style={{ fontFamily: "Poppins-Bold" }}>Sort:</Text>{" "}
-                {sortLabels[sortOption]}
-              </Text>
-            </View>
-            <View
+      <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
+        {sortChoices.map((choice) => {
+          const isSelected = sortOption === choice.key;
+          return (
+            <TouchableOpacity
+              key={choice.key}
+              onPress={() => sortActivities(choice.key)}
               style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: isDark ? "#27272a" : "#eef2ff",
+                flex: 1,
+                flexDirection: "row",
                 alignItems: "center",
                 justifyContent: "center",
+                gap: 5,
+                paddingVertical: 9,
+                paddingHorizontal: 8,
+                borderRadius: 10,
+                borderWidth: 1,
+                borderColor: isSelected ? "#5b55f6" : borderColor,
+                backgroundColor: isSelected ? "#5b55f6" : surfaceColor,
               }}
             >
               <MaterialCommunityIcons
-                name="chevron-down"
-                size={20}
-                color={isDark ? "#c4b5fd" : "#5b55f6"}
+                name={choice.icon}
+                size={14}
+                color={isSelected ? "#fff" : secondaryTextColor}
               />
-            </View>
-          </TouchableOpacity>
-        )}
+              <Text
+                style={{
+                  fontFamily: isSelected
+                    ? "Poppins-SemiBold"
+                    : "Poppins-Regular",
+                  fontSize: 12,
+                  color: isSelected ? "#fff" : primaryTextColor,
+                }}
+              >
+                {choice.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
       {!loading && filteredActivities.length === 0 ? (
         <Text
@@ -706,191 +626,6 @@ const TrackActivities = () => {
           )}
         />
       )}
-      {Platform.OS !== "ios" && (
-        <ReactNativeModal
-          isVisible={showSortModal}
-          backdropOpacity={0.4}
-          onBackdropPress={() => setShowSortModal(false)}
-          onBackButtonPress={() => setShowSortModal(false)}
-          useNativeDriver={true}
-          useNativeDriverForBackdrop={true}
-          animationIn="slideInUp"
-          animationOut="slideOutDown"
-          style={{ justifyContent: "flex-end", margin: 0 }}
-        >
-          <View
-            style={{
-              backgroundColor: elevatedSurfaceColor,
-              borderTopLeftRadius: 28,
-              borderTopRightRadius: 28,
-              paddingHorizontal: 20,
-              paddingTop: 14,
-              paddingBottom: 28,
-              borderWidth: 1,
-              borderColor,
-            }}
-          >
-            <View
-              style={{
-                alignSelf: "center",
-                width: 44,
-                height: 5,
-                borderRadius: 999,
-                backgroundColor: isDark ? "#3f3f46" : "#d4d4d8",
-                marginBottom: 18,
-              }}
-            />
-            <Text
-              style={{
-                color: mutedTextColor,
-                fontFamily: "Poppins-Bold",
-                fontSize: 12,
-                letterSpacing: 1,
-                textTransform: "uppercase",
-                marginBottom: 4,
-                textAlign: "center",
-              }}
-            >
-              Organize Activities
-            </Text>
-            <Text
-              style={{
-                color: primaryTextColor,
-                fontFamily: "Poppins-Bold",
-                fontSize: 24,
-                textAlign: "center",
-                marginBottom: 20,
-              }}
-            >
-              Sort By
-            </Text>
-
-            {sortChoices.map((choice) => {
-              const isSelected = sortOption === choice.key;
-
-              return (
-                <TouchableOpacity
-                  key={choice.key}
-                  onPress={() => {
-                    sortActivities(choice.key);
-                    setShowSortModal(false);
-                  }}
-                  style={{
-                    flexDirection: "row",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    backgroundColor: isSelected
-                      ? isDark
-                        ? "rgba(91, 85, 246, 0.18)"
-                        : "#eef2ff"
-                      : surfaceColor,
-                    borderRadius: 18,
-                    borderWidth: 1,
-                    borderColor: isSelected
-                      ? "#5b55f6"
-                      : isDark
-                        ? "#3f3f46"
-                        : "#e5e7eb",
-                    paddingHorizontal: 16,
-                    paddingVertical: 15,
-                    marginBottom: 12,
-                  }}
-                >
-                  <View
-                    style={{
-                      flexDirection: "row",
-                      alignItems: "center",
-                      gap: 12,
-                    }}
-                  >
-                    <View
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 18,
-                        alignItems: "center",
-                        justifyContent: "center",
-                        backgroundColor: isSelected
-                          ? "#5b55f6"
-                          : isDark
-                            ? "#27272a"
-                            : "#f3f4f6",
-                      }}
-                    >
-                      <MaterialCommunityIcons
-                        name={choice.icon}
-                        size={18}
-                        color={isSelected ? "#fff" : secondaryTextColor}
-                      />
-                    </View>
-                    <View>
-                      <Text
-                        style={{
-                          color: primaryTextColor,
-                          fontFamily: isSelected
-                            ? "Poppins-Bold"
-                            : "Poppins-SemiBold",
-                          fontSize: 16,
-                        }}
-                      >
-                        {choice.label}
-                      </Text>
-                      {isSelected && (
-                        <Text
-                          style={{
-                            color: "#5b55f6",
-                            fontFamily: "Poppins-SemiBold",
-                            fontSize: 12,
-                            marginTop: 2,
-                          }}
-                        >
-                          Current sort
-                        </Text>
-                      )}
-                    </View>
-                  </View>
-                  {isSelected ? (
-                    <MaterialCommunityIcons
-                      name="check-circle"
-                      size={22}
-                      color="#5b55f6"
-                    />
-                  ) : (
-                    <MaterialCommunityIcons
-                      name="chevron-right"
-                      size={20}
-                      color={mutedTextColor}
-                    />
-                  )}
-                </TouchableOpacity>
-              );
-            })}
-
-            <TouchableOpacity
-              onPress={() => setShowSortModal(false)}
-              style={{
-                marginTop: 4,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: "rgba(239, 68, 68, 0.28)",
-                backgroundColor: isDark ? "rgba(127, 29, 29, 0.28)" : "#fef2f2",
-                paddingVertical: 16,
-                alignItems: "center",
-              }}
-            >
-              <Text
-                style={{
-                  color: "#dc2626",
-                  fontFamily: "Poppins-Bold",
-                  fontSize: 16,
-                }}
-              >
-                Cancel
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </ReactNativeModal>
-      )}
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
@@ -988,6 +723,11 @@ const TrackActivities = () => {
                         ? "Failed to load career fields"
                         : "Select a career field"
                   }
+                  containerStyle={{ marginBottom: 0 }}
+                  nativeHostStyle={{
+                    marginTop: 0,
+                    transform: [{ translateY: 4 }],
+                  }}
                 />
                 <InputField
                   label="Roles"
@@ -1009,9 +749,7 @@ const TrackActivities = () => {
                   >
                     Grades <Text style={{ color: "#ef4444" }}>*</Text>
                   </Text>
-                  <View
-                    style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}
-                  >
+                  <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
                     {gradeOptions.map((grade) => (
                       <TouchableOpacity
                         key={grade}
@@ -1029,8 +767,8 @@ const TrackActivities = () => {
                             : isDark
                               ? "#1e1e1e"
                               : "#fff",
-                          marginRight: 12,
-                          marginBottom: 12,
+                          marginRight: 16,
+                          marginBottom: 8,
                         }}
                       >
                         <Text
@@ -1103,90 +841,157 @@ const TrackActivities = () => {
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
         onBackdropPress={() => setShowLogsModal(false)}
+        onBackButtonPress={() => setShowLogsModal(false)}
+        propagateSwipe={true}
+        style={{ marginTop: 60, marginHorizontal: 10 }}
       >
         <View
           style={{
-            backgroundColor: surfaceColor,
-            paddingHorizontal: 28,
-            paddingVertical: 36,
+            backgroundColor: elevatedSurfaceColor,
             borderRadius: 16,
-            shadowColor: "#000",
             maxHeight: "80%",
+            paddingBottom: 8,
           }}
         >
-          <TouchableOpacity
-            onPress={() => setShowLogsModal(false)}
-            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
-          >
-            <MaterialCommunityIcons
-              name="close"
-              size={24}
-              color={primaryTextColor}
-            />
-          </TouchableOpacity>
+          {/* Header */}
+          <View style={{ padding: 24, paddingBottom: 16 }}>
+            <TouchableOpacity
+              onPress={() => setShowLogsModal(false)}
+              style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={24}
+                color={primaryTextColor}
+              />
+            </TouchableOpacity>
 
-          <Text
+            <Text
+              style={{
+                fontSize: 20,
+                fontFamily: "Poppins-Bold",
+                color: primaryTextColor,
+                paddingRight: 32,
+              }}
+            >
+              Activity Logs
+            </Text>
+          </View>
+
+          <View
             style={{
-              fontSize: 24,
-              fontWeight: "bold",
-              color: primaryTextColor,
-              marginBottom: 16,
+              height: 1,
+              backgroundColor: borderColor,
+              marginHorizontal: 24,
             }}
-          >
-            Activity Logs
-          </Text>
+          />
 
           {logs.length === 0 ? (
-            <Text style={{ color: mutedTextColor, marginBottom: 16 }}>
+            <Text
+              style={{
+                color: mutedTextColor,
+                fontFamily: "Poppins-Regular",
+                textAlign: "center",
+                padding: 32,
+              }}
+            >
               No logs found.
             </Text>
           ) : (
             <FlatList
               data={logs}
               keyExtractor={(item, index) => index.toString()}
+              contentContainerStyle={{ padding: 24, paddingTop: 16 }}
+              showsVerticalScrollIndicator={false}
+              nestedScrollEnabled={true}
               renderItem={({ item }) => (
                 <View
                   style={{
-                    borderBottomWidth: 1,
-                    borderBottomColor: isDark ? "#444" : "#d1d5db",
-                    paddingBottom: 8,
-                    marginBottom: 8,
+                    backgroundColor: surfaceColor,
+                    borderRadius: 12,
+                    padding: 14,
+                    marginBottom: 10,
+                    borderWidth: 1,
+                    borderColor,
                   }}
                 >
-                  <Text
+                  <View
                     style={{
-                      fontFamily: "Poppins-Bold",
-                      color: primaryTextColor,
+                      flexDirection: "row",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      marginBottom: 8,
                     }}
                   >
-                    Date: {formatDate(item.date_of_activity)}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      color: secondaryTextColor,
-                    }}
-                  >
-                    Hours Logged: {item.hours_logged}
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      color: secondaryTextColor,
-                    }}
-                  >
-                    Description: {item.description}
-                  </Text>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: isDark ? "#2d2b5e" : "#ededfd",
+                        borderRadius: 6,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name="calendar"
+                        size={12}
+                        color="#5b55f6"
+                      />
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-SemiBold",
+                          fontSize: 12,
+                          color: "#5b55f6",
+                          marginLeft: 4,
+                        }}
+                      >
+                        {formatDate(item.date_of_activity)}
+                      </Text>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        alignItems: "center",
+                        backgroundColor: isDark ? "#27272a" : "#f3f4f6",
+                        borderRadius: 6,
+                        paddingHorizontal: 8,
+                        paddingVertical: 3,
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name="clock-outline"
+                        size={12}
+                        color={mutedTextColor}
+                      />
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-SemiBold",
+                          fontSize: 12,
+                          color: primaryTextColor,
+                          marginLeft: 4,
+                        }}
+                      >
+                        {item.hours_logged} hrs
+                      </Text>
+                    </View>
+                  </View>
+                  {item.description && (
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 13,
+                        color: secondaryTextColor,
+                        lineHeight: 18,
+                      }}
+                    >
+                      {item.description}
+                    </Text>
+                  )}
                 </View>
               )}
             />
           )}
-
-          <CustomButton
-            title="Close"
-            onPress={() => setShowLogsModal(false)}
-            className="mt-4"
-          />
         </View>
       </ReactNativeModal>
       {/* AI Description Modal */}
@@ -1197,54 +1002,88 @@ const TrackActivities = () => {
         isVisible={showAIDescriptionModal}
         onBackdropPress={resetAIDescriptionState}
         onBackButtonPress={resetAIDescriptionState}
+        style={{ marginTop: 60, marginHorizontal: 10 }}
       >
         <View
           style={{
             backgroundColor: surfaceColor,
-            paddingHorizontal: 28,
-            paddingVertical: 36,
             borderRadius: 16,
-            shadowColor: "#000",
+            maxHeight: "82%",
+            paddingBottom: 8,
           }}
         >
-          <TouchableOpacity
-            onPress={resetAIDescriptionState}
-            style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
-          >
-            <MaterialCommunityIcons
-              name="close"
-              size={24}
-              color={primaryTextColor}
-            />
-          </TouchableOpacity>
+          <View style={{ padding: 24, paddingBottom: 16 }}>
+            <TouchableOpacity
+              onPress={resetAIDescriptionState}
+              style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={24}
+                color={primaryTextColor}
+              />
+            </TouchableOpacity>
+            <View
+              style={{
+                alignSelf: "flex-start",
+                backgroundColor: isDark ? "#2d2b5e" : "#ededfd",
+                borderRadius: 6,
+                paddingHorizontal: 10,
+                paddingVertical: 3,
+                marginBottom: 10,
+              }}
+            >
+              <Text
+                style={{
+                  fontFamily: "Poppins-SemiBold",
+                  fontSize: 12,
+                  color: "#5b55f6",
+                }}
+              >
+                AI Powered
+              </Text>
+            </View>
+            <Text
+              style={{
+                fontSize: 20,
+                fontFamily: "Poppins-Bold",
+                color: primaryTextColor,
+                paddingRight: 32,
+              }}
+            >
+              AI Activity Summary
+            </Text>
+          </View>
 
-          <Text
+          <View
             style={{
-              fontSize: 24,
-              fontFamily: "Poppins-SemiBold",
-              color: primaryTextColor,
-              marginBottom: 16,
+              height: 1,
+              backgroundColor: borderColor,
+              marginHorizontal: 24,
             }}
-          >
-            AI Activity Summary
-          </Text>
-
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: "Poppins-Regular",
-              color: secondaryTextColor,
-              marginBottom: 24,
-            }}
-            selectable={true}
-          >
-            {aiDescription}
-          </Text>
-
-          <CustomButton
-            title="Replace Current Description"
-            onPress={replaceAIDescription}
           />
+
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ padding: 24 }}
+          >
+            <Text
+              style={{
+                fontSize: 15,
+                fontFamily: "Poppins-Regular",
+                color: secondaryTextColor,
+                lineHeight: 24,
+                marginBottom: 20,
+              }}
+              selectable={true}
+            >
+              {aiDescription}
+            </Text>
+            <CustomButton
+              title="Replace Current Description"
+              onPress={replaceAIDescription}
+            />
+          </ScrollView>
         </View>
       </ReactNativeModal>
       {/* AI Loading Overlay */}

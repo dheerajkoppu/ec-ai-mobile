@@ -7,6 +7,7 @@ import {
   Dimensions,
   Platform,
   StyleSheet,
+  ActionSheetIOS,
 } from "react-native";
 import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -100,6 +101,64 @@ const Opportunities = () => {
   }, [lastSwipeDate]);
 
   const openReport = (op: Opportunity) => {
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          title: `Report "${op.title}"`,
+          message: "Why are you reporting this opportunity?",
+          options: ["Scam", "Inaccurate info", "Other", "Cancel"],
+          cancelButtonIndex: 3,
+          destructiveButtonIndex: 3,
+        },
+        async (buttonIndex) => {
+          if (buttonIndex === 3) return;
+          const reasons = ["Scam", "Inaccurate info", "Other"];
+          const reason = reasons[buttonIndex];
+
+          const doSubmit = async (details: string) => {
+            try {
+              const token = await getToken();
+              const res = await fetch(
+                "https://ec-ai.expo.app/reportopportunity",
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                  },
+                  body: JSON.stringify({
+                    opportunity_id: op.id,
+                    reason,
+                    details,
+                  }),
+                },
+              );
+              if (!res.ok) throw new Error(await res.text());
+              await Haptics.notificationAsync(
+                Haptics.NotificationFeedbackType.Success,
+              );
+              Alert.alert("Report submitted", "Thank you for your feedback.");
+            } catch (err: any) {
+              Alert.alert("Error", err.message || "Could not submit report.");
+            }
+          };
+
+          if (reason === "Inaccurate info" || reason === "Other") {
+            Alert.prompt(
+              "Add Details",
+              "Please describe what's wrong",
+              async (details) => {
+                await doSubmit(details ?? "");
+              },
+              "plain-text",
+            );
+          } else {
+            await doSubmit("");
+          }
+        },
+      );
+      return;
+    }
     setReportingOp(op);
     setReportReason("");
     setReportDetails("");

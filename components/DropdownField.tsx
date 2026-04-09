@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { View, Text, StyleSheet, useColorScheme, Platform } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  useColorScheme,
+  Platform,
+  StyleProp,
+  ViewStyle,
+} from "react-native";
 import {
   Host,
   Menu,
@@ -27,6 +35,8 @@ interface DropdownFieldProps {
   value: string;
   onChange: (item: { label: string; value: string }) => void;
   placeholder: string;
+  containerStyle?: StyleProp<ViewStyle>;
+  nativeHostStyle?: StyleProp<ViewStyle>;
 }
 
 const DropdownField: React.FC<DropdownFieldProps> = ({
@@ -35,6 +45,8 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
   value,
   onChange,
   placeholder,
+  containerStyle,
+  nativeHostStyle,
 }) => {
   const [isFocus, setIsFocus] = useState(false);
   const scheme = useColorScheme();
@@ -67,12 +79,12 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
 
   if (Platform.OS === "ios") {
     return (
-      <View style={styles.container}>
+      <View style={[styles.container, containerStyle]}>
         {renderLabel()}
         <Host
           matchContents={{ vertical: true }}
           colorScheme={isDark ? "dark" : "light"}
-          style={styles.nativeHost}
+          style={[styles.nativeHost, nativeHostStyle]}
         >
           <Menu
             label={
@@ -127,7 +139,7 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       {renderLabel()}
       <Dropdown
         data={data}
@@ -196,7 +208,7 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 50,
     overflow: "visible",
-    marginTop: 8,
+    marginTop: 4,
   },
 });
 
