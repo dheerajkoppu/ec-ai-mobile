@@ -8,12 +8,15 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
+  ActionSheetIOS,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Activity } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
+
 import ReactNativeModal from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomButton from "@/components/CustomButton";
@@ -37,9 +40,14 @@ const TrackActivities = () => {
   const [activities, setActivities] = useState<Activity[]>([]);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const primaryTextColor = isDark ? "#f5f5f5" : "#111827";
+  const secondaryTextColor = isDark ? "#d4d4d8" : "#374151";
+  const mutedTextColor = isDark ? "#a1a1aa" : "#6b7280";
+  const surfaceColor = isDark ? "#1e1e1e" : "#ffffff";
+  const elevatedSurfaceColor = isDark ? "#1a1a1a" : "#ffffff";
+  const borderColor = isDark ? "#3f3f46" : "#d1d5db";
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const [, setSortOption] = useState<string>("mostRecent");
-  const [showSortDropdown, setShowSortDropdown] = useState<boolean>(false);
+  const [sortOption, setSortOption] = useState<string>("mostRecent");
   const [refreshing, setRefreshing] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
@@ -203,16 +211,52 @@ const TrackActivities = () => {
     }
   };
 
+  const sortLabels: Record<string, string> = {
+    mostRecent: "Most Recent",
+    hours: "Hours",
+    category: "Career Field",
+  };
+
   const sortActivities = (option: string) => {
-    let sortedActivities = [...activities];
-    if (option === "hours") {
-      sortedActivities.sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
-    } else if (option === "category") {
-      sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
+    if (option === "mostRecent") {
+      if (fetchedActivities && Array.isArray(fetchedActivities)) {
+        setActivities(fetchedActivities);
+      }
+    } else {
+      let sortedActivities = [...activities];
+      if (option === "hours") {
+        sortedActivities.sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
+      } else if (option === "category") {
+        sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
+      }
+      setActivities(sortedActivities);
     }
     setSortOption(option);
-    setActivities(sortedActivities);
-    setShowSortDropdown(false);
+  };
+
+  const showSortOptions = () => {
+    const options = ["Cancel", "Most Recent", "Hours", "Career Field"];
+    if (Platform.OS === "ios") {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options,
+          cancelButtonIndex: 0,
+          title: "Sort By",
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) sortActivities("mostRecent");
+          else if (buttonIndex === 2) sortActivities("hours");
+          else if (buttonIndex === 3) sortActivities("category");
+        },
+      );
+    } else {
+      Alert.alert("Sort By", undefined, [
+        { text: "Most Recent", onPress: () => sortActivities("mostRecent") },
+        { text: "Hours", onPress: () => sortActivities("hours") },
+        { text: "Career Field", onPress: () => sortActivities("category") },
+        { text: "Cancel", style: "cancel" },
+      ]);
+    }
   };
 
   const filteredActivities = activities.filter((activity) =>
@@ -253,14 +297,10 @@ const TrackActivities = () => {
 
   const getAIDescription = async (activity: Activity) => {
     if (aiDescriptionLoading) return;
-    setAiDescriptionLoading(true);
-    setShowAIDescriptionModal(false);
-    setSelectedActivityForAIDescription(null);
-    setAiDescription("");
+
     try {
       const customerInfo = await Purchases.getCustomerInfo();
-      const isPremium =
-        customerInfo.entitlements.active["premium"] !== undefined;
+      let isPremium = customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
         const result = await RevenueCatUI.presentPaywallIfNeeded({
@@ -271,12 +311,17 @@ const TrackActivities = () => {
           result === PAYWALL_RESULT.PURCHASED ||
           result === PAYWALL_RESULT.RESTORED
         ) {
-          setAiDescriptionLoading(false);
-          return await getAIDescription(activity); // Retry after upgrade
+          isPremium = true;
         } else {
           return;
         }
       }
+
+      setShowAIDescriptionModal(false);
+      setSelectedActivityForAIDescription(null);
+      setAiDescription("");
+      setPendingAIResult(false);
+      setAiDescriptionLoading(true);
 
       const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/getaidescription", {
@@ -347,9 +392,12 @@ const TrackActivities = () => {
       className={`flex-1 px-4 py-6 ${isDark ? "bg-[#121212]" : "bg-primary-200"}`}
     >
       <Text
-        className={`text-3xl font-bold font-PoppinsBold pb-2 ${
-          isDark ? "text-white" : "text-gray-800"
-        }`}
+        style={{
+          fontSize: 30,
+          fontFamily: "Poppins-Bold",
+          paddingBottom: 8,
+          color: primaryTextColor,
+        }}
       >
         {" "}
         Track Activities
@@ -368,31 +416,41 @@ const TrackActivities = () => {
         value={searchQuery}
         onChangeText={setSearchQuery}
       />
-      <View className="flex-row mb-4 relative z-10">
+      <View className="flex-row mb-4">
         <TouchableOpacity
-          onPress={() => setShowSortDropdown(!showSortDropdown)}
+          onPress={showSortOptions}
+          style={{
+            backgroundColor: surfaceColor,
+            borderRadius: 12,
+            borderWidth: 1,
+            borderColor,
+            paddingHorizontal: 14,
+            paddingVertical: 10,
+            flexDirection: "row",
+            alignItems: "center",
+            gap: 6,
+          }}
         >
-          <Text className="text-general-400 font-PoppinsBold">Sort By ▾</Text>
+          <Text
+            style={{
+              color: primaryTextColor,
+              fontFamily: "Poppins-SemiBold",
+              fontSize: 14,
+            }}
+          >
+            Sort: {sortLabels[sortOption]} ▾
+          </Text>
         </TouchableOpacity>
-
-        {showSortDropdown && (
-          <View className="absolute bg-white p-2 rounded-lg shadow-lg px-5 mt-6 py-3 z-20">
-            <TouchableOpacity onPress={() => sortActivities("hours")}>
-              <Text className="text-general-400 font-PoppinsSemiBold mb-2">
-                Hours
-              </Text>
-            </TouchableOpacity>
-            <View className="border-b border-gray-300 mb-2" />
-            <TouchableOpacity onPress={() => sortActivities("category")}>
-              <Text className="text-general-400 font-PoppinsSemiBold">
-                Career Field
-              </Text>
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
       {!loading && filteredActivities.length === 0 ? (
-        <Text className="text-center text-gray-500 font-PoppinsRegular mt-10">
+        <Text
+          style={{
+            textAlign: "center",
+            color: mutedTextColor,
+            fontFamily: "Poppins-Regular",
+            marginTop: 40,
+          }}
+        >
           No activities found.
         </Text>
       ) : (
@@ -410,7 +468,7 @@ const TrackActivities = () => {
                 await openLogs(item);
               }}
               style={{
-                backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                backgroundColor: surfaceColor,
                 padding: 16,
                 marginBottom: 16,
                 borderRadius: 10,
@@ -421,36 +479,58 @@ const TrackActivities = () => {
                 elevation: 3,
               }}
             >
-              <Text
-                className={`font-bold font-PoppinsSemiBold text-base mb-2 ${
-                  isDark ? "text-white" : "text-black"
-                }`}
+              <View
+                style={{
+                  alignSelf: "flex-start",
+                  backgroundColor: isDark ? "#2d2b5e" : "#ededfd",
+                  borderRadius: 6,
+                  paddingHorizontal: 10,
+                  paddingVertical: 3,
+                  marginBottom: 10,
+                }}
               >
-                {item.category}
-              </Text>
+                <Text
+                  style={{
+                    fontFamily: "Poppins-SemiBold",
+                    fontSize: 12,
+                    color: "#5b55f6",
+                  }}
+                >
+                  {item.category}
+                </Text>
+              </View>
 
               <View className="flex-row">
                 <View className="w-24">
                   <Text
-                    className={`font-PoppinsRegular mb-1 text-xs ${
-                      isDark ? "text-white" : "text-black"
-                    }`}
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      fontSize: 12,
+                      marginBottom: 4,
+                      color: secondaryTextColor,
+                    }}
                   >
                     {item.grade}
                   </Text>
 
                   <Text
-                    className={`font-PoppinsRegular mb-1 text-xs ${
-                      isDark ? "text-white" : "text-black"
-                    }`}
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      fontSize: 12,
+                      marginBottom: 4,
+                      color: secondaryTextColor,
+                    }}
                   >
                     {" "}
                     {item.hoursPerWeek} hr/wk
                   </Text>
                   <Text
-                    className={`font-PoppinsRegular mb-1 text-xs ${
-                      isDark ? "text-white" : "text-black"
-                    }`}
+                    style={{
+                      fontFamily: "Poppins-Regular",
+                      fontSize: 12,
+                      marginBottom: 4,
+                      color: secondaryTextColor,
+                    }}
                   >
                     {" "}
                     {item.weeksPerYear} wk/yr
@@ -458,9 +538,11 @@ const TrackActivities = () => {
                 </View>
                 <View className="flex-1">
                   <Text
-                    className={`font-PoppinsSemiBold mb-1 ${
-                      isDark ? "text-white" : "text-black"
-                    }`}
+                    style={{
+                      fontFamily: "Poppins-SemiBold",
+                      marginBottom: 4,
+                      color: primaryTextColor,
+                    }}
                   >
                     {item.name}
                   </Text>
@@ -470,7 +552,7 @@ const TrackActivities = () => {
                       style={{
                         fontFamily: "Poppins-Regular",
                         fontSize: 12,
-                        color: isDark ? "#ccc" : "#444",
+                        color: secondaryTextColor,
                         marginBottom: 4,
                       }}
                     >
@@ -481,7 +563,7 @@ const TrackActivities = () => {
                     style={{
                       fontFamily: "Poppins-Regular",
                       fontSize: 12,
-                      color: isDark ? "#bbb" : "#333",
+                      color: mutedTextColor,
                       marginBottom: 8,
                     }}
                   >
@@ -558,7 +640,7 @@ const TrackActivities = () => {
       >
         <View
           style={{
-            backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+            backgroundColor: elevatedSurfaceColor,
             paddingHorizontal: 28,
             paddingVertical: 36,
             borderRadius: 16,
@@ -576,14 +658,14 @@ const TrackActivities = () => {
             <MaterialCommunityIcons
               name="close"
               size={24}
-              color={isDark ? "#fff" : "#000"}
+              color={primaryTextColor}
             />
           </TouchableOpacity>
           <Text
             style={{
               fontSize: 24,
               fontFamily: "Poppins-Bold",
-              color: isDark ? "#fff" : "#1f2937",
+              color: primaryTextColor,
               marginBottom: 12,
             }}
           >
@@ -628,7 +710,7 @@ const TrackActivities = () => {
                           fontWeight: "600",
                           fontSize: 18,
                           fontFamily: "Poppins-Bold",
-                          color: isDark ? "#fff" : "#000",
+                          color: primaryTextColor,
                         }}
                       >
                         Career Field <Text style={{ color: "#ef4444" }}>*</Text>
@@ -657,7 +739,7 @@ const TrackActivities = () => {
                 <View style={{ marginBottom: 16 }}>
                   <Text
                     style={{
-                      color: isDark ? "#fff" : "#000",
+                      color: primaryTextColor,
                       fontWeight: "600",
                       fontSize: 18,
                       fontFamily: "Poppins-Bold",
@@ -697,7 +779,7 @@ const TrackActivities = () => {
                               ? "#fff"
                               : isDark
                                 ? "#e0e0e0"
-                                : "#000",
+                                : "#111827",
                           }}
                         >
                           {grade}
@@ -763,7 +845,7 @@ const TrackActivities = () => {
       >
         <View
           style={{
-            backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+            backgroundColor: surfaceColor,
             paddingHorizontal: 28,
             paddingVertical: 36,
             borderRadius: 16,
@@ -778,7 +860,7 @@ const TrackActivities = () => {
             <MaterialCommunityIcons
               name="close"
               size={24}
-              color={isDark ? "#fff" : "#000"}
+              color={primaryTextColor}
             />
           </TouchableOpacity>
 
@@ -786,7 +868,7 @@ const TrackActivities = () => {
             style={{
               fontSize: 24,
               fontWeight: "bold",
-              color: isDark ? "#fff" : "#1f2937",
+              color: primaryTextColor,
               marginBottom: 16,
             }}
           >
@@ -794,9 +876,7 @@ const TrackActivities = () => {
           </Text>
 
           {logs.length === 0 ? (
-            <Text
-              style={{ color: isDark ? "#aaa" : "#4b5563", marginBottom: 16 }}
-            >
+            <Text style={{ color: mutedTextColor, marginBottom: 16 }}>
               No logs found.
             </Text>
           ) : (
@@ -815,7 +895,7 @@ const TrackActivities = () => {
                   <Text
                     style={{
                       fontFamily: "Poppins-Bold",
-                      color: isDark ? "#fff" : "#000",
+                      color: primaryTextColor,
                     }}
                   >
                     Date: {formatDate(item.date_of_activity)}
@@ -823,7 +903,7 @@ const TrackActivities = () => {
                   <Text
                     style={{
                       fontFamily: "Poppins-Regular",
-                      color: isDark ? "#ccc" : "#222",
+                      color: secondaryTextColor,
                     }}
                   >
                     Hours Logged: {item.hours_logged}
@@ -831,7 +911,7 @@ const TrackActivities = () => {
                   <Text
                     style={{
                       fontFamily: "Poppins-Regular",
-                      color: isDark ? "#ccc" : "#222",
+                      color: secondaryTextColor,
                     }}
                   >
                     Description: {item.description}
@@ -858,7 +938,7 @@ const TrackActivities = () => {
       >
         <View
           style={{
-            backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+            backgroundColor: surfaceColor,
             paddingHorizontal: 28,
             paddingVertical: 36,
             borderRadius: 16,
@@ -872,7 +952,7 @@ const TrackActivities = () => {
             <MaterialCommunityIcons
               name="close"
               size={24}
-              color={isDark ? "#fff" : "#000"}
+              color={primaryTextColor}
             />
           </TouchableOpacity>
 
@@ -880,7 +960,7 @@ const TrackActivities = () => {
             style={{
               fontSize: 24,
               fontFamily: "Poppins-SemiBold",
-              color: isDark ? "#fff" : "#1f2937",
+              color: primaryTextColor,
               marginBottom: 16,
             }}
           >
@@ -891,7 +971,7 @@ const TrackActivities = () => {
             style={{
               fontSize: 16,
               fontFamily: "Poppins-Regular",
-              color: isDark ? "#ccc" : "#374151",
+              color: secondaryTextColor,
               marginBottom: 24,
             }}
             selectable={true}
@@ -935,7 +1015,7 @@ const TrackActivities = () => {
         >
           <View
             style={{
-              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+              backgroundColor: surfaceColor,
               borderRadius: 16,
               paddingHorizontal: 40,
               paddingVertical: 36,
@@ -952,7 +1032,7 @@ const TrackActivities = () => {
               style={{
                 fontFamily: "Poppins-SemiBold",
                 fontSize: 16,
-                color: isDark ? "#fff" : "#1f2937",
+                color: primaryTextColor,
                 marginTop: 16,
               }}
             >
@@ -962,7 +1042,7 @@ const TrackActivities = () => {
               style={{
                 fontFamily: "Poppins-Regular",
                 fontSize: 13,
-                color: isDark ? "#aaa" : "#6b7280",
+                color: mutedTextColor,
                 marginTop: 6,
               }}
             >

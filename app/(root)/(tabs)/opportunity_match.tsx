@@ -5,10 +5,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
-  ImageBackground,
   Platform,
   StyleSheet,
 } from "react-native";
+import { Image } from "expo-image";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Alert } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
@@ -41,7 +41,7 @@ interface Opportunity {
 
 const { width } = Dimensions.get("window");
 const CARD_WIDTH = width - 40;
-const CARD_HEIGHT = 520;
+const CARD_HEIGHT = 600;
 const REPORT_BUTTON_SIZE = 38;
 const REPORT_ICON_COLOR = "#5B55F6";
 
@@ -328,12 +328,13 @@ const Opportunities = () => {
       style={{
         flex: 1,
         paddingHorizontal: 16,
-        paddingVertical: 24,
+        paddingTop: 8,
+        paddingBottom: 24,
         backgroundColor: isDark ? "#121212" : "#F5F7FA",
       }}
     >
       {/* Header */}
-      <View style={{ alignItems: "center", marginVertical: 16 }}>
+      <View style={{ alignItems: "center", marginVertical: 8 }}>
         <Text
           allowFontScaling={false}
           style={{
@@ -375,7 +376,7 @@ const Opportunities = () => {
         verticalSwipe={false}
         cardVerticalMargin={20}
         backgroundColor="transparent"
-        containerStyle={{ flex: 1, marginTop: 150 }}
+        containerStyle={{ flex: 1, marginTop: 130 }}
         renderCard={(item, index) => {
           // Show ad every 3 swipes (index 2, 5, 8, ...)
           if (!isPremium && (index + 1) % 3 === 0) {
@@ -384,30 +385,41 @@ const Opportunities = () => {
 
           return (
             <View>
-              <ImageBackground
-                source={{ uri: item.pictureurl }}
+              <View
                 style={{
                   width: CARD_WIDTH,
                   height: CARD_HEIGHT,
                   backgroundColor: "#FFF",
                   borderRadius: 12,
-                  padding: 16,
                   shadowColor: "#000",
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.1,
                   shadowRadius: 8,
                   elevation: 4,
                   alignSelf: "center",
+                  overflow: "hidden",
                 }}
-                imageStyle={{ borderRadius: 12 }}
               >
+                <Image
+                  source={{ uri: item.pictureurl }}
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    borderRadius: 12,
+                  }}
+                  contentFit="cover"
+                  cachePolicy="disk"
+                  transition={200}
+                />
                 <View
                   style={{
                     position: "absolute",
                     bottom: 0,
                     left: 0,
                     right: 0,
-                    padding: 16,
+                    paddingTop: 32,
+                    paddingHorizontal: 16,
+                    paddingBottom: 16,
                     backgroundColor: "rgba(0, 0, 0, 0.5)",
                     borderBottomLeftRadius: 12,
                     borderBottomRightRadius: 12,
@@ -437,7 +449,7 @@ const Opportunities = () => {
                     </Text>
                   )}
                 </View>
-              </ImageBackground>
+              </View>
 
               {/* Report icon */}
               <TouchableOpacity
