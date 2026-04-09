@@ -2,11 +2,10 @@ import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
-import { googleOAuth } from "@/lib/auth";
+import { getOAuthRedirectUrl, googleOAuth } from "@/lib/auth";
 import { useColorScheme } from "react-native";
 
 WebBrowser.maybeCompleteAuthSession();
@@ -16,9 +15,7 @@ const OAuth = () => {
   const isDark = useColorScheme() === "dark";
 
   const handleGoogleSignIn = async () => {
-    const redirectUrl = AuthSession.makeRedirectUri({
-      native: "myapp://oauth-redirect",
-    });
+    const redirectUrl = getOAuthRedirectUrl();
     const result = await googleOAuth(() => startOAuthFlow({ redirectUrl }));
 
     if (result.code === "session_exists" || result.code === "success") {

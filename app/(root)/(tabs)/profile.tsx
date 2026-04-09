@@ -22,9 +22,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as FileSystem from "expo-file-system/legacy";
 import { useRouter } from "expo-router";
 import Purchases from "react-native-purchases";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { fetchAPI } from "@/lib/fetch";
 import * as Haptics from "expo-haptics";
+import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 
 const Profile = () => {
   const { user } = useUser();
@@ -239,9 +240,7 @@ const Profile = () => {
             title={isPremium ? "Premium" : "Subscribe to Premium"}
             onPress={async () => {
               if (!isPremium) {
-                const result = await RevenueCatUI.presentPaywallIfNeeded({
-                  requiredEntitlementIdentifier: "premium",
-                });
+                const result = await presentPremiumPaywallIfNeeded();
                 if (
                   [PAYWALL_RESULT.PURCHASED, PAYWALL_RESULT.RESTORED].includes(
                     result,
@@ -299,9 +298,7 @@ const Profile = () => {
                 );
                 await downloadPDF();
               } else {
-                const result = await RevenueCatUI.presentPaywallIfNeeded({
-                  requiredEntitlementIdentifier: "premium",
-                });
+                const result = await presentPremiumPaywallIfNeeded();
                 if (
                   result === PAYWALL_RESULT.PURCHASED ||
                   result === PAYWALL_RESULT.RESTORED

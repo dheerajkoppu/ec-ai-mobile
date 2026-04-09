@@ -8,9 +8,22 @@ import {
   ActivityIndicator,
   RefreshControl,
   Alert,
-  ActionSheetIOS,
   Platform,
 } from "react-native";
+import {
+  Host,
+  Menu,
+  Button as SwiftUIButton,
+  HStack,
+  Text as SwiftText,
+  Image as SwiftImage,
+} from "@expo/ui/swift-ui";
+import {
+  bold,
+  buttonStyle,
+  controlSize,
+  foregroundStyle,
+} from "@expo/ui/swift-ui/modifiers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Activity } from "@/types/type";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -25,11 +38,12 @@ import { useFetch, fetchAPI } from "@/lib/fetch";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
 import { useLocalSearchParams } from "expo-router";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
+import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 
 const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
 
@@ -48,6 +62,7 @@ const TrackActivities = () => {
   const borderColor = isDark ? "#3f3f46" : "#d1d5db";
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [sortOption, setSortOption] = useState<string>("mostRecent");
+  const [showSortModal, setShowSortModal] = useState<boolean>(false);
   const [refreshing, setRefreshing] = useState(false);
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [editingGrades, setEditingGrades] = useState<string[]>([]);
@@ -69,6 +84,13 @@ const TrackActivities = () => {
   const [aiDescriptionLoading, setAiDescriptionLoading] =
     useState<boolean>(false);
   const [pendingAIResult, setPendingAIResult] = useState<boolean>(false);
+
+  const resetAIDescriptionState = () => {
+    setShowAIDescriptionModal(false);
+    setSelectedActivityForAIDescription(null);
+    setAiDescription("");
+    setPendingAIResult(false);
+  };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
@@ -216,6 +238,23 @@ const TrackActivities = () => {
     hours: "Hours",
     category: "Career Field",
   };
+  const sortChoices = [
+    {
+      key: "mostRecent",
+      label: "Most Recent",
+      icon: "clock-outline" as const,
+    },
+    {
+      key: "hours",
+      label: "Hours",
+      icon: "timer-sand" as const,
+    },
+    {
+      key: "category",
+      label: "Career Field",
+      icon: "briefcase-variant-outline" as const,
+    },
+  ];
 
   const sortActivities = (option: string) => {
     if (option === "mostRecent") {
@@ -235,28 +274,7 @@ const TrackActivities = () => {
   };
 
   const showSortOptions = () => {
-    const options = ["Cancel", "Most Recent", "Hours", "Career Field"];
-    if (Platform.OS === "ios") {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          options,
-          cancelButtonIndex: 0,
-          title: "Sort By",
-        },
-        (buttonIndex) => {
-          if (buttonIndex === 1) sortActivities("mostRecent");
-          else if (buttonIndex === 2) sortActivities("hours");
-          else if (buttonIndex === 3) sortActivities("category");
-        },
-      );
-    } else {
-      Alert.alert("Sort By", undefined, [
-        { text: "Most Recent", onPress: () => sortActivities("mostRecent") },
-        { text: "Hours", onPress: () => sortActivities("hours") },
-        { text: "Career Field", onPress: () => sortActivities("category") },
-        { text: "Cancel", style: "cancel" },
-      ]);
-    }
+    setShowSortModal(true);
   };
 
   const filteredActivities = activities.filter((activity) =>
@@ -299,13 +317,13 @@ const TrackActivities = () => {
     if (aiDescriptionLoading) return;
 
     try {
+      resetAIDescriptionState();
+
       const customerInfo = await Purchases.getCustomerInfo();
       let isPremium = customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
-        const result = await RevenueCatUI.presentPaywallIfNeeded({
-          requiredEntitlementIdentifier: "premium",
-        });
+        const result = await presentPremiumPaywallIfNeeded();
 
         if (
           result === PAYWALL_RESULT.PURCHASED ||
@@ -317,10 +335,6 @@ const TrackActivities = () => {
         }
       }
 
-      setShowAIDescriptionModal(false);
-      setSelectedActivityForAIDescription(null);
-      setAiDescription("");
-      setPendingAIResult(false);
       setAiDescriptionLoading(true);
 
       const token = await getToken();
@@ -376,9 +390,7 @@ const TrackActivities = () => {
         }),
       });
       await refetch();
-      setShowAIDescriptionModal(false);
-      setSelectedActivityForAIDescription(null);
-      setAiDescription("");
+      resetAIDescriptionState();
       Alert.alert("Success", "Activity description replaced successfully.");
     } catch (error) {
       console.log("Error replacing description:", error);
@@ -417,30 +429,106 @@ const TrackActivities = () => {
         onChangeText={setSearchQuery}
       />
       <View className="flex-row mb-4">
-        <TouchableOpacity
-          onPress={showSortOptions}
-          style={{
-            backgroundColor: surfaceColor,
-            borderRadius: 12,
-            borderWidth: 1,
-            borderColor,
-            paddingHorizontal: 14,
-            paddingVertical: 10,
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 6,
-          }}
-        >
-          <Text
+        {Platform.OS === "ios" &&
+        !showEditModal &&
+        !showLogsModal &&
+        !showAIDescriptionModal ? (
+          <Host
+            matchContents={{ vertical: true }}
+            colorScheme={isDark ? "dark" : "light"}
+            style={{ minWidth: 200, minHeight: 44 }}
+          >
+            <Menu
+              label={
+                <HStack spacing={4}>
+                  <HStack spacing={0}>
+                    <SwiftText
+                      modifiers={[
+                        foregroundStyle(isDark ? "#f5f5f5" : "#111827"),
+                        bold(),
+                      ]}
+                    >
+                      {"Sort: "}
+                    </SwiftText>
+                    <SwiftText
+                      modifiers={[
+                        foregroundStyle(isDark ? "#f5f5f5" : "#111827"),
+                      ]}
+                    >
+                      {sortLabels[sortOption]}
+                    </SwiftText>
+                  </HStack>
+                  <SwiftImage
+                    systemName="chevron.up.chevron.down"
+                    size={10}
+                    color={isDark ? "#a1a1aa" : "#6b7280"}
+                  />
+                </HStack>
+              }
+              modifiers={[buttonStyle("bordered"), controlSize("small")]}
+            >
+              {sortChoices.map((choice) => (
+                <SwiftUIButton
+                  key={choice.key}
+                  label={choice.label}
+                  systemImage={
+                    sortOption === choice.key ? "checkmark" : undefined
+                  }
+                  onPress={() => sortActivities(choice.key)}
+                />
+              ))}
+            </Menu>
+          </Host>
+        ) : (
+          <TouchableOpacity
+            onPress={showSortOptions}
             style={{
-              color: primaryTextColor,
-              fontFamily: "Poppins-SemiBold",
-              fontSize: 14,
+              backgroundColor: surfaceColor,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor,
+              paddingHorizontal: 12,
+              paddingVertical: 7,
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 6 },
+              shadowOpacity: isDark ? 0.2 : 0.08,
+              shadowRadius: 12,
+              elevation: 2,
             }}
           >
-            Sort: {sortLabels[sortOption]} ▾
-          </Text>
-        </TouchableOpacity>
+            <View>
+              <Text
+                style={{
+                  color: primaryTextColor,
+                  fontFamily: "Poppins-Regular",
+                  fontSize: 13,
+                }}
+              >
+                <Text style={{ fontFamily: "Poppins-Bold" }}>Sort:</Text>{" "}
+                {sortLabels[sortOption]}
+              </Text>
+            </View>
+            <View
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 16,
+                backgroundColor: isDark ? "#27272a" : "#eef2ff",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MaterialCommunityIcons
+                name="chevron-down"
+                size={20}
+                color={isDark ? "#c4b5fd" : "#5b55f6"}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
       </View>
       {!loading && filteredActivities.length === 0 ? (
         <Text
@@ -618,6 +706,191 @@ const TrackActivities = () => {
           )}
         />
       )}
+      {Platform.OS !== "ios" && (
+        <ReactNativeModal
+          isVisible={showSortModal}
+          backdropOpacity={0.4}
+          onBackdropPress={() => setShowSortModal(false)}
+          onBackButtonPress={() => setShowSortModal(false)}
+          useNativeDriver={true}
+          useNativeDriverForBackdrop={true}
+          animationIn="slideInUp"
+          animationOut="slideOutDown"
+          style={{ justifyContent: "flex-end", margin: 0 }}
+        >
+          <View
+            style={{
+              backgroundColor: elevatedSurfaceColor,
+              borderTopLeftRadius: 28,
+              borderTopRightRadius: 28,
+              paddingHorizontal: 20,
+              paddingTop: 14,
+              paddingBottom: 28,
+              borderWidth: 1,
+              borderColor,
+            }}
+          >
+            <View
+              style={{
+                alignSelf: "center",
+                width: 44,
+                height: 5,
+                borderRadius: 999,
+                backgroundColor: isDark ? "#3f3f46" : "#d4d4d8",
+                marginBottom: 18,
+              }}
+            />
+            <Text
+              style={{
+                color: mutedTextColor,
+                fontFamily: "Poppins-Bold",
+                fontSize: 12,
+                letterSpacing: 1,
+                textTransform: "uppercase",
+                marginBottom: 4,
+                textAlign: "center",
+              }}
+            >
+              Organize Activities
+            </Text>
+            <Text
+              style={{
+                color: primaryTextColor,
+                fontFamily: "Poppins-Bold",
+                fontSize: 24,
+                textAlign: "center",
+                marginBottom: 20,
+              }}
+            >
+              Sort By
+            </Text>
+
+            {sortChoices.map((choice) => {
+              const isSelected = sortOption === choice.key;
+
+              return (
+                <TouchableOpacity
+                  key={choice.key}
+                  onPress={() => {
+                    sortActivities(choice.key);
+                    setShowSortModal(false);
+                  }}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    backgroundColor: isSelected
+                      ? isDark
+                        ? "rgba(91, 85, 246, 0.18)"
+                        : "#eef2ff"
+                      : surfaceColor,
+                    borderRadius: 18,
+                    borderWidth: 1,
+                    borderColor: isSelected
+                      ? "#5b55f6"
+                      : isDark
+                        ? "#3f3f46"
+                        : "#e5e7eb",
+                    paddingHorizontal: 16,
+                    paddingVertical: 15,
+                    marginBottom: 12,
+                  }}
+                >
+                  <View
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 12,
+                    }}
+                  >
+                    <View
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 18,
+                        alignItems: "center",
+                        justifyContent: "center",
+                        backgroundColor: isSelected
+                          ? "#5b55f6"
+                          : isDark
+                            ? "#27272a"
+                            : "#f3f4f6",
+                      }}
+                    >
+                      <MaterialCommunityIcons
+                        name={choice.icon}
+                        size={18}
+                        color={isSelected ? "#fff" : secondaryTextColor}
+                      />
+                    </View>
+                    <View>
+                      <Text
+                        style={{
+                          color: primaryTextColor,
+                          fontFamily: isSelected
+                            ? "Poppins-Bold"
+                            : "Poppins-SemiBold",
+                          fontSize: 16,
+                        }}
+                      >
+                        {choice.label}
+                      </Text>
+                      {isSelected && (
+                        <Text
+                          style={{
+                            color: "#5b55f6",
+                            fontFamily: "Poppins-SemiBold",
+                            fontSize: 12,
+                            marginTop: 2,
+                          }}
+                        >
+                          Current sort
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  {isSelected ? (
+                    <MaterialCommunityIcons
+                      name="check-circle"
+                      size={22}
+                      color="#5b55f6"
+                    />
+                  ) : (
+                    <MaterialCommunityIcons
+                      name="chevron-right"
+                      size={20}
+                      color={mutedTextColor}
+                    />
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+
+            <TouchableOpacity
+              onPress={() => setShowSortModal(false)}
+              style={{
+                marginTop: 4,
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: "rgba(239, 68, 68, 0.28)",
+                backgroundColor: isDark ? "rgba(127, 29, 29, 0.28)" : "#fef2f2",
+                paddingVertical: 16,
+                alignItems: "center",
+              }}
+            >
+              <Text
+                style={{
+                  color: "#dc2626",
+                  fontFamily: "Poppins-Bold",
+                  fontSize: 16,
+                }}
+              >
+                Cancel
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ReactNativeModal>
+      )}
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
@@ -686,48 +959,36 @@ const TrackActivities = () => {
                     setEditingActivity({ ...editingActivity, name: value })
                   }
                 />
-                {loadingCareerFields ? (
-                  <ActivityIndicator
-                    size="small"
-                    color="#5b55f6"
-                    style={{ marginVertical: 8 }}
-                  />
-                ) : errorCareerFields ? (
-                  <Text
-                    style={{
-                      color: "#ef4444",
-                      fontFamily: "Poppins-Regular",
-                      marginBottom: 8,
-                    }}
-                  >
-                    Failed to load career fields
-                  </Text>
-                ) : (
-                  <DropdownField
-                    label={
-                      <Text
-                        style={{
-                          fontWeight: "600",
-                          fontSize: 18,
-                          fontFamily: "Poppins-Bold",
-                          color: primaryTextColor,
-                        }}
-                      >
-                        Career Field <Text style={{ color: "#ef4444" }}>*</Text>
-                      </Text>
-                    }
-                    data={careerFields ?? []}
-                    value={editingActivity?.category}
-                    onChange={({ value }) =>
-                      editingActivity &&
-                      setEditingActivity({
-                        ...editingActivity,
-                        category: value,
-                      })
-                    }
-                    placeholder="Select a career field"
-                  />
-                )}
+                <DropdownField
+                  label={
+                    <Text
+                      style={{
+                        fontWeight: "600",
+                        fontSize: 18,
+                        fontFamily: "Poppins-Bold",
+                        color: primaryTextColor,
+                      }}
+                    >
+                      Career Field <Text style={{ color: "#ef4444" }}>*</Text>
+                    </Text>
+                  }
+                  data={careerFields ?? []}
+                  value={editingActivity?.category}
+                  onChange={({ value }) =>
+                    editingActivity &&
+                    setEditingActivity({
+                      ...editingActivity,
+                      category: value,
+                    })
+                  }
+                  placeholder={
+                    loadingCareerFields
+                      ? "Loading..."
+                      : errorCareerFields
+                        ? "Failed to load career fields"
+                        : "Select a career field"
+                  }
+                />
                 <InputField
                   label="Roles"
                   placeholder="Enter Roles"
@@ -934,7 +1195,8 @@ const TrackActivities = () => {
         useNativeDriver={true}
         useNativeDriverForBackdrop={true}
         isVisible={showAIDescriptionModal}
-        onBackdropPress={() => setShowAIDescriptionModal(false)}
+        onBackdropPress={resetAIDescriptionState}
+        onBackButtonPress={resetAIDescriptionState}
       >
         <View
           style={{
@@ -946,7 +1208,7 @@ const TrackActivities = () => {
           }}
         >
           <TouchableOpacity
-            onPress={() => setShowAIDescriptionModal(false)}
+            onPress={resetAIDescriptionState}
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
             <MaterialCommunityIcons

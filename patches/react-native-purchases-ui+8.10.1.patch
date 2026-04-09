@@ -1,0 +1,40 @@
+diff --git a/node_modules/react-native-purchases-ui/android/build.gradle b/node_modules/react-native-purchases-ui/android/build.gradle
+--- a/node_modules/react-native-purchases-ui/android/build.gradle
++++ b/node_modules/react-native-purchases-ui/android/build.gradle
+@@ -73,8 +73,8 @@ android {
+   }
+ 
+   compileOptions {
+-    sourceCompatibility JavaVersion.VERSION_1_8
+-    targetCompatibility JavaVersion.VERSION_1_8
++    sourceCompatibility JavaVersion.VERSION_17
++    targetCompatibility JavaVersion.VERSION_17
+   }
+ }
+diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
+--- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
++++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
+@@ -65,9 +65,9 @@ internal class RNCustomerCenterModule(
+     fun presentCustomerCenter(
+         promise: Promise
+     ) {
+-        currentActivity?.let {
++        getCurrentActivity()?.let { activity ->
+             customerCenterPromise = promise
+-            presentCustomerCenterFromActivity(it)
++            presentCustomerCenterFromActivity(activity)
+         } ?: run {
+             promise.reject(
+                 "CUSTOMER_CENTER_MISSING_ACTIVITY",
+diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+--- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
++++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+@@ -22,7 +22,7 @@ internal class RNPaywallsModule(
+ 
+     private val currentActivityFragment: FragmentActivity?
+         get() {
+-            return when (val currentActivity = currentActivity) {
++            return when (val currentActivity = getCurrentActivity()) {
+                 is FragmentActivity -> currentActivity
+                 else -> {
+                     Log.e(NAME, "RevenueCat paywalls require application to use a FragmentActivity")

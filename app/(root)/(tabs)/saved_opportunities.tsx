@@ -20,8 +20,9 @@ import InputField from "@/components/InputField";
 import CustomButton from "@/components/CustomButton";
 import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
 import Purchases from "react-native-purchases";
-import RevenueCatUI, { PAYWALL_RESULT } from "react-native-purchases-ui";
+import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
+import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 
 interface Opportunity {
   id: string;
@@ -70,6 +71,12 @@ export default function Saved_opportunities() {
   const [showAIReasonsModal, setShowAIReasonsModal] = useState(false);
   const [loadingReason, setLoadingReason] = useState(false);
   const [pendingReasonsResult, setPendingReasonsResult] = useState(false);
+
+  const resetAIReasonsState = () => {
+    setShowAIReasonsModal(false);
+    setAiReasons("");
+    setPendingReasonsResult(false);
+  };
 
   // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
@@ -134,28 +141,28 @@ export default function Saved_opportunities() {
   // Fetch AI-generated personalized reasons for a specific opportunity
   const getAIReasons = async (opportunity: Opportunity) => {
     if (loadingReason) return;
+
     try {
-      setLoadingReason(true);
+      resetAIReasonsState();
 
       const customerInfo = await Purchases.getCustomerInfo();
       const isPremium =
         customerInfo.entitlements.active["premium"] !== undefined;
 
       if (!isPremium) {
-        const result = await RevenueCatUI.presentPaywallIfNeeded({
-          requiredEntitlementIdentifier: "premium",
-        });
+        const result = await presentPremiumPaywallIfNeeded();
 
         if (
           result === PAYWALL_RESULT.PURCHASED ||
           result === PAYWALL_RESULT.RESTORED
         ) {
-          setLoadingReason(false);
-          return await getAIReasons(opportunity); // Retry after upgrade
+          // Continue below with the upgraded entitlement.
         } else {
-          return; // User didn’t upgrade
+          return;
         }
       }
+
+      setLoadingReason(true);
 
       const token = await getToken();
       const response = await fetch("https://ec-ai.expo.app/getaireasons", {
@@ -423,7 +430,8 @@ export default function Saved_opportunities() {
           useNativeDriver
           useNativeDriverForBackdrop
           isVisible={showAIReasonsModal}
-          onBackdropPress={() => setShowAIReasonsModal(false)}
+          onBackdropPress={resetAIReasonsState}
+          onBackButtonPress={resetAIReasonsState}
         >
           <View
             style={{
@@ -433,7 +441,7 @@ export default function Saved_opportunities() {
             }}
           >
             <TouchableOpacity
-              onPress={() => setShowAIReasonsModal(false)}
+              onPress={resetAIReasonsState}
               style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
             >
               <MaterialCommunityIcons
@@ -469,7 +477,7 @@ export default function Saved_opportunities() {
             )}
             <CustomButton
               title="Close"
-              onPress={() => setShowAIReasonsModal(false)}
+              onPress={resetAIReasonsState}
             />
           </View>
         </ReactNativeModal>

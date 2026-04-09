@@ -2,7 +2,6 @@ import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import type { TokenCache } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
-import * as Linking from "expo-linking";
 
 const createTokenCache = (): TokenCache => {
   return {
@@ -26,11 +25,14 @@ const createTokenCache = (): TokenCache => {
 export const tokenCache =
   Platform.OS !== "web" ? createTokenCache() : undefined;
 
+export const OAUTH_REDIRECT_PATH = "oauth-redirect";
+export const OAUTH_REDIRECT_URL = "ec-ai://oauth-redirect";
+
+export const getOAuthRedirectUrl = () => OAUTH_REDIRECT_URL;
+
 async function oauthSignIn(provider: "Google" | "Apple", startOAuthFlow: any) {
   try {
-    const { createdSessionId, setActive, signUp } = await startOAuthFlow({
-      redirectUrl: Linking.createURL("/(root)/(tabs)/opportunity_match"),
-    });
+    const { createdSessionId, setActive, signUp } = await startOAuthFlow();
 
     if (createdSessionId && setActive) {
       await setActive({ session: createdSessionId });

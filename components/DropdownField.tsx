@@ -6,7 +6,6 @@ import {
   Button as SwiftUIButton,
   HStack,
   Text as SwiftText,
-  Spacer,
   Image as SwiftImage,
 } from "@expo/ui/swift-ui";
 import {
@@ -15,7 +14,10 @@ import {
   disabled,
   frame,
   foregroundStyle,
+  layoutPriority,
+  lineLimit,
   opacity,
+  truncationMode,
 } from "@expo/ui/swift-ui/modifiers";
 import { Dropdown } from "react-native-element-dropdown";
 
@@ -60,11 +62,7 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
       );
     }
 
-    return (
-      <Text style={[styles.customLabel, { color: isDark ? "#fff" : "#333" }]}>
-        {label}
-      </Text>
-    );
+    return <View style={styles.customLabel}>{label}</View>;
   };
 
   if (Platform.OS === "ios") {
@@ -88,10 +86,17 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
                   }),
                 ]}
               >
-                <SwiftText modifiers={[foregroundStyle(triggerTextColor)]}>
+                <SwiftText
+                  modifiers={[
+                    foregroundStyle(triggerTextColor),
+                    frame({ maxWidth: 9999, alignment: "leading" }),
+                    layoutPriority(1),
+                    lineLimit(1),
+                    truncationMode("tail"),
+                  ]}
+                >
                   {triggerLabel}
                 </SwiftText>
-                <Spacer />
                 <SwiftImage
                   systemName="chevron.up.chevron.down"
                   size={12}
@@ -189,6 +194,9 @@ const styles = StyleSheet.create({
   },
   nativeHost: {
     width: "100%",
+    minHeight: 50,
+    overflow: "visible",
+    marginTop: 8,
   },
 });
 

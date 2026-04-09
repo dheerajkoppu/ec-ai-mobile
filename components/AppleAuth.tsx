@@ -1,12 +1,11 @@
 import { useOAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
-import { Alert, Image, View, useColorScheme } from "react-native";
+import { Alert, Image, Platform, View, useColorScheme } from "react-native";
 import * as Haptics from "expo-haptics";
-import * as AuthSession from "expo-auth-session";
 import * as WebBrowser from "expo-web-browser";
 import CustomButton from "@/components/CustomButton";
 import { icons } from "@/constants";
-import { appleOAuth } from "@/lib/auth";
+import { appleOAuth, getOAuthRedirectUrl } from "@/lib/auth";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -14,11 +13,12 @@ const AppleAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
   const colorScheme = useColorScheme();
 
-  const handleAppleSignIn = async () => {
-    const redirectUrl = AuthSession.makeRedirectUri({
-      native: "myapp://oauth-redirect",
-    });
+  if (Platform.OS !== "ios") {
+    return null;
+  }
 
+  const handleAppleSignIn = async () => {
+    const redirectUrl = getOAuthRedirectUrl();
     const result = await appleOAuth(() => startOAuthFlow({ redirectUrl }));
 
     if (result.code === "session_exists" || result.code === "success") {

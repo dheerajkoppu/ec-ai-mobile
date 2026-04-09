@@ -1,6 +1,19 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Text, TouchableOpacity, View, Alert, Pressable } from "react-native";
-import { Host, DatePicker } from "@expo/ui/swift-ui";
+import {
+  Text,
+  TouchableOpacity,
+  View,
+  Alert,
+  Pressable,
+  Platform,
+} from "react-native";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import {
+  controlSize,
+  datePickerStyle,
+} from "@expo/ui/swift-ui/modifiers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
@@ -19,6 +32,18 @@ type DropdownItem = {
   label: string;
   value: string;
 };
+
+const getFormLabelStyle = (isDark: boolean) => ({
+  color: isDark ? "#fff" : "#000",
+  fontSize: 18,
+  fontFamily: "Poppins-Bold" as const,
+});
+
+const renderRequiredLabel = (label: string, isDark: boolean) => (
+  <Text style={getFormLabelStyle(isDark)}>
+    {label} <Text style={{ color: "#ef4444" }}>*</Text>
+  </Text>
+);
 
 const ActivityTabs = () => {
   const { user } = useUser();
@@ -270,84 +295,34 @@ const ActivityTabs = () => {
             }}
           >
             <InputField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Name of Activity <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Name of Activity", isDark)}
               value={activityName}
               placeholder="ex. Future Business Leader of America"
               onChangeText={setActivityName}
             />
             <DropdownField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Activity Type <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Activity Type", isDark)}
               placeholder="Select activity type"
               data={activities}
               value={activityType}
               onChange={(item: DropdownItem) => setActivityType(item.value)}
             />
             <InputField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Hours Per Week <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Hours Per Week", isDark)}
               value={timeSpent}
               placeholder="Enter hours"
               onChangeText={setTimeSpent}
               keyboardType="number-pad"
             />
             <InputField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Weeks Per Year <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Weeks Per Year", isDark)}
               value={weeksPerYear}
               placeholder="Enter weeks"
               onChangeText={setWeeksPerYear}
               keyboardType="number-pad"
             />
             <InputField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Roles <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Roles", isDark)}
               value={roles}
               placeholder="ex. President (12)"
               onChangeText={setRoles}
@@ -427,17 +402,7 @@ const ActivityTabs = () => {
             }}
           >
             <DropdownField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Name of Activity <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Name of Activity", isDark)}
               placeholder="Select activity"
               data={formattedActivityNames}
               value={selectedActivityId}
@@ -447,17 +412,7 @@ const ActivityTabs = () => {
             />
             <DateInputField logDate={logDate} setLogDate={setLogDate} />
             <InputField
-              label={
-                <Text
-                  style={{
-                    color: isDark ? "#fff" : "#000",
-                    fontWeight: "600",
-                    fontSize: 18,
-                  }}
-                >
-                  Hours <Text className="text-red-500">*</Text>
-                </Text>
-              }
+              label={renderRequiredLabel("Hours", isDark)}
               value={logHours}
               placeholder="Enter hours"
               onChangeText={setLogHours}
@@ -489,6 +444,21 @@ const DateInputField = ({
   setLogDate: (date: Date) => void;
 }) => {
   const isDark = useColorScheme() === "dark";
+  const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+  const iosPicker = Platform.OS === "ios"
+    ? require("@expo/ui/swift-ui")
+    : null;
+
+  const handleAndroidDateChange = (
+    event: DateTimePickerEvent,
+    selectedDate?: Date,
+  ) => {
+    setShowAndroidPicker(false);
+
+    if (event.type === "set" && selectedDate) {
+      setLogDate(selectedDate);
+    }
+  };
 
   return (
     <View
@@ -500,24 +470,55 @@ const DateInputField = ({
       }}
     >
       <Text
-        style={{
-          color: isDark ? "#fff" : "#000",
-          fontWeight: "600",
-          fontSize: 18,
-          fontFamily: "Poppins-Bold",
-        }}
+        style={getFormLabelStyle(isDark)}
       >
         Date of Activity <Text style={{ color: "#ef4444" }}>*</Text>
       </Text>
-      <Host matchContents>
-        <DatePicker
-          title=""
-          selection={logDate}
-          displayedComponents={["date"]}
-          range={{ end: new Date() }}
-          onDateChange={(date) => setLogDate(date)}
-        />
-      </Host>
+      {Platform.OS === "ios" && iosPicker ? (
+        <iosPicker.Host matchContents>
+          <iosPicker.DatePicker
+            title=""
+            selection={logDate}
+            displayedComponents={["date"]}
+            range={{ end: new Date() }}
+            modifiers={[datePickerStyle("compact"), controlSize("small")]}
+            onDateChange={(date) => setLogDate(date)}
+          />
+        </iosPicker.Host>
+      ) : (
+        <>
+          <Pressable
+            onPress={() => setShowAndroidPicker(true)}
+            style={{
+              borderWidth: 1,
+              borderColor: isDark ? "#3f3f46" : "#d1d5db",
+              backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+              borderRadius: 10,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              minWidth: 128,
+            }}
+          >
+            <Text
+              style={{
+                color: isDark ? "#fff" : "#111827",
+                fontFamily: "Poppins-Regular",
+                fontSize: 14,
+              }}
+            >
+              {formatDateToYMD(logDate)}
+            </Text>
+          </Pressable>
+          {showAndroidPicker ? (
+            <DateTimePicker
+              mode="date"
+              value={logDate}
+              maximumDate={new Date()}
+              onChange={handleAndroidDateChange}
+            />
+          ) : null}
+        </>
+      )}
     </View>
   );
 };

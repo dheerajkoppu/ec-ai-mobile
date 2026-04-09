@@ -1,0 +1,13 @@
+diff --git a/node_modules/react-native-purchases/android/build.gradle b/node_modules/react-native-purchases/android/build.gradle
+--- a/node_modules/react-native-purchases/android/build.gradle
++++ b/node_modules/react-native-purchases/android/build.gradle
+@@ -41,8 +41,8 @@ android {
+         disable 'GradleCompatible'
+     }
+     compileOptions {
+-        sourceCompatibility JavaVersion.VERSION_1_8
+-        targetCompatibility JavaVersion.VERSION_1_8
++        sourceCompatibility JavaVersion.VERSION_17
++        targetCompatibility JavaVersion.VERSION_17
+     }
+ }

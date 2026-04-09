@@ -1,0 +1,43 @@
+diff --git a/node_modules/react-native/scripts/replace-rncore-version.js b/node_modules/react-native/scripts/replace-rncore-version.js
+index 55ce8aa..33b9cf1 100644
+--- a/node_modules/react-native/scripts/replace-rncore-version.js
++++ b/node_modules/react-native/scripts/replace-rncore-version.js
+@@ -131,6 +131,24 @@ function updateLastBuildConfiguration(configuration /*: string */) {
+   fs.writeFileSync(LAST_BUILD_FILENAME, configuration);
+ }
+ 
++// Recreates React-use-frameworks.modulemap after the React-Core-prebuilt directory
++// is replaced. This file is created by expo-modules-autolinking during pod install
++// for use_frameworks! compatibility, but gets deleted when [RNDeps] replaces the dir.
++function ensureUseFrameworksModulemap() {
++  const modulemapPath = path.join('React-Core-prebuilt', 'React-use-frameworks.modulemap');
++  if (!fs.existsSync(modulemapPath)) {
++    const content = [
++      'module React {',
++      '  umbrella header "React.xcframework/Headers/React_Core/React_Core-umbrella.h"',
++      '  export *',
++      '}',
++      '',
++    ].join('\n');
++    fs.writeFileSync(modulemapPath, content);
++    console.log('Created React-use-frameworks.modulemap for use_frameworks! compatibility');
++  }
++}
++
+ function main(
+   configuration /*: string */,
+   version /*: string */,
+@@ -140,11 +158,13 @@ function main(
+   validateVersion(version);
+ 
+   if (!shouldReplaceRnCoreConfiguration(configuration)) {
++    ensureUseFrameworksModulemap();
+     return;
+   }
+ 
+   replaceRNCoreConfiguration(configuration, version, podsRoot);
+   updateLastBuildConfiguration(configuration);
++  ensureUseFrameworksModulemap();
+   console.log('Done replacing React Native prebuilt');
+ }
+ 
