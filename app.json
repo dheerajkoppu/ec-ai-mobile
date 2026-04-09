@@ -58,7 +58,7 @@
   "expo": {
     "name": "EC-AI",
     "slug": "ec-ai",
-    "version": "1.2.0",
+    "version": "1.2.1",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "ec-ai",
@@ -82,9 +82,7 @@
         "foregroundImage": "./assets/images/logo.png",
         "backgroundColor": "#F5F7FA"
       },
-      "permissions": [
-        "android.permission.RECORD_AUDIO"
-      ]
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "bundler": "metro",
@@ -201,7 +199,7 @@
         "projectId": "a31952ea-e220-4629-8d9e-7efbbb3c8b30"
       }
     },
-    "runtimeVersion": "1.2.0",
+    "runtimeVersion": "1.2.1",
     "updates": {
       "url": "https://u.expo.dev/a31952ea-e220-4629-8d9e-7efbbb3c8b30"
     }
