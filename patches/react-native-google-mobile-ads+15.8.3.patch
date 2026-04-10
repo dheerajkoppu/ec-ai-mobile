@@ -1,7 +1,9 @@
 diff --git a/node_modules/react-native-google-mobile-ads/android/build.gradle b/node_modules/react-native-google-mobile-ads/android/build.gradle
+index 254ec70..c9b520d 100644
 --- a/node_modules/react-native-google-mobile-ads/android/build.gradle
 +++ b/node_modules/react-native-google-mobile-ads/android/build.gradle
-@@ -124,8 +124,8 @@ android {
+@@ -124,7 +124,7 @@ android {
+     abortOnError false
    }
    compileOptions {
 -    sourceCompatibility JavaVersion.VERSION_1_8

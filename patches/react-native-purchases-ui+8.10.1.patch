@@ -1,4 +1,5 @@
 diff --git a/node_modules/react-native-purchases-ui/android/build.gradle b/node_modules/react-native-purchases-ui/android/build.gradle
+index d17425f..7f51291 100644
 --- a/node_modules/react-native-purchases-ui/android/build.gradle
 +++ b/node_modules/react-native-purchases-ui/android/build.gradle
 @@ -73,8 +73,8 @@ android {
@@ -11,7 +12,9 @@ diff --git a/node_modules/react-native-purchases-ui/android/build.gradle b/node_
 +    targetCompatibility JavaVersion.VERSION_17
    }
  }
+ 
 diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
+index b0821b9..78bccd2 100644
 --- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
 +++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNCustomerCenterModule.kt
 @@ -65,9 +65,9 @@ internal class RNCustomerCenterModule(
@@ -27,6 +30,7 @@ diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/re
              promise.reject(
                  "CUSTOMER_CENTER_MISSING_ACTIVITY",
 diff --git a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
+index d559eec..5d2f3c6 100644
 --- a/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
 +++ b/node_modules/react-native-purchases-ui/android/src/main/java/com/revenuecat/purchases/react/ui/RNPaywallsModule.kt
 @@ -22,7 +22,7 @@ internal class RNPaywallsModule(

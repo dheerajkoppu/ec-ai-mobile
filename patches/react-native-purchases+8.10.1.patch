@@ -1,7 +1,8 @@
 diff --git a/node_modules/react-native-purchases/android/build.gradle b/node_modules/react-native-purchases/android/build.gradle
+index f1d7dc0..b3a1ecf 100644
 --- a/node_modules/react-native-purchases/android/build.gradle
 +++ b/node_modules/react-native-purchases/android/build.gradle
-@@ -41,8 +41,8 @@ android {
+@@ -41,7 +41,7 @@ android {
          disable 'GradleCompatible'
      }
      compileOptions {
