@@ -59,12 +59,12 @@ const Sign_Up = () => {
 
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
-      setVerification({
-        ...verification,
+      setVerification((prev) => ({
+        ...prev,
         state: "pending",
         error: "",
         code: "",
-      });
+      }));
     } catch (err: any) {
       console.log(JSON.stringify(err, null, 2));
       Alert.alert("Error", err.errors[0].longMessage);
@@ -95,15 +95,18 @@ const Sign_Up = () => {
           }),
         });
 
-        setVerification({ ...verification, state: "success" });
+        setVerification((prev) => ({ ...prev, state: "success" }));
       } else {
-        setVerification({
-          ...verification,
+        setVerification((prev) => ({
+          ...prev,
           error: "Verification Failed. Please try again.",
-        });
+        }));
       }
     } catch (err: any) {
-      setVerification({ ...verification, error: err.errors[0].longMessage });
+      setVerification((prev) => ({
+        ...prev,
+        error: err.errors[0].longMessage,
+      }));
       Alert.alert("Error", err.errors[0].longMessage);
     }
   };
@@ -113,13 +116,16 @@ const Sign_Up = () => {
 
     try {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-      setVerification({ ...verification, error: "" });
+      setVerification((prev) => ({ ...prev, error: "" }));
       Alert.alert(
         "Success",
         "A new verification code has been sent to your email.",
       );
     } catch (err: any) {
-      setVerification({ ...verification, error: err.errors[0].longMessage });
+      setVerification((prev) => ({
+        ...prev,
+        error: err.errors[0].longMessage,
+      }));
     }
   };
 
@@ -267,12 +273,12 @@ const Sign_Up = () => {
         >
           <TouchableOpacity
             onPress={() =>
-              setVerification({
-                ...verification,
+              setVerification((prev) => ({
+                ...prev,
                 state: "default",
                 code: "",
                 error: "",
-              })
+              }))
             }
             style={{ position: "absolute", top: 20, right: 20, zIndex: 1 }}
           >
@@ -309,7 +315,9 @@ const Sign_Up = () => {
             value={verification.code}
             maxLength={6}
             keyboardType="numeric"
-            onChangeText={(code) => setVerification({ ...verification, code })}
+            onChangeText={(code) =>
+              setVerification((prev) => ({ ...prev, code }))
+            }
           />
           {verification.error && (
             <Text style={{ color: "red", fontSize: 13, marginTop: 4 }}>

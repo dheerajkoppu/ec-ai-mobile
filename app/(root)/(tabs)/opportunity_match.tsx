@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -27,6 +27,7 @@ import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
 import { renderStars } from "@/lib/formatters";
+import { fetchAPI } from "@/lib/fetch";
 // TypeScript resolves the platform suffixes here, but eslint-import-resolver-typescript does not.
 // eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
@@ -62,9 +63,12 @@ const styles = StyleSheet.create({
     shadowRadius: 14,
   },
 });
+
 const Opportunities = () => {
   const [swipeCount, setSwipeCount] = useState(0);
-  const [lastSwipeDate, setLastSwipeDate] = useState<string>("");
+  const [lastSwipeDate, setLastSwipeDate] = useState<string>(
+    () => new Date().toISOString().split("T")[0],
+  );
   const { user } = useUser();
   const { getToken } = useAuth();
   const colorScheme = useColorScheme();
@@ -88,17 +92,10 @@ const Opportunities = () => {
   const [cardIndex, setCardIndex] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
 
-  const [canSwipe, setCanSwipe] = useState(true);
+  const savedOpportunityIdsRef = useRef<Set<string>>(new Set());
   const [reportingOp, setReportingOp] = useState<Opportunity | null>(null);
   const [reportReason, setReportReason] = useState<string>("");
   const [reportDetails, setReportDetails] = useState<string>("");
-  useEffect(() => {
-    const today = new Date().toISOString().split("T")[0];
-    if (lastSwipeDate !== today) {
-      setSwipeCount(0);
-      setLastSwipeDate(today);
-    }
-  }, [lastSwipeDate]);
 
   const openReport = (op: Opportunity) => {
     if (Platform.OS === "ios") {
@@ -118,22 +115,18 @@ const Opportunities = () => {
           const doSubmit = async (details: string) => {
             try {
               const token = await getToken();
-              const res = await fetch(
-                "https://ec-ai.expo.app/reportopportunity",
-                {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                  },
-                  body: JSON.stringify({
-                    opportunity_id: op.id,
-                    reason,
-                    details,
-                  }),
+              await fetchAPI("https://ec-ai.expo.app/reportopportunity", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
                 },
-              );
-              if (!res.ok) throw new Error(await res.text());
+                body: JSON.stringify({
+                  opportunity_id: op.id,
+                  reason,
+                  details,
+                }),
+              });
               await Haptics.notificationAsync(
                 Haptics.NotificationFeedbackType.Success,
               );
@@ -168,7 +161,7 @@ const Opportunities = () => {
     if (!reportingOp || !reportReason) return;
     try {
       const token = await getToken();
-      const res = await fetch("https://ec-ai.expo.app/reportopportunity", {
+      await fetchAPI("https://ec-ai.expo.app/reportopportunity", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -180,7 +173,6 @@ const Opportunities = () => {
           details: reportDetails,
         }),
       });
-      if (!res.ok) throw new Error(await res.text());
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       Alert.alert("Report submitted", "Thank you for your feedback.");
       setReportingOp(null);
@@ -190,7 +182,6 @@ const Opportunities = () => {
   };
 
   const onSwiped = async (i: number, liked: boolean) => {
-    if (!canSwipe) return;
     setCardIndex(i + 1);
     await AsyncStorage.setItem("lastCardIndex", String(i + 1));
     await handleSwipe(i, liked);
@@ -218,16 +209,38 @@ const Opportunities = () => {
     try {
       const info = await Purchases.getCustomerInfo();
       const hasPremium = info.entitlements.active["premium"] !== undefined;
-      setCanSwipe(true); // keep unlimited swipes
-      setIsPremium(hasPremium); // 🔑 track premium status
-    } catch (error) {
-      console.error("Failed to check premium status:", error);
+      setIsPremium(hasPremium);
+    } catch (err) {
+      console.error("Failed to check premium status:", err);
+    }
+  };
+
+  const loadSavedIds = async () => {
+    try {
+      const token = await getToken();
+      const json = await fetchAPI(
+        "https://ec-ai.expo.app/getsavedopportunities",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        },
+      );
+      savedOpportunityIdsRef.current = new Set(
+        json?.data?.map((item: any) => item.id) ?? [],
+      );
+    } catch (err) {
+      console.error("Failed to load saved opportunity IDs:", err);
     }
   };
 
   useFocusEffect(
     useCallback(() => {
-      (async () => await checkPremiumAndUnlock())();
+      checkPremiumAndUnlock();
+      loadSavedIds();
     }, []),
   );
 
@@ -267,12 +280,10 @@ const Opportunities = () => {
       setLoading(false);
     }
   }, [user, getToken]);
+
   useEffect(() => {
     if (!user) return;
-
-    (async () => {
-      await fetchOpportunities();
-    })();
+    fetchOpportunities();
   }, [user, fetchOpportunities]);
 
   const handleSwipe = async (i: number, liked: boolean) => {
@@ -280,7 +291,6 @@ const Opportunities = () => {
     const opportunity = opportunities[i];
 
     try {
-      // Always allow swipes — no premium check or alert
       if (lastSwipeDate !== today) {
         setSwipeCount(1);
         setLastSwipeDate(today);
@@ -291,8 +301,10 @@ const Opportunities = () => {
         if (updated % 10 === 0) await fetchOpportunities();
       }
 
-      if (liked) await handleSave(opportunity);
-      await logSwipe(opportunity.id, liked);
+      await Promise.all([
+        liked ? handleSave(opportunity) : Promise.resolve(),
+        logSwipe(opportunity.id, liked),
+      ]);
     } catch (err) {
       console.error("Error during swipe handling:", err);
     }
@@ -301,7 +313,7 @@ const Opportunities = () => {
   const logSwipe = async (opportunityId: string, liked: boolean) => {
     try {
       const token = await getToken();
-      await fetch("https://ec-ai.expo.app/logswipe", {
+      await fetchAPI("https://ec-ai.expo.app/logswipe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -316,25 +328,11 @@ const Opportunities = () => {
 
   const handleSave = async (op: Opportunity) => {
     if (!user) return;
+    if (savedOpportunityIdsRef.current.has(op.id)) return;
 
     try {
       const token = await getToken();
-      const res = await fetch("https://ec-ai.expo.app/getsavedopportunities", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({}),
-      });
-
-      const json = await res.json();
-      const savedIds = new Set(json?.data?.map((item: any) => item.id));
-
-      if (savedIds.has(op.id)) return; // Already saved
-
-      // No more premium check or limit — save unconditionally
-      await fetch("https://ec-ai.expo.app/addsavedopportunity", {
+      await fetchAPI("https://ec-ai.expo.app/addsavedopportunity", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -342,6 +340,7 @@ const Opportunities = () => {
         },
         body: JSON.stringify({ opportunity_id: op.id }),
       });
+      savedOpportunityIdsRef.current.add(op.id);
     } catch (err) {
       console.error("Error saving opportunity:", err);
     }
@@ -424,8 +423,6 @@ const Opportunities = () => {
         infinite
         disableTopSwipe
         disableBottomSwipe
-        disableLeftSwipe={!canSwipe}
-        disableRightSwipe={!canSwipe}
         stackSize={3}
         verticalSwipe={false}
         cardVerticalMargin={20}
@@ -587,7 +584,7 @@ const Opportunities = () => {
             </View>
 
             <Text className="text-base font-Poppins text-center mb-6 text-black dark:text-white">
-              Why are you reporting “{reportingOp?.title}”?
+              Why are you reporting "{reportingOp?.title}"?
             </Text>
 
             {["Scam", "Inaccurate info", "Other"].map((r) => {

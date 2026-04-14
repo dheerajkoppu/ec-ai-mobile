@@ -22,6 +22,15 @@ export const icons = {
   email,
 };
 
+export const GRADE_OPTIONS = [
+  "Pre-9",
+  "9",
+  "10",
+  "11",
+  "12",
+  "Post-12",
+] as const;
+
 export const useOnboardingData = () => {
   const scheme = useColorScheme();
   const isDark = scheme === "dark";

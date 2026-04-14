@@ -30,14 +30,12 @@ import { useCallback } from "react";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
-
-const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
+import { GRADE_OPTIONS } from "@/constants";
 
 const TrackActivities = () => {
   const { user } = useUser();
   const { getToken } = useAuth();
   const email = user?.primaryEmailAddress?.emailAddress;
-  const [activities, setActivities] = useState<Activity[]>([]);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const primaryTextColor = isDark ? "#f5f5f5" : "#111827";
@@ -57,8 +55,10 @@ const TrackActivities = () => {
   const { fromAdd } = useLocalSearchParams();
   const [hasRefetchedFromAdd, setHasRefetchedFromAdd] = useState(false);
   const [authToken, setAuthToken] = useState<string | null>(null);
+  const [deletedActivityIds, setDeletedActivityIds] = useState<Set<number>>(
+    new Set(),
+  );
 
-  // New state for the AI description modal
   const [aiDescription, setAiDescription] = useState<string>("");
   const [showAIDescriptionModal, setShowAIDescriptionModal] =
     useState<boolean>(false);
@@ -119,11 +119,21 @@ const TrackActivities = () => {
     "https://ec-ai.expo.app/getactivitytypes",
   );
 
-  useEffect(() => {
-    if (fetchedActivities && Array.isArray(fetchedActivities)) {
-      setActivities(fetchedActivities);
+  const filteredActivities = useMemo(() => {
+    const base = fetchedActivities ?? [];
+    const filtered = base
+      .filter((activity) => !deletedActivityIds.has(activity.id))
+      .filter((activity) =>
+        activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
+      );
+    if (sortOption === "hours") {
+      return [...filtered].sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
     }
-  }, [fetchedActivities]);
+    if (sortOption === "category") {
+      return [...filtered].sort((a, b) => a.category.localeCompare(b.category));
+    }
+    return filtered;
+  }, [fetchedActivities, deletedActivityIds, searchQuery, sortOption]);
 
   const handleRefresh = async () => {
     try {
@@ -133,6 +143,7 @@ const TrackActivities = () => {
       setRefreshing(false);
     }
   };
+
   useFocusEffect(
     useCallback(() => {
       if (fromAdd === "true" && !hasRefetchedFromAdd) {
@@ -141,6 +152,7 @@ const TrackActivities = () => {
       }
     }, [fromAdd, hasRefetchedFromAdd, refetch]),
   );
+
   const updateActivity = async () => {
     if (editingActivity && email) {
       const updatedActivity = {
@@ -182,7 +194,7 @@ const TrackActivities = () => {
   const deleteActivity = async (activity: Activity) => {
     try {
       const token = await getToken();
-      const res = await fetch("https://ec-ai.expo.app/deleteactivity", {
+      await fetchAPI("https://ec-ai.expo.app/deleteactivity", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -190,12 +202,7 @@ const TrackActivities = () => {
         },
         body: JSON.stringify({ activityId: activity.id }),
       });
-      if (!res.ok) {
-        console.log("Delete failed with status", res.status);
-        Alert.alert("Error", "Failed to delete activity.");
-        return;
-      }
-      setActivities((prev) => prev.filter((a) => a.id !== activity.id));
+      setDeletedActivityIds((prev) => new Set([...prev, activity.id]));
       Alert.alert("Deleted", "Activity deleted successfully.");
     } catch (error) {
       console.log("Delete error:", error);
@@ -218,11 +225,6 @@ const TrackActivities = () => {
     }
   };
 
-  const sortLabels: Record<string, string> = {
-    mostRecent: "Most Recent",
-    hours: "Hours",
-    category: "Career Field",
-  };
   const sortChoices = [
     {
       key: "mostRecent",
@@ -241,31 +243,10 @@ const TrackActivities = () => {
     },
   ];
 
-  const sortActivities = (option: string) => {
-    if (option === "mostRecent") {
-      if (fetchedActivities && Array.isArray(fetchedActivities)) {
-        setActivities(fetchedActivities);
-      }
-    } else {
-      let sortedActivities = [...activities];
-      if (option === "hours") {
-        sortedActivities.sort((a, b) => b.hoursPerWeek - a.hoursPerWeek);
-      } else if (option === "category") {
-        sortedActivities.sort((a, b) => a.category.localeCompare(b.category));
-      }
-      setActivities(sortedActivities);
-    }
-    setSortOption(option);
-  };
-
-  const filteredActivities = activities.filter((activity) =>
-    activity.name.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
   const openLogs = async (activity: Activity) => {
     try {
       const token = await getToken();
-      const response = await fetch(`https://ec-ai.expo.app/getactivitylogs`, {
+      const result = await fetchAPI("https://ec-ai.expo.app/getactivitylogs", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -273,12 +254,6 @@ const TrackActivities = () => {
         },
         body: JSON.stringify({ activity_id: activity.id }),
       });
-      const result = await response.json();
-
-      if (!response.ok) {
-        Alert.alert("Error", result?.error || "Failed to fetch activity logs.");
-        return;
-      }
 
       if (!Array.isArray(result.data) || result.data.length === 0) {
         setLogs([]);
@@ -319,7 +294,7 @@ const TrackActivities = () => {
       setAiDescriptionLoading(true);
 
       const token = await getToken();
-      const response = await fetch("https://ec-ai.expo.app/getaidescription", {
+      const result = await fetchAPI("https://ec-ai.expo.app/getaidescription", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -327,16 +302,6 @@ const TrackActivities = () => {
         },
         body: JSON.stringify({ activity_id: activity.id }),
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        Alert.alert(
-          "Error",
-          result?.error || "Failed to generate AI activity summary.",
-        );
-        return;
-      }
 
       if (!result?.description) {
         Alert.alert("Error", "No AI summary was returned.");
@@ -354,7 +319,6 @@ const TrackActivities = () => {
     }
   };
 
-  // Function to call the new updatedescription+api endpoint when "Replace Current Description" is pushed.
   const replaceAIDescription = async () => {
     if (!selectedActivityForAIDescription) return;
     try {
@@ -415,7 +379,7 @@ const TrackActivities = () => {
           return (
             <TouchableOpacity
               key={choice.key}
-              onPress={() => sortActivities(choice.key)}
+              onPress={() => setSortOption(choice.key)}
               style={{
                 flex: 1,
                 flexDirection: "row",
@@ -750,7 +714,7 @@ const TrackActivities = () => {
                     Grades <Text style={{ color: "#ef4444" }}>*</Text>
                   </Text>
                   <View style={{ flexDirection: "row", flexWrap: "wrap" }}>
-                    {gradeOptions.map((grade) => (
+                    {GRADE_OPTIONS.map((grade) => (
                       <TouchableOpacity
                         key={grade}
                         onPress={() => toggleEditingGrade(grade)}

@@ -25,8 +25,7 @@ import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
 import { formatDateToYMD } from "@/lib/formatters";
-
-const gradeOptions = ["Pre-9", "9", "10", "11", "12", "Post-12"];
+import { GRADE_OPTIONS } from "@/constants";
 
 type DropdownItem = {
   label: string;
@@ -120,8 +119,6 @@ const ActivityTabs = () => {
         value: item.id,
       }))
     : [];
-
-  const handleTabSwitch = (tab: string) => setActiveTab(tab);
 
   const toggleGradeSelection = (grade: string) => {
     if (selectedGrades.includes(grade)) {
@@ -286,7 +283,7 @@ const ActivityTabs = () => {
             className={`flex-1 py-2 rounded-2xl ${
               activeTab === tab ? "bg-[#5b55f6]" : "bg-gray-300"
             }`}
-            onPress={() => handleTabSwitch(tab)}
+            onPress={() => setActiveTab(tab)}
           >
             <Text className="text-center text-white font-PoppinsBold">
               {tab === "add" ? "Add New Activity" : "Log Hours"}
@@ -358,7 +355,7 @@ const ActivityTabs = () => {
               Grade Level <Text className="text-red-500">*</Text>
             </Text>
             <View className="flex-wrap flex-row mt-2">
-              {gradeOptions.map((grade) => (
+              {GRADE_OPTIONS.map((grade) => (
                 <Pressable
                   key={grade}
                   onPress={() => toggleGradeSelection(grade)}

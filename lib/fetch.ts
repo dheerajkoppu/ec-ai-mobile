@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 
 type UseFetchConfig = {
   enabled?: boolean;
@@ -22,6 +22,15 @@ export const useFetch = <T>(
   const [error, setError] = useState<string | null>(null);
   const enabled = config?.enabled ?? true;
 
+  // Keep a stable ref so object-literal options don't cause infinite refetch
+  // loops when callers pass a new reference on every render. The ref is
+  // always synced to the latest value so real changes (e.g. auth token
+  // becoming available) are picked up on the next triggered fetch.
+  const optionsRef = useRef(options);
+  useEffect(() => {
+    optionsRef.current = options;
+  });
+
   const fetchData = useCallback(async () => {
     if (!enabled) return;
 
@@ -29,14 +38,14 @@ export const useFetch = <T>(
     setError(null);
 
     try {
-      const result = await fetchAPI(url, options);
+      const result = await fetchAPI(url, optionsRef.current);
       setData(result.data);
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [enabled, url, options]);
+  }, [enabled, url]);
 
   useEffect(() => {
     if (!enabled) return;

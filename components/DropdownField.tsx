@@ -30,7 +30,7 @@ import {
 import { Dropdown } from "react-native-element-dropdown";
 
 interface DropdownFieldProps {
-  label: any;
+  label: React.ReactNode;
   data: { label: string; value: string }[];
   value: string;
   onChange: (item: { label: string; value: string }) => void;

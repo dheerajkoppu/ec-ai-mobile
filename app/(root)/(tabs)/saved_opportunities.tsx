@@ -22,6 +22,7 @@ import Purchases from "react-native-purchases";
 import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
+import { fetchAPI } from "@/lib/fetch";
 
 interface Opportunity {
   id: string;
@@ -86,56 +87,50 @@ export default function Saved_opportunities() {
   const loadSavedOpportunities = useCallback(async () => {
     try {
       const token = await getToken();
-      const res = await fetch(`https://ec-ai.expo.app/getsavedopportunities`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
+      const json = await fetchAPI(
+        `https://ec-ai.expo.app/getsavedopportunities`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
         },
-        body: JSON.stringify({}),
-      });
-
-      const json = await res.json();
-
-      if (res.ok) {
-        // Format response data for local use
-        const mapped = json.data.map((op: any) => ({
-          id: op.id,
-          school: op.school,
-          title: op.activityName,
-          careerField: op.careerField,
-          activityType: op.activityType,
-          pictureurl: op.pictureurl,
-          location: op.location,
-          duration: op.duration,
-          deadline: op.deadline
-            ? new Date(op.deadline).toISOString().split("T")[0]
-            : undefined,
-          apply: op.applicationLink,
-          gradeRequirements: op.gradeRequirements,
-          raceRequirements: op.raceRequirements,
-          genderRequirements: op.genderRequirements,
-          ageRequirements: op.ageRequirements,
-          primaryCity: op.primaryCity,
-          onlyFRLStudents: op.onlyFRLStudents,
-          onlyFirstGen: op.onlyFirstGen,
-          minGPA: op.minGPA,
-          minSAT: op.minSAT,
-          minACT: op.minACT,
-          minPSAT: op.minPSAT,
-          hasLeadershipRoles: op.hasLeadershipRoles,
-          selectivityLevel: op.selectivityLevel,
-          outsideUS: op.outsideUS,
-          hoursPerWeek: op.hoursPerWeek,
-          createdAt: op.createdAt,
-          description: op.description,
-          prestige: op.prestige,
-        }));
-        setSavedOpportunities(mapped);
-      } else {
-        console.error("Error fetching saved opportunities:", json.error);
-        setSavedOpportunities([]);
-      }
+      );
+      const mapped = json.data.map((op: any) => ({
+        id: op.id,
+        school: op.school,
+        title: op.activityName,
+        careerField: op.careerField,
+        activityType: op.activityType,
+        pictureurl: op.pictureurl,
+        location: op.location,
+        duration: op.duration,
+        deadline: op.deadline
+          ? new Date(op.deadline).toISOString().split("T")[0]
+          : undefined,
+        apply: op.applicationLink,
+        gradeRequirements: op.gradeRequirements,
+        raceRequirements: op.raceRequirements,
+        genderRequirements: op.genderRequirements,
+        ageRequirements: op.ageRequirements,
+        primaryCity: op.primaryCity,
+        onlyFRLStudents: op.onlyFRLStudents,
+        onlyFirstGen: op.onlyFirstGen,
+        minGPA: op.minGPA,
+        minSAT: op.minSAT,
+        minACT: op.minACT,
+        minPSAT: op.minPSAT,
+        hasLeadershipRoles: op.hasLeadershipRoles,
+        selectivityLevel: op.selectivityLevel,
+        outsideUS: op.outsideUS,
+        hoursPerWeek: op.hoursPerWeek,
+        createdAt: op.createdAt,
+        description: op.description,
+        prestige: op.prestige,
+      }));
+      setSavedOpportunities(mapped);
     } catch (error) {
       console.error("Error loading saved opportunities:", error);
       setSavedOpportunities([]);
@@ -169,7 +164,7 @@ export default function Saved_opportunities() {
       setLoadingReason(true);
 
       const token = await getToken();
-      const response = await fetch("https://ec-ai.expo.app/getaireasons", {
+      const result = await fetchAPI("https://ec-ai.expo.app/getaireasons", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -177,16 +172,6 @@ export default function Saved_opportunities() {
         },
         body: JSON.stringify({ activity_id: opportunity.id }),
       });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        Alert.alert(
-          "Error",
-          result?.error || "Failed to get AI-generated reasons.",
-        );
-        return;
-      }
 
       if (!result?.reasons) {
         Alert.alert("Error", "No AI reasons were returned.");
@@ -207,7 +192,7 @@ export default function Saved_opportunities() {
   const deleteOpportunity = async (id: string) => {
     try {
       const token = await getToken();
-      const res = await fetch("https://ec-ai.expo.app/deletesavedopportunity", {
+      await fetchAPI("https://ec-ai.expo.app/deletesavedopportunity", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -215,13 +200,10 @@ export default function Saved_opportunities() {
         },
         body: JSON.stringify({ opportunity_id: id }),
       });
-      if (!res.ok) {
-        Alert.alert("Delete failed. Please try again.");
-        return;
-      }
       setSavedOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     } catch (error) {
       console.error("Error deleting opportunity:", error);
+      Alert.alert("Delete failed. Please try again.");
     }
   };
 

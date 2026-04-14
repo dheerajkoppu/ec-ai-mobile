@@ -1,4 +1,6 @@
+import React from "react";
 import {
+  ImageSourcePropType,
   StyleProp,
   TextInputProps,
   TextStyle,
@@ -35,8 +37,8 @@ declare interface ButtonProps extends TouchableOpacityProps {
 }
 
 declare interface InputFieldProps extends TextInputProps {
-  label: any;
-  icon?: any;
+  label: React.ReactNode;
+  icon?: ImageSourcePropType;
   secureTextEntry?: boolean;
   labelStyle?: StyleProp<TextStyle>;
   containerStyle?: StyleProp<ViewStyle>;

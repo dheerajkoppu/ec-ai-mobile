@@ -138,24 +138,17 @@ const Profile = () => {
 
     try {
       const token = await getToken();
-      const response = await fetch("https://ec-ai.expo.app/exportdata", {
+      await fetchAPI("https://ec-ai.expo.app/exportdata", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-
-      await response.json();
-      if (response.ok) {
-        Alert.alert(
-          "Request Sent",
-          "Your data request has been sent successfully.",
-        );
-      } else {
-        Alert.alert("Error", "Failed to send export request.");
-      }
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    } catch (error) {
+      Alert.alert(
+        "Request Sent",
+        "Your data request has been sent successfully.",
+      );
+    } catch {
       Alert.alert("Error", "An unexpected error occurred.");
     }
   };
@@ -341,7 +334,7 @@ const Profile = () => {
             title="Contact Support"
             onPress={async () => {
               await Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Support%20Inquiry",
+                "mailto:ask.ecai@gmail.com?subject=Support%20Request&body=Hello%20EC-AI%20Team%2C%0A%0ADescribe%20your%20issue%3A%0A%0A%0ASteps%20to%20reproduce%3A%0A1.%20%0A2.%20%0A3.%20%0A%0ADevice%3A%20%0AApp%20version%3A%20%0A%0AThank%20you",
               );
             }}
             className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
@@ -350,7 +343,7 @@ const Profile = () => {
             title="Submit Feedback"
             onPress={async () => {
               await Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Feedback",
+                "mailto:ask.ecai@gmail.com?subject=App%20Feedback&body=Hello%20EC-AI%20Team%2C%0A%0AWhat%20I%20liked%3A%0A%0A%0AWhat%20could%20be%20improved%3A%0A%0A%0AFeature%20requests%3A%0A%0A%0AThank%20you",
               );
             }}
             className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
