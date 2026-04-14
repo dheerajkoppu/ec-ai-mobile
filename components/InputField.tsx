@@ -1,4 +1,4 @@
-import React, { forwardRef, useState, useEffect } from "react";
+import React, { forwardRef, useState } from "react";
 import {
   TextInput,
   View,
@@ -26,18 +26,8 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
     },
     ref,
   ) => {
-    // 1. Local state for immediate typing
-    const [local, setLocal] = useState<string>(value ?? "");
     const isDark = useColorScheme() === "dark";
     const [isFocused, setIsFocused] = useState(false);
-
-    // 2. Sync local if parent value changes externally (e.g. form reset from parent)
-    useEffect(() => {
-      if (value !== undefined && value !== local) {
-        setLocal(value);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [value]);
 
     return (
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
@@ -82,11 +72,8 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             )}
             <TextInput
               ref={ref}
-              value={local}
-              onChangeText={(text) => {
-                setLocal(text);
-                onChangeText?.(text);
-              }}
+              value={value ?? ""}
+              onChangeText={onChangeText}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               style={[

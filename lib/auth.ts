@@ -30,16 +30,25 @@ export const OAUTH_REDIRECT_URL = "ec-ai://oauth-redirect";
 
 export const getOAuthRedirectUrl = () => OAUTH_REDIRECT_URL;
 
-async function oauthSignIn(provider: "Google" | "Apple", startOAuthFlow: any) {
+async function oauthSignIn(
+  provider: "Google" | "Apple",
+  startOAuthFlow: any,
+  getToken: () => Promise<string | null>,
+) {
   try {
     const { createdSessionId, setActive, signUp } = await startOAuthFlow();
 
     if (createdSessionId && setActive) {
       await setActive({ session: createdSessionId });
 
-      if (signUp.createdUserId) {
+      if (signUp?.createdUserId) {
+        const token = await getToken();
         await fetchAPI("https://ec-ai.expo.app/user", {
           method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({
             name: `${signUp.firstName ?? ""} ${signUp.lastName ?? ""}`.trim(),
             email: signUp.emailAddress,
@@ -76,8 +85,12 @@ async function oauthSignIn(provider: "Google" | "Apple", startOAuthFlow: any) {
   }
 }
 
-export const googleOAuth = (startOAuthFlow: any) =>
-  oauthSignIn("Google", startOAuthFlow);
+export const googleOAuth = (
+  startOAuthFlow: any,
+  getToken: () => Promise<string | null>,
+) => oauthSignIn("Google", startOAuthFlow, getToken);
 
-export const appleOAuth = (startOAuthFlow: any) =>
-  oauthSignIn("Apple", startOAuthFlow);
+export const appleOAuth = (
+  startOAuthFlow: any,
+  getToken: () => Promise<string | null>,
+) => oauthSignIn("Apple", startOAuthFlow, getToken);

@@ -5,26 +5,23 @@ import {
   Alert,
   ActivityIndicator,
   TouchableOpacity,
-  Modal,
-  FlatList,
-  StyleSheet,
+  Animated,
   ScrollView,
   useColorScheme,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
-import { useUser, useAuth } from "@clerk/clerk-expo";
-
+import { useAuth } from "@clerk/clerk-expo";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
-import DropdownField from "@/components/DropdownField";
-import CustomButton from "@/components/CustomButton";
 import { fetchAPI } from "@/lib/fetch";
+import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
 
-// Interfaces
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 interface DropdownOption {
   label: string;
   value: string;
@@ -74,217 +71,429 @@ interface IFormData {
   agreeTerms?: string;
 }
 
-// MultiSelectDropdown Component
-interface MultiSelectDropdownProps {
-  options: DropdownOption[];
-  selectedValues: string[];
-  onChange: (values: string[]) => void;
-  placeholder?: string;
-}
+// ─── Animated Progress Bar ───────────────────────────────────────────────────
 
-const MultiSelectDropdown: React.FC<MultiSelectDropdownProps> = ({
-  options,
-  selectedValues,
-  onChange,
-  placeholder = "Select options",
+const ProgressBar = ({
+  step,
+  total,
+  isDark,
+}: {
+  step: number;
+  total: number;
+  isDark: boolean;
 }) => {
-  const [modalVisible, setModalVisible] = useState(false);
-  const isDark = useColorScheme() === "dark";
+  const progressAnim = useRef(new Animated.Value((step + 1) / total)).current;
 
-  // dynamic colors
-  const bg = isDark ? "#1e1e1e" : "#fff";
-  const fg = isDark ? "#eee" : "#111";
-  const bord = isDark ? "#444" : "#ccc";
-  const ovbg = "rgba(0,0,0,0.5)";
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: (step + 1) / total,
+      duration: 350,
+      useNativeDriver: false,
+    }).start();
+  }, [step, total]);
 
-  const toggle = (v: string) =>
-    selectedValues.includes(v)
-      ? onChange(selectedValues.filter((s) => s !== v))
-      : onChange([...selectedValues, v]);
-
-  const renderOption = ({ item }: { item: DropdownOption }) => {
-    const sel = selectedValues.includes(item.value);
-    return (
-      <TouchableOpacity
-        style={[styles.option, { backgroundColor: bg }]}
-        onPress={() => toggle(item.value)}
-      >
-        <View
-          style={[
-            styles.checkbox,
-            { borderColor: bord, backgroundColor: sel ? "#5b55f7" : bg },
-          ]}
-        />
-        <Text style={[styles.optionText, { color: fg }]}>{item.label}</Text>
-      </TouchableOpacity>
-    );
-  };
+  const width = progressAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0%", "100%"],
+  });
 
   return (
-    <View>
-      <TouchableOpacity
-        style={[styles.button, { backgroundColor: bg, borderColor: bord }]}
-        onPress={() => setModalVisible(true)}
-      >
-        <Text style={[styles.buttonText, { color: fg }]}>
-          {selectedValues.length
-            ? options
-                .filter((o) => selectedValues.includes(o.value))
-                .map((o) => o.label)
-                .join(", ")
-            : placeholder}
-        </Text>
-      </TouchableOpacity>
-
-      <Modal visible={modalVisible} transparent animationType="fade">
-        <View style={[styles.overlay, { backgroundColor: ovbg }]}>
-          <View
-            style={[
-              styles.container,
-              { backgroundColor: bg, borderColor: bord },
-            ]}
-          >
-            <ScrollView contentContainerStyle={styles.scroll}>
-              <FlatList
-                data={options}
-                keyExtractor={(i) => i.value}
-                renderItem={renderOption}
-              />
-            </ScrollView>
-            <TouchableOpacity
-              style={[
-                styles.done,
-                { backgroundColor: isDark ? "#444" : "#5b55f7" },
-              ]}
-              onPress={() => setModalVisible(false)}
-            >
-              <Text style={styles.doneText}>Done</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+    <View
+      style={{
+        flex: 1,
+        height: 5,
+        backgroundColor: isDark ? "#2a2a2a" : "#E5E7EB",
+        borderRadius: 3,
+        overflow: "hidden",
+      }}
+    >
+      <Animated.View
+        style={{
+          height: 5,
+          width,
+          backgroundColor: "#5b55f7",
+          borderRadius: 3,
+        }}
+      />
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  button: {
-    padding: 10,
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  buttonText: {
-    fontSize: 16,
-  },
-  overlay: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  container: {
-    width: 300,
-    maxHeight: "70%",
-    borderRadius: 12,
-    padding: 15,
-    borderWidth: 1,
-    elevation: 5,
-  },
-  scroll: {
-    flexGrow: 1,
-  },
-  option: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 15,
-  },
-  optionText: {
-    fontSize: 16,
-    flexShrink: 1,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderWidth: 1,
-    marginRight: 10,
-    borderRadius: 4,
-  },
-  done: {
-    marginTop: 10,
-    padding: 10,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  doneText: {
-    color: "#fff",
-    fontSize: 16,
-    fontWeight: "bold",
-  },
-});
+// ─── Field Label ─────────────────────────────────────────────────────────────
 
-// SlideWrapper component
-const SlideWrapper: React.FC<{
-  children: React.ReactNode;
-  showBack?: boolean;
-  onBack?: () => void;
-}> = ({ children, showBack = false, onBack = () => {} }) => {
-  const isDark = useColorScheme() === "dark";
+const FieldLabel = ({
+  text,
+  isDark,
+  required = true,
+}: {
+  text: string;
+  isDark: boolean;
+  required?: boolean;
+}) => (
+  <Text
+    style={{
+      fontSize: 14,
+      fontFamily: "Poppins-SemiBold",
+      color: isDark ? "#bbb" : "#4B5563",
+      marginTop: 22,
+      marginBottom: 10,
+      letterSpacing: 0.2,
+    }}
+  >
+    {text.toUpperCase()}
+    {required && <Text style={{ color: "#ef4444" }}> *</Text>}
+  </Text>
+);
+
+// ─── Inline Single-Select (replaces DropdownField) ───────────────────────────
+
+const InlineSelect = ({
+  options,
+  value,
+  onChange,
+  isDark,
+  columns = 1,
+}: {
+  options: DropdownOption[];
+  value: string;
+  onChange: (item: DropdownOption) => void;
+  isDark: boolean;
+  columns?: 1 | 2;
+}) => {
+  const gap = 8;
+  const twoCol = columns === 2;
 
   return (
-    <KeyboardAwareScrollView
+    <View
+      style={{
+        flexDirection: twoCol ? "row" : "column",
+        flexWrap: twoCol ? "wrap" : "nowrap",
+        gap,
+      }}
+    >
+      {options.map((option) => {
+        const selected = value === option.value;
+        return (
+          <TouchableOpacity
+            key={option.value}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              onChange(option);
+            }}
+            style={{
+              width: twoCol ? `${(100 - gap / 2) / 2}%` : "100%",
+              flexDirection: "row",
+              alignItems: "center",
+              justifyContent: "space-between",
+              paddingVertical: 13,
+              paddingHorizontal: 15,
+              borderRadius: 12,
+              borderWidth: 2,
+              borderColor: selected
+                ? "#5b55f7"
+                : isDark
+                  ? "#252525"
+                  : "#E5E7EB",
+              backgroundColor: selected
+                ? isDark
+                  ? "#1e1c4d"
+                  : "#EEF2FF"
+                : isDark
+                  ? "#1A1A1A"
+                  : "#F9FAFB",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "Poppins-Medium",
+                fontSize: 14,
+                color: selected ? "#5b55f7" : isDark ? "#ccc" : "#374151",
+                flex: 1,
+              }}
+              numberOfLines={2}
+            >
+              {option.label}
+            </Text>
+            {selected && (
+              <MaterialCommunityIcons
+                name="check-circle"
+                size={18}
+                color="#5b55f7"
+                style={{ marginLeft: 6 }}
+              />
+            )}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+// ─── Chip Multi-Select (replaces MultiSelectDropdown) ────────────────────────
+
+const ChipSelect = ({
+  options,
+  selectedValues,
+  onChange,
+  isDark,
+}: {
+  options: DropdownOption[];
+  selectedValues: string[];
+  onChange: (values: string[]) => void;
+  isDark: boolean;
+}) => {
+  const toggle = async (val: string) => {
+    await Haptics.selectionAsync();
+    if (selectedValues.includes(val)) {
+      onChange(selectedValues.filter((v) => v !== val));
+    } else {
+      onChange([...selectedValues, val]);
+    }
+  };
+
+  return (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+      {options.map((option) => {
+        const selected = selectedValues.includes(option.value);
+        return (
+          <TouchableOpacity
+            key={option.value}
+            onPress={() => toggle(option.value)}
+            style={{
+              paddingHorizontal: 14,
+              paddingVertical: 9,
+              borderRadius: 20,
+              borderWidth: 2,
+              borderColor: selected
+                ? "#5b55f7"
+                : isDark
+                  ? "#252525"
+                  : "#E5E7EB",
+              backgroundColor: selected
+                ? "#5b55f7"
+                : isDark
+                  ? "#1A1A1A"
+                  : "#F9FAFB",
+            }}
+          >
+            <Text
+              style={{
+                fontFamily: "Poppins-Medium",
+                fontSize: 13,
+                color: selected ? "#fff" : isDark ? "#bbb" : "#555",
+              }}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+// ─── Yes / No Card Pair ───────────────────────────────────────────────────────
+
+const CardPair = ({
+  value,
+  onChange,
+  isDark,
+  trueLabel = "Yes",
+  falseLabel = "No",
+}: {
+  value: string;
+  onChange: (item: DropdownOption) => void;
+  isDark: boolean;
+  trueLabel?: string;
+  falseLabel?: string;
+}) => {
+  const pairs = [
+    { label: trueLabel, value: "Yes" },
+    { label: falseLabel, value: "No" },
+  ];
+
+  return (
+    <View style={{ flexDirection: "row", gap: 12 }}>
+      {pairs.map((option) => {
+        const selected = value === option.value;
+        return (
+          <TouchableOpacity
+            key={option.value}
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              onChange(option);
+            }}
+            style={{
+              flex: 1,
+              paddingVertical: 20,
+              borderRadius: 14,
+              borderWidth: 2,
+              borderColor: selected
+                ? "#5b55f7"
+                : isDark
+                  ? "#252525"
+                  : "#E5E7EB",
+              backgroundColor: selected
+                ? isDark
+                  ? "#1e1c4d"
+                  : "#EEF2FF"
+                : isDark
+                  ? "#1A1A1A"
+                  : "#F9FAFB",
+              alignItems: "center",
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: "Poppins-SemiBold",
+                color: selected ? "#5b55f7" : isDark ? "#bbb" : "#555",
+              }}
+            >
+              {option.label}
+            </Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+};
+
+// ─── Step Layout (replaces SlideWrapper) ─────────────────────────────────────
+
+const StepLayout = ({
+  children,
+  icon,
+  title,
+  subtitle,
+  onContinue,
+  continueLabel = "Continue",
+  disabled = false,
+  isLoading = false,
+}: {
+  children: React.ReactNode;
+  icon: string;
+  title: string;
+  subtitle: string;
+  onContinue: () => void | Promise<void>;
+  continueLabel?: string;
+  disabled?: boolean;
+  isLoading?: boolean;
+}) => {
+  const isDark = useColorScheme() === "dark";
+  const isButtonDisabled = disabled || isLoading;
+
+  return (
+    <ScrollView
       style={{ flex: 1 }}
-      contentContainerStyle={{ paddingBottom: 100, maxHeight: 700 }}
+      contentContainerStyle={{
+        paddingHorizontal: 24,
+        paddingBottom: 40,
+        paddingTop: 8,
+      }}
       keyboardShouldPersistTaps="handled"
-      extraScrollHeight={80}
       showsVerticalScrollIndicator={false}
     >
       <View
         style={{
-          backgroundColor: isDark ? "#1e1e1e" : "#F5F7FA",
-          padding: 20,
-          borderRadius: 8,
-          shadowColor: "#000",
-          marginBottom: 16,
-          paddingBottom: 20,
+          width: 56,
+          height: 56,
+          borderRadius: 16,
+          backgroundColor: isDark ? "#1e1c4d" : "#EEF2FF",
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: 14,
         }}
       >
-        {showBack && (
-          <TouchableOpacity
-            onPress={onBack}
+        <MaterialCommunityIcons name={icon as any} size={28} color="#5b55f7" />
+      </View>
+      <Text
+        style={{
+          fontSize: 24,
+          fontFamily: "Poppins-Bold",
+          color: isDark ? "#fff" : "#111",
+          marginBottom: 4,
+        }}
+      >
+        {title}
+      </Text>
+      <Text
+        style={{
+          fontSize: 14,
+          color: isDark ? "#888" : "#6B7280",
+          fontFamily: "Poppins-Regular",
+          marginBottom: 4,
+        }}
+      >
+        {subtitle}
+      </Text>
+      {children}
+
+      <TouchableOpacity
+        onPress={onContinue}
+        disabled={isButtonDisabled}
+        style={{
+          backgroundColor: "#5b55f7",
+          borderRadius: 14,
+          paddingVertical: 17,
+          alignItems: "center",
+          marginTop: 28,
+          opacity: isButtonDisabled ? 0.7 : 1,
+        }}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text
             style={{
-              marginBottom: 7, // <- Large margin before bold header content
-              paddingVertical: 10,
-              paddingHorizontal: 14,
-              backgroundColor: "#5b55f7",
-              alignSelf: "flex-start",
-              borderRadius: 8,
+              fontSize: 17,
+              fontFamily: "Poppins-SemiBold",
+              color: "#fff",
             }}
           >
-            <Text style={{ fontSize: 14, color: "white", fontWeight: "600" }}>
-              ← Back
-            </Text>
-          </TouchableOpacity>
+            {continueLabel}
+          </Text>
         )}
-        {children}
-      </View>
-    </KeyboardAwareScrollView>
+      </TouchableOpacity>
+    </ScrollView>
   );
 };
-// ProfileSetup component
+
+// ─── Main Component ───────────────────────────────────────────────────────────
+
 const ProfileSetup: React.FC = () => {
-  const { user } = useUser();
   const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
+  const hasLoadedProfileRef = useRef(false);
   const [dropdowns, setDropdowns] = useState<IDropdowns | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(0);
+
+  const background = isDark ? "#121212" : "#fff";
+  const textColor = isDark ? "#fff" : "#111";
+  const subTextColor = isDark ? "#888" : "#6B7280";
+  const termsRequiredMessage =
+    "You must accept the Terms of Service and Privacy Policy to continue.";
 
   const handleChange = useCallback((key: keyof IFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [key]: value }));
   }, []);
+
+  const handleTermsChange = useCallback(
+    (value: string) => {
+      if (value === "No") {
+        Alert.alert("Consent Required", termsRequiredMessage);
+        return;
+      }
+
+      handleChange("agreeTerms", value);
+    },
+    [handleChange, termsRequiredMessage],
+  );
 
   const handleMultiSelectChange = useCallback(
     (key: keyof IFormData, values: string[]) => {
@@ -292,13 +501,13 @@ const ProfileSetup: React.FC = () => {
     },
     [],
   );
+
   const handleBack = () => {
     if (step > 0) {
       swiperRef.current?.scrollBy(-1);
     }
   };
 
-  // Updated helper: remove curly braces and any surrounding quotes from each item
   function parsePostgresArray(str: string): string[] {
     if (!str) return [];
     return str
@@ -307,7 +516,6 @@ const ProfileSetup: React.FC = () => {
       .map((s) => s.trim().replace(/^"+|"+$/g, ""));
   }
 
-  // Mapping functions for score ranges
   function mapSatScoreToRange(score: number): string {
     if (score >= 1500) return "1500+";
     if (score >= 1400) return "1400-1490";
@@ -334,100 +542,104 @@ const ProfileSetup: React.FC = () => {
   }
 
   useEffect(() => {
-    if (update === "true") {
-      const fetchUserData = async () => {
-        try {
-          const token = await getToken();
-          const response = await fetch("https://ec-ai.expo.app/getuserdata", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({}),
-          });
-          const result = await response.json();
-          if (response.ok && result?.user) {
-            const userData = result.user;
-            // Convert score strings to numbers
-            const satScoreNum = parseInt(userData.sat_score);
-            const actScoreNum = parseInt(userData.act_score);
-            const psatScoreNum = parseInt(userData.psat_score);
+    if (update !== "true" || hasLoadedProfileRef.current) return;
 
-            // Parse multi-select fields:
-            let careerInterestArr: string[] = [];
-            if (typeof userData.career_interest === "string") {
-              careerInterestArr = parsePostgresArray(userData.career_interest);
-            } else if (Array.isArray(userData.career_interest)) {
-              careerInterestArr = userData.career_interest;
-            }
+    hasLoadedProfileRef.current = true;
+    let isMounted = true;
 
-            let ecReasonArr: string[] = [];
-            if (Array.isArray(userData.extracurricular_motivation)) {
-              ecReasonArr = userData.extracurricular_motivation
-                .flat()
-                .map((item: string) => item.trim());
-            } else if (
-              typeof userData.extracurricular_motivation === "string"
-            ) {
-              ecReasonArr = parsePostgresArray(
-                userData.extracurricular_motivation,
-              );
-            }
+    const fetchUserData = async () => {
+      try {
+        const token = await getToken();
+        const response = await fetch("https://ec-ai.expo.app/getuserdata", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({}),
+        });
+        const result = await response.json();
+        if (!isMounted || !response.ok || !result?.user) return;
 
-            let ecLevelArr: string[] = [];
-            if (typeof userData.field_goal === "string") {
-              ecLevelArr = parsePostgresArray(userData.field_goal);
-            } else if (Array.isArray(userData.field_goal)) {
-              ecLevelArr = userData.field_goal;
-            }
+        const userData = result.user;
+        const satScoreNum = parseInt(userData.sat_score);
+        const actScoreNum = parseInt(userData.act_score);
+        const psatScoreNum = parseInt(userData.psat_score);
 
-            const transformedData: IFormData = {
-              gradeLevel: userData.grade_level,
-              race: userData.race_ethnicity,
-              gender: userData.gender,
-              age: String(userData.age),
-              firstGen: userData.first_gen_college ? "Yes" : "No",
-              gpaWeighted: userData.gpa_weighted,
-              gpaUnweighted: userData.gpa_unweighted,
-              satScore: isNaN(satScoreNum)
-                ? "None"
-                : mapSatScoreToRange(satScoreNum),
-              actScore: isNaN(actScoreNum)
-                ? "None"
-                : mapActScoreToRange(actScoreNum),
-              psatScore: isNaN(psatScoreNum)
-                ? "None"
-                : mapPsatScoreToRange(psatScoreNum),
-              careerInterest: careerInterestArr,
-              entrepreneur: userData.wants_to_start_business ? "Yes" : "No",
-              research: userData.interested_in_research ? "Yes" : "No",
-              ecReason: ecReasonArr,
-              ecLevel: ecLevelArr,
-              leadership: userData.seeking_leadership ? "Yes" : "No",
-              selectivity: userData.opportunity_selectivity,
-              paid: userData.interested_in_paid_opportunities ? "Yes" : "No",
-              travel: userData.interested_in_travel ? "Yes" : "No",
-              timeWeekly: userData.weekly_commitment,
-              ecType: userData.extracurricular_format,
-              source: userData.referral_source,
-              usedOtherApps: userData.used_other_ec_finders ? "Yes" : "No",
-              agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
-            };
-            setFormData(transformedData);
-          }
-        } catch (error) {
-          console.error("Error fetching user data:", error);
+        let careerInterestArr: string[] = [];
+        if (typeof userData.career_interest === "string") {
+          careerInterestArr = parsePostgresArray(userData.career_interest);
+        } else if (Array.isArray(userData.career_interest)) {
+          careerInterestArr = userData.career_interest;
         }
-      };
-      fetchUserData();
-    }
+
+        let ecReasonArr: string[] = [];
+        if (Array.isArray(userData.extracurricular_motivation)) {
+          ecReasonArr = userData.extracurricular_motivation
+            .flat()
+            .map((item: string) => item.trim());
+        } else if (typeof userData.extracurricular_motivation === "string") {
+          ecReasonArr = parsePostgresArray(userData.extracurricular_motivation);
+        }
+
+        let ecLevelArr: string[] = [];
+        if (typeof userData.field_goal === "string") {
+          ecLevelArr = parsePostgresArray(userData.field_goal);
+        } else if (Array.isArray(userData.field_goal)) {
+          ecLevelArr = userData.field_goal;
+        }
+
+        setFormData({
+          gradeLevel: userData.grade_level,
+          race: userData.race_ethnicity,
+          gender: userData.gender,
+          age: String(userData.age),
+          firstGen: userData.first_gen_college ? "Yes" : "No",
+          gpaWeighted: userData.gpa_weighted,
+          gpaUnweighted: userData.gpa_unweighted,
+          satScore: isNaN(satScoreNum)
+            ? "None"
+            : mapSatScoreToRange(satScoreNum),
+          actScore: isNaN(actScoreNum)
+            ? "None"
+            : mapActScoreToRange(actScoreNum),
+          psatScore: isNaN(psatScoreNum)
+            ? "None"
+            : mapPsatScoreToRange(psatScoreNum),
+          careerInterest: careerInterestArr,
+          entrepreneur: userData.wants_to_start_business ? "Yes" : "No",
+          research: userData.interested_in_research ? "Yes" : "No",
+          ecReason: ecReasonArr,
+          ecLevel: ecLevelArr,
+          leadership: userData.seeking_leadership ? "Yes" : "No",
+          selectivity: userData.opportunity_selectivity,
+          paid: userData.interested_in_paid_opportunities ? "Yes" : "No",
+          travel: userData.interested_in_travel ? "Yes" : "No",
+          timeWeekly: userData.weekly_commitment,
+          ecType: userData.extracurricular_format,
+          source: userData.referral_source,
+          usedOtherApps: userData.used_other_ec_finders ? "Yes" : "No",
+          agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
+        });
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    fetchUserData();
+
+    return () => {
+      isMounted = false;
+    };
   }, [update, getToken]);
 
   const handleSubmit = async () => {
+    if (isSubmitting) return false;
+
+    setIsSubmitting(true);
     try {
       const token = await getToken();
-      const response = await fetchAPI("https://ec-ai.expo.app/userdata", {
+      await fetchAPI("https://ec-ai.expo.app/userdata", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -435,17 +647,17 @@ const ProfileSetup: React.FC = () => {
         },
         body: JSON.stringify(formData),
       });
-      if (response.ok) {
-        router.replace("/(root)/(tabs)/opportunity_match");
-      } else {
-        router.replace("/(root)/(tabs)/opportunity_match");
+      if (update !== "true") {
+        await presentPremiumPaywallIfNeeded();
       }
+      router.replace("/(root)/(tabs)/opportunity_match");
+      return true;
     } catch (err) {
       console.error("Error submitting profile data:", err);
-      Alert.alert(
-        "Error",
-        "An error occurred while submitting your profile data.",
-      );
+      Alert.alert("Error", "Something went wrong. Please try again.");
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -458,7 +670,6 @@ const ProfileSetup: React.FC = () => {
           formData.gender?.trim() &&
           formData.age?.trim()
         );
-
       case 1:
         return !!(
           formData.firstGen?.trim() &&
@@ -492,7 +703,7 @@ const ProfileSetup: React.FC = () => {
           formData.travel?.trim() &&
           formData.source?.trim() &&
           formData.usedOtherApps?.trim() &&
-          formData.agreeTerms?.trim()
+          formData.agreeTerms === "Yes"
         );
       default:
         return true;
@@ -503,10 +714,37 @@ const ProfileSetup: React.FC = () => {
     if (validateSlide(step)) {
       swiperRef.current?.scrollBy(1);
     } else {
-      Alert.alert(
-        "Incomplete",
-        "Please fill out all required fields on this page.",
-      );
+      if (step === 5 && formData.agreeTerms !== "Yes") {
+        Alert.alert("Consent Required", termsRequiredMessage);
+        return;
+      }
+
+      Alert.alert("Incomplete", "Please fill out all required fields.");
+    }
+  };
+
+  const handleContinue = async () => {
+    if (isSubmitting) return;
+
+    await Haptics.selectionAsync();
+    if (step === 5) {
+      if (!validateSlide(5)) {
+        if (formData.agreeTerms !== "Yes") {
+          Alert.alert("Consent Required", termsRequiredMessage);
+          return;
+        }
+
+        Alert.alert("Incomplete", "Please fill out all required fields.");
+        return;
+      }
+      const submitted = await handleSubmit();
+      if (submitted) {
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success,
+        );
+      }
+    } else {
+      goToNextSlide();
     }
   };
 
@@ -518,11 +756,10 @@ const ProfileSetup: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({}),
         });
-
         setDropdowns(result.data);
       } catch (err) {
         console.error("Error fetching dropdown data:", err);
-        Alert.alert("Error", "Failed to load dropdown options.");
+        Alert.alert("Error", "Failed to load form options.");
       } finally {
         setLoading(false);
       }
@@ -535,54 +772,64 @@ const ProfileSetup: React.FC = () => {
       <SafeAreaView
         style={{
           flex: 1,
-          backgroundColor: isDark ? "#121212" : "#F5F7FA",
+          backgroundColor: background,
           justifyContent: "center",
           alignItems: "center",
         }}
       >
-        <ActivityIndicator size="large" color="#5b55f6" />
+        <ActivityIndicator size="large" color="#5b55f7" />
         <Text
           style={{
-            fontSize: 18,
-            marginTop: 8,
-            color: isDark ? "#ccc" : "#555",
+            fontSize: 15,
+            marginTop: 14,
+            color: subTextColor,
             fontFamily: "Poppins-Regular",
           }}
         >
-          Loading form...
+          Loading...
         </Text>
       </SafeAreaView>
     );
   }
 
-  const yesNo = dropdowns.yesNo;
-
   return (
-    <SafeAreaView
-      style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
-    >
-      <View style={{ paddingHorizontal: 16, paddingTop: 24, paddingBottom: 8 }}>
-        <Text
-          allowFontScaling={false}
-          style={{
-            fontSize: 24,
-            fontWeight: "bold",
-            color: isDark ? "#fff" : "#333",
-            fontFamily: "Poppins-Bold",
-          }}
-        >
-          Profile Setup
-        </Text>
-        <Text
-          allowFontScaling={false}
-          style={{
-            fontSize: 16,
-            color: isDark ? "#fff" : "#555",
-            fontFamily: "Poppins-Regular",
-          }}
-        >
-          Step {step + 1} of 6
-        </Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: background }}>
+      {/* ── Top nav: back arrow + animated progress bar + step counter ── */}
+      <View
+        style={{
+          paddingHorizontal: 20,
+          paddingTop: 10,
+          paddingBottom: 14,
+        }}
+      >
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
+          <TouchableOpacity
+            onPress={handleBack}
+            style={{ opacity: step > 0 ? 1 : 0 }}
+            disabled={step === 0}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <MaterialCommunityIcons
+              name="arrow-left"
+              size={24}
+              color={textColor}
+            />
+          </TouchableOpacity>
+
+          <ProgressBar step={step} total={6} isDark={isDark} />
+
+          <Text
+            style={{
+              fontFamily: "Poppins-Medium",
+              fontSize: 13,
+              color: subTextColor,
+              minWidth: 32,
+              textAlign: "right",
+            }}
+          >
+            {step + 1}/6
+          </Text>
+        </View>
       </View>
 
       <Swiper
@@ -592,400 +839,307 @@ const ProfileSetup: React.FC = () => {
         scrollEnabled={false}
         onIndexChanged={(index) => setStep(index)}
       >
-        {/* Slide 1 */}
-        <SlideWrapper showBack={step > 0} onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Grade Level <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.grades}
-            value={formData.gradeLevel || ""}
-            placeholder="Select grade"
-            onChange={(item) => handleChange("gradeLevel", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Race/Ethnicity <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.raceEthnicity}
-            value={formData.race || ""}
-            placeholder="Select race"
-            onChange={(item) => handleChange("race", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Gender <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.gender}
-            value={formData.gender || ""}
-            placeholder="Select gender"
-            onChange={(item) => handleChange("gender", item.value)}
-          />
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Age<Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter your age"
-            value={formData.age}
-            onChangeText={(val) => handleChange("age", val)}
-          />
-          <CustomButton
-            title="Next"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              goToNextSlide();
-            }}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 2 */}
-        <SlideWrapper showBack onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                First-gen Student? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.firstGen || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("firstGen", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                SAT Score <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.satRange}
-            value={formData.satScore || ""}
-            placeholder="Select SAT range"
-            onChange={(item) => handleChange("satScore", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                ACT Score <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.actRange}
-            value={formData.actScore || ""}
-            placeholder="Select ACT range"
-            onChange={(item) => handleChange("actScore", item.value)}
-          />
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Weighted GPA <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter weighted GPA"
-            value={formData.gpaWeighted}
-            onChangeText={(val) => handleChange("gpaWeighted", val)}
-          />
-
-          <CustomButton
-            title="Next"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              goToNextSlide();
-            }}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 3 */}
-        <SlideWrapper showBack onBack={handleBack}>
-          <InputField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Unweighted GPA <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            keyboardType="numeric"
-            placeholder="Enter unweighted GPA"
-            value={formData.gpaUnweighted}
-            onChangeText={(val) => handleChange("gpaUnweighted", val)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                PSAT Score <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.psatRange}
-            value={formData.psatScore || ""}
-            placeholder="Select PSAT range"
-            onChange={(item) => handleChange("psatScore", item.value)}
-          />
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: "Poppins-Bold",
-              marginBottom: 5,
-              color: isDark ? "#fff" : "#000", // dark gray or white
-            }}
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="account"
+            title="Tell us about you"
+            subtitle="Your profile helps us find the perfect matches"
+            onContinue={handleContinue}
           >
-            Career Interest <Text className="text-red-500">*</Text>
-          </Text>
-          <MultiSelectDropdown
-            options={dropdowns.careerInterest}
-            selectedValues={formData.careerInterest || []}
-            onChange={(values) =>
-              handleMultiSelectChange("careerInterest", values)
-            }
-            placeholder="Select career interests"
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Want to start a business/nonprofit?{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.entrepreneur || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("entrepreneur", item.value)}
-          />
+            <FieldLabel text="Age" isDark={isDark} />
+            <InputField
+              keyboardType="numeric"
+              placeholder="Enter your age"
+              value={formData.age}
+              onChangeText={(val) => handleChange("age", val)}
+            />
 
-          <CustomButton
-            title="Next"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              goToNextSlide();
-            }}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
+            <FieldLabel text="Grade Level" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.grades}
+              value={formData.gradeLevel || ""}
+              onChange={(item) => handleChange("gradeLevel", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
 
-        {/* Slide 4 */}
-        <SlideWrapper showBack onBack={handleBack}>
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: "Poppins-Bold",
-              marginBottom: 5,
-              color: isDark ? "#fff" : "#000", // dark gray or white
-            }}
+            <FieldLabel text="Race / Ethnicity" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.raceEthnicity}
+              value={formData.race || ""}
+              onChange={(item) => handleChange("race", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Gender" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.gender}
+              value={formData.gender || ""}
+              onChange={(item) => handleChange("gender", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
+          </StepLayout>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="school"
+            title="Academic profile"
+            subtitle="Helps us recommend right-fit opportunities"
+            onContinue={handleContinue}
           >
-            EC Goals? <Text className="text-red-500">*</Text>
-          </Text>
-          <MultiSelectDropdown
-            options={dropdowns.extracurricularReasons}
-            selectedValues={formData.ecReason || []}
-            onChange={(values) => handleMultiSelectChange("ecReason", values)}
-            placeholder="Select EC goals"
-          />
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: "Poppins-Bold",
-              marginTop: 10,
-              marginBottom: 5,
-              color: isDark ? "#fff" : "#000", // dark gray or white
-            }}
+            <FieldLabel
+              text="First-Generation College Student?"
+              isDark={isDark}
+            />
+            <CardPair
+              value={formData.firstGen || ""}
+              onChange={(item) => handleChange("firstGen", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Weighted GPA" isDark={isDark} />
+            <InputField
+              keyboardType="numeric"
+              placeholder="e.g. 3.9"
+              value={formData.gpaWeighted}
+              onChangeText={(val) => handleChange("gpaWeighted", val)}
+            />
+
+            <FieldLabel text="SAT Score Range" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.satRange}
+              value={formData.satScore || ""}
+              onChange={(item) => handleChange("satScore", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
+
+            <FieldLabel text="ACT Score Range" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.actRange}
+              value={formData.actScore || ""}
+              onChange={(item) => handleChange("actScore", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
+          </StepLayout>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="heart"
+            title="Your interests"
+            subtitle="What you're passionate about shapes everything"
+            onContinue={handleContinue}
           >
-            Level to reach in your field?{" "}
-            <Text className="text-red-500">*</Text>
-          </Text>
-          <MultiSelectDropdown
-            options={dropdowns.fieldLevel}
-            selectedValues={formData.ecLevel || []}
-            onChange={(values) => handleMultiSelectChange("ecLevel", values)}
-            placeholder="Select levels"
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Looking for leadership? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.leadership || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("leadership", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Interested in research? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.research || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("research", item.value)}
-          />
-          <CustomButton
-            title="Next"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              goToNextSlide();
-            }}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
+            <FieldLabel text="Unweighted GPA" isDark={isDark} />
+            <InputField
+              keyboardType="numeric"
+              placeholder="e.g. 3.7"
+              value={formData.gpaUnweighted}
+              onChangeText={(val) => handleChange("gpaUnweighted", val)}
+            />
 
-        {/* Slide 5 */}
-        <SlideWrapper showBack onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Opportunity Selectiveness{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.opportunitySelectivity}
-            value={formData.selectivity || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("selectivity", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Interested in Paid Opportunities?{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.paid || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("paid", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                EC Format Preference <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.extracurricularFormat}
-            value={formData.ecType || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("ecType", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Time per week for ECs <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.weeklyCommitment}
-            value={formData.timeWeekly || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("timeWeekly", item.value)}
-          />
+            <FieldLabel text="PSAT Score Range" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.psatRange}
+              value={formData.psatScore || ""}
+              onChange={(item) => handleChange("psatScore", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
 
-          <CustomButton
-            title="Next"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              goToNextSlide();
-            }}
-            style={{ marginTop: 16, marginBottom: 16 }}
-          />
-        </SlideWrapper>
-
-        {/* Slide 6 */}
-        <SlideWrapper showBack onBack={handleBack}>
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Interested in Travel/Study Abroad?{" "}
-                <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.travel || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("travel", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Referral Source <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={dropdowns.referralSource}
-            value={formData.source || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("source", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Used Other EC Apps? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.usedOtherApps || ""}
-            placeholder="Select"
-            onChange={(item) => handleChange("usedOtherApps", item.value)}
-          />
-          <DropdownField
-            label={
-              <Text className="font-medium text-lg font-PoppinsBold">
-                Do You Agree to{" "}
-                <Text
-                  onPress={async () =>
-                    await WebBrowser.openBrowserAsync(
-                      "https://ec-ai.app/terms-of-use",
-                    )
-                  }
-                  style={{ color: "#5b55f7", textDecorationLine: "underline" }}
-                >
-                  the Terms
-                </Text>
-                {" & "}
-                <Text
-                  onPress={async () =>
-                    await WebBrowser.openBrowserAsync(
-                      "https://ec-ai.app/privacy-policy",
-                    )
-                  }
-                  style={{ color: "#5b55f7", textDecorationLine: "underline" }}
-                >
-                  Privacy Policy
-                </Text>
-                ? <Text className="text-red-500">*</Text>
-              </Text>
-            }
-            data={yesNo}
-            value={formData.agreeTerms || ""}
-            placeholder="Confirm"
-            onChange={(item) => handleChange("agreeTerms", item.value)}
-          />
-
-          <CustomButton
-            title="Submit"
-            onPress={async () => {
-              if (!validateSlide(step)) {
-                Alert.alert(
-                  "Incomplete",
-                  "Please fill out all required fields on this page.",
-                );
-                return;
+            <FieldLabel text="Career Interests" isDark={isDark} />
+            <ChipSelect
+              options={dropdowns.careerInterest}
+              selectedValues={formData.careerInterest || []}
+              onChange={(values) =>
+                handleMultiSelectChange("careerInterest", values)
               }
+              isDark={isDark}
+            />
 
-              await handleSubmit();
-              await Haptics.notificationAsync(
-                Haptics.NotificationFeedbackType.Success,
-              );
-            }}
-            style={{ marginTop: 16 }}
-          />
-        </SlideWrapper>
+            <FieldLabel
+              text="Want to start a business or nonprofit?"
+              isDark={isDark}
+            />
+            <CardPair
+              value={formData.entrepreneur || ""}
+              onChange={(item) => handleChange("entrepreneur", item.value)}
+              isDark={isDark}
+            />
+          </StepLayout>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="trophy"
+            title="Your goals"
+            subtitle="What do you want to achieve?"
+            onContinue={handleContinue}
+          >
+            <FieldLabel
+              text="Why do you want extracurriculars?"
+              isDark={isDark}
+            />
+            <ChipSelect
+              options={dropdowns.extracurricularReasons}
+              selectedValues={formData.ecReason || []}
+              onChange={(values) => handleMultiSelectChange("ecReason", values)}
+              isDark={isDark}
+            />
+
+            <FieldLabel
+              text="What level do you want to reach in your field?"
+              isDark={isDark}
+            />
+            <ChipSelect
+              options={dropdowns.fieldLevel}
+              selectedValues={formData.ecLevel || []}
+              onChange={(values) => handleMultiSelectChange("ecLevel", values)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Seeking leadership roles?" isDark={isDark} />
+            <CardPair
+              value={formData.leadership || ""}
+              onChange={(item) => handleChange("leadership", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Interested in research?" isDark={isDark} />
+            <CardPair
+              value={formData.research || ""}
+              onChange={(item) => handleChange("research", item.value)}
+              isDark={isDark}
+            />
+          </StepLayout>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="tune-variant"
+            title="Activity preferences"
+            subtitle="How do you like to engage?"
+            onContinue={handleContinue}
+          >
+            <FieldLabel text="Opportunity Selectiveness" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.opportunitySelectivity}
+              value={formData.selectivity || ""}
+              onChange={(item) => handleChange("selectivity", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel
+              text="Interested in paid opportunities?"
+              isDark={isDark}
+            />
+            <CardPair
+              value={formData.paid || ""}
+              onChange={(item) => handleChange("paid", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="EC Format Preference" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.extracurricularFormat}
+              value={formData.ecType || ""}
+              onChange={(item) => handleChange("ecType", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Weekly Time Commitment" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.weeklyCommitment}
+              value={formData.timeWeekly || ""}
+              onChange={(item) => handleChange("timeWeekly", item.value)}
+              isDark={isDark}
+              columns={2}
+            />
+          </StepLayout>
+        </View>
+
+        <View style={{ flex: 1 }}>
+          <StepLayout
+            icon="check-circle-outline"
+            title="Almost done!"
+            subtitle="Just a couple more things"
+            onContinue={handleContinue}
+            continueLabel="Submit"
+            disabled={isSubmitting}
+            isLoading={isSubmitting}
+          >
+            <FieldLabel
+              text="Interested in travel / study abroad?"
+              isDark={isDark}
+            />
+            <CardPair
+              value={formData.travel || ""}
+              onChange={(item) => handleChange("travel", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="How did you hear about us?" isDark={isDark} />
+            <InlineSelect
+              options={dropdowns.referralSource}
+              value={formData.source || ""}
+              onChange={(item) => handleChange("source", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel
+              text="Used other EC finder apps before?"
+              isDark={isDark}
+            />
+            <CardPair
+              value={formData.usedOtherApps || ""}
+              onChange={(item) => handleChange("usedOtherApps", item.value)}
+              isDark={isDark}
+            />
+
+            <FieldLabel text="Terms & Privacy Policy" isDark={isDark} />
+            <Text
+              style={{
+                color: isDark ? "#888" : "#6B7280",
+                fontFamily: "Poppins-Regular",
+                fontSize: 14,
+                lineHeight: 21,
+                marginBottom: 12,
+              }}
+            >
+              By continuing you agree to our{" "}
+              <Text
+                onPress={() =>
+                  WebBrowser.openBrowserAsync("https://ec-ai.app/terms-of-use")
+                }
+                style={{ color: "#5b55f7" }}
+              >
+                Terms of Service
+              </Text>
+              {" & "}
+              <Text
+                onPress={() =>
+                  WebBrowser.openBrowserAsync(
+                    "https://ec-ai.app/privacy-policy",
+                  )
+                }
+                style={{ color: "#5b55f7" }}
+              >
+                Privacy Policy
+              </Text>
+            </Text>
+            <CardPair
+              value={formData.agreeTerms || ""}
+              onChange={(item) => handleTermsChange(item.value)}
+              isDark={isDark}
+              trueLabel="I Agree"
+              falseLabel="Decline"
+            />
+          </StepLayout>
+        </View>
       </Swiper>
     </SafeAreaView>
   );

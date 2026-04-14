@@ -29,7 +29,6 @@ const Sign_Up = () => {
   const passwordRef = useRef<TextInput>(null);
   const isDark = useColorScheme() === "dark";
 
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -151,17 +150,26 @@ const Sign_Up = () => {
           label="Name"
           placeholder="Enter your name"
           icon={icons.person}
+          textContentType="name"
+          autoComplete="name"
           value={form.name}
-          onChangeText={(value) => setForm({ ...form, name: value })}
+          onChangeText={(value) =>
+            setForm((previous) => ({ ...previous, name: value }))
+          }
           onSubmitEditing={() => emailRef.current?.focus()}
         />
         <InputField
           label="Email"
           placeholder="Enter your email"
           textContentType="emailAddress"
+          autoComplete="email"
+          keyboardType="email-address"
+          autoCapitalize="none"
           icon={icons.email}
           value={form.email}
-          onChangeText={(value) => setForm({ ...form, email: value })}
+          onChangeText={(value) =>
+            setForm((previous) => ({ ...previous, email: value }))
+          }
           ref={emailRef}
           onSubmitEditing={() => passwordRef.current?.focus()}
         />
@@ -172,8 +180,12 @@ const Sign_Up = () => {
             placeholder="Enter your password"
             icon={icons.lock}
             secureTextEntry={!showPassword}
+            textContentType="newPassword"
+            autoComplete="new-password"
             value={form.password}
-            onChangeText={(value) => setForm({ ...form, password: value })}
+            onChangeText={(value) =>
+              setForm((previous) => ({ ...previous, password: value }))
+            }
             ref={passwordRef}
             onSubmitEditing={() => {
               Keyboard.dismiss();
@@ -227,7 +239,21 @@ const Sign_Up = () => {
         isVisible={verification.state === "pending"}
         style={{ justifyContent: "flex-start", marginTop: 130 }}
         onModalHide={() => {
-          if (verification.state === "success") setShowSuccessModal(true);
+          if (verification.state === "success") {
+            Alert.alert(
+              "Verified",
+              "You have successfully verified your account.",
+              [
+                {
+                  text: "Add Additional Details",
+                  onPress: async () => {
+                    await Haptics.selectionAsync();
+                    router.replace("/(auth)/profile-setup");
+                  },
+                },
+              ],
+            );
+          }
         }}
       >
         <View
@@ -305,64 +331,6 @@ const Sign_Up = () => {
               Resend Code
             </Text>
           </TouchableOpacity>
-        </View>
-      </ReactNativeModal>
-
-      {/* SUCCESS MODAL */}
-      <ReactNativeModal
-        isVisible={showSuccessModal}
-        backdropTransitionOutTiming={1}
-        useNativeDriver={true}
-        useNativeDriverForBackdrop={true}
-      >
-        <View
-          style={{
-            backgroundColor: isDark ? "#1E1E1E" : "#E2E8F0",
-            paddingHorizontal: 28,
-            paddingVertical: 36,
-            borderRadius: 16,
-            minHeight: 300,
-          }}
-        >
-          <Image
-            source={images.check}
-            style={{
-              width: 110,
-              height: 110,
-              alignSelf: "center",
-              marginVertical: 20,
-            }}
-          />
-          <Text
-            style={{
-              fontSize: 28,
-              color: isDark ? "#fff" : "#000",
-              textAlign: "center",
-              fontFamily: "Poppins-SemiBold",
-            }}
-          >
-            Verified
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: isDark ? "#ccc" : "#666",
-              textAlign: "center",
-              fontFamily: "Poppins-Regular",
-              marginTop: 8,
-            }}
-          >
-            You have successfully verified your account.
-          </Text>
-          <CustomButton
-            title="Add Additional Details"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              setShowSuccessModal(false);
-              router.replace("/(auth)/profile-setup");
-            }}
-            className="mt-5"
-          />
         </View>
       </ReactNativeModal>
     </KeyboardAwareScrollView>

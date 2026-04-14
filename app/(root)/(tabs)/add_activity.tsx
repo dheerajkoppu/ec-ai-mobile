@@ -10,18 +10,18 @@ import {
 import DateTimePicker, {
   DateTimePickerEvent,
 } from "@react-native-community/datetimepicker";
-import {
-  controlSize,
-  datePickerStyle,
-} from "@expo/ui/swift-ui/modifiers";
+import { controlSize, datePickerStyle } from "@expo/ui/swift-ui/modifiers";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
 import { fetchAPI, useFetch } from "@/lib/fetch";
+import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
+import Purchases from "react-native-purchases";
+import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
 import { formatDateToYMD } from "@/lib/formatters";
@@ -147,6 +147,25 @@ const ActivityTabs = () => {
 
     try {
       setIsSubmitting(true);
+
+      const customerInfo = await Purchases.getCustomerInfo();
+      const isPremium =
+        customerInfo.entitlements.active["premium"] !== undefined;
+
+      if (!isPremium && formattedActivityNames.length >= 10) {
+        const result = await presentPremiumPaywallIfNeeded();
+        if (
+          result !== PAYWALL_RESULT.PURCHASED &&
+          result !== PAYWALL_RESULT.RESTORED
+        ) {
+          Alert.alert(
+            "Activity Limit Reached",
+            "Free accounts can track up to 10 activities. Upgrade to Premium to add unlimited activities.",
+          );
+          return;
+        }
+      }
+
       const token = await getToken();
       await fetchAPI("https://ec-ai.expo.app/adduseractivity", {
         method: "POST",
@@ -445,9 +464,7 @@ const DateInputField = ({
 }) => {
   const isDark = useColorScheme() === "dark";
   const [showAndroidPicker, setShowAndroidPicker] = useState(false);
-  const iosPicker = Platform.OS === "ios"
-    ? require("@expo/ui/swift-ui")
-    : null;
+  const iosPicker = Platform.OS === "ios" ? require("@expo/ui/swift-ui") : null;
 
   const handleAndroidDateChange = (
     event: DateTimePickerEvent,
@@ -469,9 +486,7 @@ const DateInputField = ({
         marginBottom: 12,
       }}
     >
-      <Text
-        style={getFormLabelStyle(isDark)}
-      >
+      <Text style={getFormLabelStyle(isDark)}>
         Date of Activity <Text style={{ color: "#ef4444" }}>*</Text>
       </Text>
       {Platform.OS === "ios" && iosPicker ? (

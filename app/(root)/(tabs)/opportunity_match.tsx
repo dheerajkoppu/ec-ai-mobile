@@ -236,7 +236,18 @@ const Opportunities = () => {
         },
       );
 
-      const json = await response.json();
+      const responseText = await response.text();
+      let json: any;
+      try {
+        json = JSON.parse(responseText);
+      } catch {
+        throw new Error(
+          `Server returned non-JSON (${response.status}): ${responseText.slice(0, 300)}`,
+        );
+      }
+      if (!response.ok) {
+        throw new Error(json?.error || `Request failed (${response.status})`);
+      }
       const formatted: Opportunity[] = json.data.map((op: any) => ({
         id: op.id,
         school: op.school,
@@ -361,7 +372,12 @@ const Opportunities = () => {
     return (
       <SafeAreaView
         edges={["top", "left", "right"]}
-        style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? "#121212" : "#F5F7FA",
+          justifyContent: "center",
+          alignItems: "center",
+        }}
       >
         <ActivityIndicator size="large" color="#5b55f6" />
       </SafeAreaView>

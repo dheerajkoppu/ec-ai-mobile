@@ -81,8 +81,14 @@ const Sign_In = () => {
             icon={icons.email}
             keyboardShouldPersistTaps="never"
             value={form.email}
+            textContentType="emailAddress"
+            autoComplete="email"
+            keyboardType="email-address"
+            autoCapitalize="none"
             onSubmitEditing={() => passwordRef.current?.focus()}
-            onChangeText={(value) => setForm({ ...form, email: value })}
+            onChangeText={(value) =>
+              setForm((previous) => ({ ...previous, email: value }))
+            }
             containerStyle={
               isDark
                 ? { backgroundColor: "#1e1e1e", borderColor: "#374151" }
@@ -99,7 +105,11 @@ const Sign_In = () => {
               icon={icons.lock}
               secureTextEntry={!showPassword}
               value={form.password}
-              onChangeText={(value) => setForm({ ...form, password: value })}
+              textContentType="password"
+              autoComplete="current-password"
+              onChangeText={(value) =>
+                setForm((previous) => ({ ...previous, password: value }))
+              }
               ref={passwordRef}
               onSubmitEditing={() => {
                 Keyboard.dismiss();

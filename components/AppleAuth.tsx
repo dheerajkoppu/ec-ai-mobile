@@ -1,4 +1,4 @@
-import { useOAuth } from "@clerk/clerk-expo";
+import { useOAuth, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Platform, View, useColorScheme } from "react-native";
 import * as Haptics from "expo-haptics";
@@ -11,6 +11,7 @@ WebBrowser.maybeCompleteAuthSession();
 
 const AppleAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_apple" });
+  const { getToken } = useAuth();
   const colorScheme = useColorScheme();
 
   if (Platform.OS !== "ios") {
@@ -19,7 +20,10 @@ const AppleAuth = () => {
 
   const handleAppleSignIn = async () => {
     const redirectUrl = getOAuthRedirectUrl();
-    const result = await appleOAuth(() => startOAuthFlow({ redirectUrl }));
+    const result = await appleOAuth(
+      () => startOAuthFlow({ redirectUrl }),
+      getToken,
+    );
 
     if (result.code === "session_exists" || result.code === "success") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

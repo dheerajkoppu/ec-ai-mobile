@@ -1,4 +1,4 @@
-import { useOAuth } from "@clerk/clerk-expo";
+import { useOAuth, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import { Alert, Image, Text, View } from "react-native";
 import * as Haptics from "expo-haptics";
@@ -12,11 +12,15 @@ WebBrowser.maybeCompleteAuthSession();
 
 const OAuth = () => {
   const { startOAuthFlow } = useOAuth({ strategy: "oauth_google" });
+  const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
 
   const handleGoogleSignIn = async () => {
     const redirectUrl = getOAuthRedirectUrl();
-    const result = await googleOAuth(() => startOAuthFlow({ redirectUrl }));
+    const result = await googleOAuth(
+      () => startOAuthFlow({ redirectUrl }),
+      getToken,
+    );
 
     if (result.code === "session_exists" || result.code === "success") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
