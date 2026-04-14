@@ -203,6 +203,17 @@ const Opportunities = () => {
     })();
   }, []);
 
+  useEffect(() => {
+    if (opportunities.length === 0 || cardIndex < opportunities.length) {
+      return;
+    }
+
+    setCardIndex(0);
+    AsyncStorage.setItem("lastCardIndex", "0").catch(() => {
+      // Ignore storage reset failures and let the in-memory state recover.
+    });
+  }, [cardIndex, opportunities.length]);
+
   const checkPremiumAndUnlock = async () => {
     try {
       const info = await Purchases.getCustomerInfo();
@@ -248,39 +259,7 @@ const Opportunities = () => {
       if (!response.ok) {
         throw new Error(json?.error || `Request failed (${response.status})`);
       }
-      const formatted: Opportunity[] = json.data.map((op: any) => ({
-        id: op.id,
-        school: op.school,
-        title: op.activityName,
-        careerField: op.careerField,
-        activityType: op.activityType,
-        pictureurl: op.pictureurl,
-        location: op.location,
-        duration: op.duration,
-        deadline: op.deadline
-          ? new Date(op.deadline).toISOString().split("T")[0]
-          : undefined,
-        apply: op.applicationLink,
-        gradeRequirements: op.gradeRequirements,
-        raceRequirements: op.raceRequirements,
-        genderRequirements: op.genderRequirements,
-        ageRequirements: op.ageRequirements,
-        primaryCity: op.primaryCity,
-        onlyFRLStudents: op.onlyFRLStudents,
-        onlyFirstGen: op.onlyFirstGen,
-        minGPA: op.minGPA,
-        minSAT: op.minSAT,
-        minACT: op.minACT,
-        minPSAT: op.minPSAT,
-        hasLeadershipRoles: op.hasLeadershipRoles,
-        selectivityLevel: op.selectivityLevel,
-        outsideUS: op.outsideUS,
-        hoursPerWeek: op.hoursPerWeek,
-        createdAt: op.createdAt,
-        description: op.description,
-        prestige: op.prestige,
-      }));
-      setOpportunities(formatted);
+      setOpportunities(json.data);
       setError(null);
     } catch (err: any) {
       setError(err.message || "Error fetching opportunities");
