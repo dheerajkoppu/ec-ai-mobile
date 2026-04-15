@@ -9,6 +9,8 @@ import { useOnboardingData } from "@/constants";
 import { useColorScheme } from "react-native";
 import { useVideoPlayer, VideoView } from "expo-video";
 import * as Haptics from "expo-haptics";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 function OnboardingVideo({ uri }: { uri: string }) {
   const player = useVideoPlayer({ uri }, (videoPlayer) => {
@@ -32,6 +34,7 @@ const Home = () => {
   const swiperRef = useRef<Swiper>(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isDark = useColorScheme() === "dark";
+  const { isTablet, formMaxWidth } = useResponsiveLayout();
   const onboarding = useOnboardingData();
   const isLastSlide = activeIndex === onboarding.length - 1;
 
@@ -44,46 +47,59 @@ const Home = () => {
         onPress={() => router.replace("/(auth)/sign-up")}
         className="w-full flex justify-end items-end p-5"
       >
-        <Text
-          className="text-md font-PoppinsBold"
-          style={{ color: isDark ? "#fff" : "#000" }}
-        >
-          Skip
-        </Text>
+        <ResponsiveContainer maxWidth={formMaxWidth}>
+          <Text
+            className="text-md font-PoppinsBold"
+            style={{ color: isDark ? "#fff" : "#000", textAlign: "right" }}
+          >
+            Skip
+          </Text>
+        </ResponsiveContainer>
       </TouchableOpacity>
 
-      <Swiper
-        ref={swiperRef}
-        loop={false}
-        paginationStyle={{ bottom: -20 }}
-        dot={<View className="w-[32px] h-[4px] mx-1 bg-white rounded-full" />}
-        activeDot={
-          <View className="w-[32px] h-[4px] mx-1 bg-primary-500 rounded-full" />
-        }
-        onIndexChanged={(index) => setActiveIndex(index)}
+      <ResponsiveContainer
+        maxWidth={isTablet ? 620 : undefined}
+        style={{ flex: 1 }}
       >
-        {onboarding.map((item) => (
-          <View
-            key={item.id}
-            className="flex items-center justify-center w-full h-full"
-          >
-            <OnboardingVideo uri={item.video} />
-          </View>
-        ))}
-      </Swiper>
-
-      <CustomButton
-        title={isLastSlide ? "Get Started" : "Next"}
-        onPress={async () => {
-          await Haptics.selectionAsync();
-          if (isLastSlide) {
-            router.replace("/(auth)/sign-up");
-          } else {
-            swiperRef.current?.scrollBy(1);
+        <Swiper
+          ref={swiperRef}
+          loop={false}
+          paginationStyle={{ bottom: isTablet ? 12 : -20 }}
+          dot={<View className="w-[32px] h-[4px] mx-1 bg-white rounded-full" />}
+          activeDot={
+            <View className="w-[32px] h-[4px] mx-1 bg-primary-500 rounded-full" />
           }
-        }}
-        className="w-11/12 mt-16 mb-14"
-      />
+          onIndexChanged={(index) => setActiveIndex(index)}
+        >
+          {onboarding.map((item) => (
+            <View
+              key={item.id}
+              className="flex items-center justify-center w-full h-full"
+              style={{
+                borderRadius: isTablet ? 32 : 0,
+                overflow: "hidden",
+              }}
+            >
+              <OnboardingVideo uri={item.video} />
+            </View>
+          ))}
+        </Swiper>
+      </ResponsiveContainer>
+
+      <ResponsiveContainer maxWidth={formMaxWidth} style={{ marginBottom: 14 }}>
+        <CustomButton
+          title={isLastSlide ? "Get Started" : "Next"}
+          onPress={async () => {
+            await Haptics.selectionAsync();
+            if (isLastSlide) {
+              router.replace("/(auth)/sign-up");
+            } else {
+              swiperRef.current?.scrollBy(1);
+            }
+          }}
+          className="w-full mt-16 mb-14"
+        />
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 };

@@ -21,6 +21,8 @@ import { ReactNativeModal } from "react-native-modal";
 import { fetchAPI } from "@/lib/fetch";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import * as Haptics from "expo-haptics";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 const Sign_Up = () => {
   const { isLoaded, signUp, setActive } = useSignUp();
@@ -28,6 +30,7 @@ const Sign_Up = () => {
   const emailRef = useRef<TextInput>(null);
   const passwordRef = useRef<TextInput>(null);
   const isDark = useColorScheme() === "dark";
+  const { isTablet, formMaxWidth, modalMaxWidth } = useResponsiveLayout();
 
   const [form, setForm] = useState({
     name: "",
@@ -131,110 +134,157 @@ const Sign_Up = () => {
   return (
     <KeyboardAwareScrollView
       style={{ flex: 1, backgroundColor: isDark ? "#121212" : "#F5F7FA" }}
-      contentContainerStyle={{ paddingBottom: 40 }}
+      contentContainerStyle={{
+        flexGrow: 1,
+        paddingBottom: 40,
+        justifyContent: isTablet ? "center" : undefined,
+      }}
       keyboardShouldPersistTaps="handled"
       extraScrollHeight={20}
       scrollEnabled={true}
     >
-      <View className="relative w-full h-[170px]">
-        <Image
-          source={images.icon}
-          className="self-center mt-[70px]"
-          style={{ width: 240, height: 60, resizeMode: "contain" }}
-        />
-        <Text
-          className="text-2xl font-PoppinsBold absolute bottom-0 left-5"
-          style={{ color: isDark ? "#fff" : "#000" }}
+      <ResponsiveContainer
+        maxWidth={formMaxWidth}
+        style={{ paddingHorizontal: isTablet ? 24 : 0 }}
+      >
+        <View
+          style={{
+            width: "100%",
+            alignItems: "center",
+            paddingTop: isTablet ? 52 : 70,
+            paddingBottom: isTablet ? 28 : 20,
+          }}
         >
-          Create Your Account
-        </Text>
-      </View>
-
-      <View className="p-5">
-        <InputField
-          label="Name"
-          placeholder="Enter your name"
-          icon={icons.person}
-          textContentType="name"
-          autoComplete="name"
-          value={form.name}
-          onChangeText={(value) =>
-            setForm((previous) => ({ ...previous, name: value }))
-          }
-          onSubmitEditing={() => emailRef.current?.focus()}
-        />
-        <InputField
-          label="Email"
-          placeholder="Enter your email"
-          textContentType="emailAddress"
-          autoComplete="email"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          icon={icons.email}
-          value={form.email}
-          onChangeText={(value) =>
-            setForm((previous) => ({ ...previous, email: value }))
-          }
-          ref={emailRef}
-          onSubmitEditing={() => passwordRef.current?.focus()}
-        />
-        <View style={{ position: "relative" }}>
-          <InputField
-            label="Password"
-            keyboardShouldPersistTaps="never"
-            placeholder="Enter your password"
-            icon={icons.lock}
-            secureTextEntry={!showPassword}
-            textContentType="newPassword"
-            autoComplete="new-password"
-            value={form.password}
-            onChangeText={(value) =>
-              setForm((previous) => ({ ...previous, password: value }))
-            }
-            ref={passwordRef}
-            onSubmitEditing={() => {
-              Keyboard.dismiss();
-              onSignUpPress();
+          <Image
+            source={images.icon}
+            style={{
+              width: isTablet ? 300 : 240,
+              height: isTablet ? 76 : 60,
+              resizeMode: "contain",
+              alignSelf: "center",
             }}
-            returnKeyType="go"
           />
-          <TouchableOpacity
-            onPress={toggleShowPassword}
-            style={{ position: "absolute", right: 15, top: 62 }}
+          <Text
+            className="text-2xl font-PoppinsBold"
+            style={{
+              color: isDark ? "#fff" : "#000",
+              marginTop: 20,
+              textAlign: "center",
+              alignSelf: "center",
+            }}
           >
-            <MaterialCommunityIcons
-              name={showPassword ? "eye-off" : "eye"}
-              size={24}
-              color={isDark ? "#ccc" : "#888"}
-            />
-          </TouchableOpacity>
+            Create Your Account
+          </Text>
         </View>
 
-        <CustomButton
-          title="Sign Up"
-          onPress={async () => {
-            await Haptics.selectionAsync();
-            await onSignUpPress();
+        <View
+          style={{
+            paddingHorizontal: 20,
+            paddingVertical: isTablet ? 28 : 0,
+            borderRadius: isTablet ? 28 : 0,
+            backgroundColor: isTablet
+              ? isDark
+                ? "#161616"
+                : "#ffffff"
+              : "transparent",
+            borderWidth: isTablet ? 1 : 0,
+            borderColor: isTablet
+              ? isDark
+                ? "#27272a"
+                : "#e5e7eb"
+              : "transparent",
+            shadowColor: "#000",
+            shadowOffset: { width: 0, height: 16 },
+            shadowOpacity: isTablet ? (isDark ? 0.24 : 0.08) : 0,
+            shadowRadius: isTablet ? 28 : 0,
+            elevation: isTablet ? 6 : 0,
           }}
-          className="mt-6"
-        />
-
-        <OAuth />
-        <AppleAuth />
-
-        <TouchableOpacity
-          onPress={() => router.replace("/sign-in")}
-          className="mt-5"
         >
-          <Text
-            className="text-base text-center"
-            style={{ color: isDark ? "#ccc" : "#666" }}
+          <InputField
+            label="Name"
+            placeholder="Enter your name"
+            icon={icons.person}
+            textContentType="name"
+            autoComplete="name"
+            value={form.name}
+            onChangeText={(value) =>
+              setForm((previous) => ({ ...previous, name: value }))
+            }
+            onSubmitEditing={() => emailRef.current?.focus()}
+          />
+          <InputField
+            label="Email"
+            placeholder="Enter your email"
+            textContentType="emailAddress"
+            autoComplete="email"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            icon={icons.email}
+            value={form.email}
+            onChangeText={(value) =>
+              setForm((previous) => ({ ...previous, email: value }))
+            }
+            ref={emailRef}
+            onSubmitEditing={() => passwordRef.current?.focus()}
+          />
+          <View style={{ position: "relative" }}>
+            <InputField
+              label="Password"
+              keyboardShouldPersistTaps="never"
+              placeholder="Enter your password"
+              icon={icons.lock}
+              secureTextEntry={!showPassword}
+              textContentType="newPassword"
+              autoComplete="new-password"
+              value={form.password}
+              onChangeText={(value) =>
+                setForm((previous) => ({ ...previous, password: value }))
+              }
+              ref={passwordRef}
+              onSubmitEditing={() => {
+                Keyboard.dismiss();
+                onSignUpPress();
+              }}
+              returnKeyType="go"
+            />
+            <TouchableOpacity
+              onPress={toggleShowPassword}
+              style={{ position: "absolute", right: 15, top: 62 }}
+            >
+              <MaterialCommunityIcons
+                name={showPassword ? "eye-off" : "eye"}
+                size={24}
+                color={isDark ? "#ccc" : "#888"}
+              />
+            </TouchableOpacity>
+          </View>
+
+          <CustomButton
+            title="Sign Up"
+            onPress={async () => {
+              await Haptics.selectionAsync();
+              await onSignUpPress();
+            }}
+            className="mt-6"
+          />
+
+          <OAuth />
+          <AppleAuth />
+
+          <TouchableOpacity
+            onPress={() => router.replace("/sign-in")}
+            className="mt-5"
           >
-            Already have an account?{" "}
-            <Text className="text-primary-500">Sign In</Text>
-          </Text>
-        </TouchableOpacity>
-      </View>
+            <Text
+              className="text-base text-center"
+              style={{ color: isDark ? "#ccc" : "#666" }}
+            >
+              Already have an account?{" "}
+              <Text className="text-primary-500">Sign In</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ResponsiveContainer>
 
       {/* VERIFICATION MODAL */}
       <ReactNativeModal
@@ -268,6 +318,9 @@ const Sign_Up = () => {
             paddingVertical: 36,
             borderRadius: 16,
             minHeight: 300,
+            width: "100%",
+            maxWidth: modalMaxWidth,
+            alignSelf: "center",
           }}
         >
           <TouchableOpacity

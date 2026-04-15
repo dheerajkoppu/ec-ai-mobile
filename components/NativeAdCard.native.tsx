@@ -7,12 +7,11 @@ import {
   NativeAssetType,
   NativeMediaView,
 } from "react-native-google-mobile-ads";
-
-const CARD_WIDTH = 340;
-const CARD_HEIGHT = 520;
+import { useResponsiveLayout } from "@/lib/responsive";
 
 export default function NativeAdCardNative() {
   const [nativeAd, setNativeAd] = useState<NativeAd | null>(null);
+  const { isTablet, matchCardWidth, matchCardHeight } = useResponsiveLayout();
 
   useEffect(() => {
     let mounted = true;
@@ -44,8 +43,8 @@ export default function NativeAdCardNative() {
     <NativeAdView nativeAd={nativeAd}>
       <View
         style={{
-          width: CARD_WIDTH,
-          height: CARD_HEIGHT,
+          width: isTablet ? matchCardWidth : 340,
+          height: isTablet ? matchCardHeight : 520,
           backgroundColor: "#fff",
           borderRadius: 12,
           padding: 16,
@@ -76,7 +75,7 @@ export default function NativeAdCardNative() {
         <Text style={{ fontSize: 12, color: "#999" }}>Sponsored</Text>
 
         <NativeMediaView
-          style={{ height: 180, marginTop: 10 }}
+          style={{ height: isTablet ? 220 : 180, marginTop: 10 }}
           resizeMode="cover"
         />
 

@@ -25,6 +25,8 @@ import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
 import Purchases from "react-native-purchases";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -387,6 +389,7 @@ const StepLayout = ({
   isLoading?: boolean;
 }) => {
   const isDark = useColorScheme() === "dark";
+  const { formMaxWidth } = useResponsiveLayout();
   const isButtonDisabled = disabled || isLoading;
 
   return (
@@ -402,65 +405,77 @@ const StepLayout = ({
     >
       <View
         style={{
-          width: 56,
-          height: 56,
-          borderRadius: 16,
-          backgroundColor: isDark ? "#1e1c4d" : "#EEF2FF",
-          alignItems: "center",
-          justifyContent: "center",
-          marginBottom: 14,
+          width: "100%",
+          maxWidth: formMaxWidth,
+          alignSelf: "center",
         }}
       >
-        <MaterialCommunityIcons name={icon as any} size={28} color="#5b55f7" />
-      </View>
-      <Text
-        style={{
-          fontSize: 24,
-          fontFamily: "Poppins-Bold",
-          color: isDark ? "#fff" : "#111",
-          marginBottom: 4,
-        }}
-      >
-        {title}
-      </Text>
-      <Text
-        style={{
-          fontSize: 14,
-          color: isDark ? "#888" : "#6B7280",
-          fontFamily: "Poppins-Regular",
-          marginBottom: 4,
-        }}
-      >
-        {subtitle}
-      </Text>
-      {children}
+        <View
+          style={{
+            width: 56,
+            height: 56,
+            borderRadius: 16,
+            backgroundColor: isDark ? "#1e1c4d" : "#EEF2FF",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: 14,
+          }}
+        >
+          <MaterialCommunityIcons
+            name={icon as any}
+            size={28}
+            color="#5b55f7"
+          />
+        </View>
+        <Text
+          style={{
+            fontSize: 24,
+            fontFamily: "Poppins-Bold",
+            color: isDark ? "#fff" : "#111",
+            marginBottom: 4,
+          }}
+        >
+          {title}
+        </Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: isDark ? "#888" : "#6B7280",
+            fontFamily: "Poppins-Regular",
+            marginBottom: 4,
+          }}
+        >
+          {subtitle}
+        </Text>
+        {children}
 
-      <TouchableOpacity
-        onPress={onContinue}
-        disabled={isButtonDisabled}
-        style={{
-          backgroundColor: "#5b55f7",
-          borderRadius: 14,
-          paddingVertical: 17,
-          alignItems: "center",
-          marginTop: 28,
-          opacity: isButtonDisabled ? 0.7 : 1,
-        }}
-      >
-        {isLoading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text
-            style={{
-              fontSize: 17,
-              fontFamily: "Poppins-SemiBold",
-              color: "#fff",
-            }}
-          >
-            {continueLabel}
-          </Text>
-        )}
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={onContinue}
+          disabled={isButtonDisabled}
+          style={{
+            backgroundColor: "#5b55f7",
+            borderRadius: 14,
+            paddingVertical: 17,
+            alignItems: "center",
+            marginTop: 28,
+            opacity: isButtonDisabled ? 0.7 : 1,
+          }}
+        >
+          {isLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text
+              style={{
+                fontSize: 17,
+                fontFamily: "Poppins-SemiBold",
+                color: "#fff",
+              }}
+            >
+              {continueLabel}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
     </ScrollView>
   );
 };
@@ -470,6 +485,7 @@ const StepLayout = ({
 const ProfileSetup: React.FC = () => {
   const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
+  const { contentMaxWidth } = useResponsiveLayout();
   const { update } = useLocalSearchParams<{ update?: string }>();
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
@@ -685,7 +701,8 @@ const ProfileSetup: React.FC = () => {
                 const customerInfo = await Purchases.getCustomerInfo().catch(
                   () => null,
                 );
-                const isPremium = !!customerInfo?.entitlements.active["premium"];
+                const isPremium =
+                  !!customerInfo?.entitlements.active["premium"];
                 const result = await setNotificationsEnabled(
                   enableNotifications,
                   {
@@ -701,7 +718,10 @@ const ProfileSetup: React.FC = () => {
                   );
                 }
               } catch (error) {
-                console.error("Failed to update notification preference:", error);
+                console.error(
+                  "Failed to update notification preference:",
+                  error,
+                );
               } finally {
                 resolve();
               }
@@ -831,9 +851,13 @@ const ProfileSetup: React.FC = () => {
   useEffect(() => {
     const getDropdowns = async () => {
       try {
+        const token = await getToken();
         const result = await fetchAPI("https://ec-ai.expo.app/fetchdropdowns", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify({}),
         });
         setDropdowns(result.data);
@@ -845,7 +869,7 @@ const ProfileSetup: React.FC = () => {
       }
     };
     getDropdowns();
-  }, []);
+  }, [getToken]);
 
   if (loading || !dropdowns) {
     return (
@@ -882,47 +906,49 @@ const ProfileSetup: React.FC = () => {
           paddingBottom: 14,
         }}
       >
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <TouchableOpacity
-            onPress={handleBack}
-            style={{ opacity: step > 0 ? 1 : 0 }}
-            disabled={step === 0}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <MaterialCommunityIcons
-              name="arrow-left"
-              size={24}
-              color={textColor}
-            />
-          </TouchableOpacity>
-
-          <ProgressBar step={step} total={6} isDark={isDark} />
-
-          <Text
-            style={{
-              fontFamily: "Poppins-Medium",
-              fontSize: 13,
-              color: subTextColor,
-              minWidth: 32,
-              textAlign: "right",
-            }}
-          >
-            {step + 1}/6
-          </Text>
-
-          {update === "true" && (
+        <ResponsiveContainer maxWidth={contentMaxWidth}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
             <TouchableOpacity
-              onPress={handleClose}
+              onPress={handleBack}
+              style={{ opacity: step > 0 ? 1 : 0 }}
+              disabled={step === 0}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <MaterialCommunityIcons
-                name="close"
-                size={22}
+                name="arrow-left"
+                size={24}
                 color={textColor}
               />
             </TouchableOpacity>
-          )}
-        </View>
+
+            <ProgressBar step={step} total={6} isDark={isDark} />
+
+            <Text
+              style={{
+                fontFamily: "Poppins-Medium",
+                fontSize: 13,
+                color: subTextColor,
+                minWidth: 32,
+                textAlign: "right",
+              }}
+            >
+              {step + 1}/6
+            </Text>
+
+            {update === "true" && (
+              <TouchableOpacity
+                onPress={handleClose}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <MaterialCommunityIcons
+                  name="close"
+                  size={22}
+                  color={textColor}
+                />
+              </TouchableOpacity>
+            )}
+          </View>
+        </ResponsiveContainer>
       </View>
 
       <Swiper
@@ -941,6 +967,7 @@ const ProfileSetup: React.FC = () => {
           >
             <FieldLabel text="Age" isDark={isDark} />
             <InputField
+              label=""
               keyboardType="numeric"
               placeholder="Enter your age"
               value={formData.age}
@@ -994,6 +1021,7 @@ const ProfileSetup: React.FC = () => {
 
             <FieldLabel text="Weighted GPA" isDark={isDark} />
             <InputField
+              label=""
               keyboardType="numeric"
               placeholder="e.g. 3.9"
               value={formData.gpaWeighted}
@@ -1029,6 +1057,7 @@ const ProfileSetup: React.FC = () => {
           >
             <FieldLabel text="Unweighted GPA" isDark={isDark} />
             <InputField
+              label=""
               keyboardType="numeric"
               placeholder="e.g. 3.7"
               value={formData.gpaUnweighted}

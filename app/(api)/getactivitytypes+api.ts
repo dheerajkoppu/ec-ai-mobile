@@ -1,13 +1,6 @@
 import { sql } from "@/lib/db";
-import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function GET(request: Request) {
-  try {
-    await requireAuth(request);
-  } catch {
-    return unauthorizedResponse();
-  }
-
   try {
     // Fetch activity types sorted alphabetically
     const response = await sql`

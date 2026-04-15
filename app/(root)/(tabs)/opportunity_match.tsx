@@ -31,6 +31,7 @@ import { fetchAPI } from "@/lib/fetch";
 // TypeScript resolves the platform suffixes here, but eslint-import-resolver-typescript does not.
 // eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 interface Opportunity {
   id: string;
@@ -73,6 +74,16 @@ const Opportunities = () => {
   const { getToken } = useAuth();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const {
+    isMatchDeckTablet,
+    isLandscape,
+    matchCardHorizontalMargin,
+    modalMaxWidth,
+    matchCardWidth,
+    matchCardHeight,
+    matchCardVerticalMargin,
+    matchTopOffset,
+  } = useResponsiveLayout();
   const reportButtonStyle = [
     styles.reportButtonShell,
     Platform.OS === "ios" ? styles.reportButtonShadow : null,
@@ -375,17 +386,8 @@ const Opportunities = () => {
     );
   }
 
-  return (
-    <SafeAreaView
-      edges={["top", "left", "right"]}
-      style={{
-        flex: 1,
-        paddingHorizontal: 16,
-        paddingTop: 8,
-        paddingBottom: 24,
-        backgroundColor: isDark ? "#121212" : "#F5F7FA",
-      }}
-    >
+  const screenContent = (
+    <>
       {/* Header */}
       <View style={{ alignItems: "center", marginVertical: 8 }}>
         <Text
@@ -425,21 +427,37 @@ const Opportunities = () => {
         disableBottomSwipe
         stackSize={3}
         verticalSwipe={false}
-        cardVerticalMargin={20}
+        cardHorizontalMargin={isMatchDeckTablet ? matchCardHorizontalMargin : 20}
+        cardStyle={
+          isMatchDeckTablet
+            ? {
+                width: matchCardWidth,
+                height: matchCardHeight,
+              }
+            : undefined
+        }
+        cardVerticalMargin={
+          isMatchDeckTablet && isLandscape ? matchCardVerticalMargin : 20
+        }
         backgroundColor="transparent"
-        containerStyle={{ flex: 1, marginTop: 130 }}
+        containerStyle={{
+          flex: 1,
+          marginTop: isMatchDeckTablet ? matchTopOffset : 130,
+        }}
         renderCard={(item, index) => {
           // Show ad every 3 swipes (index 2, 5, 8, ...)
           if (!isPremium && (index + 1) % 3 === 0) {
             return <NativeAdCard />;
           }
 
+          const isTopCard = index === cardIndex;
+
           return (
             <View>
               <View
                 style={{
-                  width: CARD_WIDTH,
-                  height: CARD_HEIGHT,
+                  width: isMatchDeckTablet ? matchCardWidth : CARD_WIDTH,
+                  height: isMatchDeckTablet ? matchCardHeight : CARD_HEIGHT,
                   backgroundColor: "#FFF",
                   borderRadius: 12,
                   shadowColor: "#000",
@@ -502,46 +520,62 @@ const Opportunities = () => {
                 </View>
               </View>
 
-              {/* Report icon */}
-              <TouchableOpacity
-                style={{
-                  position: "absolute",
-                  top: 8,
-                  right: 8,
-                  zIndex: 2,
-                }}
-                onPress={() => openReport(item)}
-              >
-                {Platform.OS === "ios" ? (
-                  <GlassView
-                    glassEffectStyle="clear"
-                    tintColor={
-                      isDark
-                        ? "rgba(255, 255, 255, 0.05)"
-                        : "rgba(255, 255, 255, 0.02)"
-                    }
-                    style={reportButtonStyle}
-                  >
-                    <MaterialCommunityIcons
-                      name="flag-outline"
-                      size={20}
-                      color={REPORT_ICON_COLOR}
-                    />
-                  </GlassView>
-                ) : (
-                  <View style={reportButtonStyle}>
-                    <MaterialCommunityIcons
-                      name="flag-outline"
-                      size={20}
-                      color={REPORT_ICON_COLOR}
-                    />
-                  </View>
-                )}
-              </TouchableOpacity>
+              {isTopCard ? (
+                <TouchableOpacity
+                  style={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    zIndex: 2,
+                  }}
+                  onPress={() => openReport(item)}
+                >
+                  {Platform.OS === "ios" ? (
+                    <GlassView
+                      glassEffectStyle="clear"
+                      tintColor={
+                        isDark
+                          ? "rgba(255, 255, 255, 0.05)"
+                          : "rgba(255, 255, 255, 0.02)"
+                      }
+                      style={reportButtonStyle}
+                    >
+                      <MaterialCommunityIcons
+                        name="flag-outline"
+                        size={20}
+                        color={REPORT_ICON_COLOR}
+                      />
+                    </GlassView>
+                  ) : (
+                    <View style={reportButtonStyle}>
+                      <MaterialCommunityIcons
+                        name="flag-outline"
+                        size={20}
+                        color={REPORT_ICON_COLOR}
+                      />
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ) : null}
             </View>
           );
         }}
       />
+    </>
+  );
+
+  return (
+    <SafeAreaView
+      edges={["top", "left", "right"]}
+      style={{
+        flex: 1,
+        paddingHorizontal: 16,
+        paddingTop: 8,
+        paddingBottom: 24,
+        backgroundColor: isDark ? "#121212" : "#F5F7FA",
+      }}
+    >
+      {screenContent}
 
       <ReactNativeModal
         isVisible={!!reportingOp}
@@ -558,6 +592,9 @@ const Opportunities = () => {
             shadowOpacity: isDark ? 0.4 : 0.1,
             shadowRadius: 8,
             marginBottom: 64,
+            width: "100%",
+            maxWidth: modalMaxWidth,
+            alignSelf: "center",
           }}
         >
           <KeyboardAwareScrollView

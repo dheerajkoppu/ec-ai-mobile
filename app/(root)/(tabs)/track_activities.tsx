@@ -31,6 +31,8 @@ import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { GRADE_OPTIONS } from "@/constants";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 const TrackActivities = () => {
   const { user } = useUser();
@@ -38,6 +40,7 @@ const TrackActivities = () => {
   const email = user?.primaryEmailAddress?.emailAddress;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const { contentMaxWidth, modalMaxWidth } = useResponsiveLayout();
   const primaryTextColor = isDark ? "#f5f5f5" : "#111827";
   const secondaryTextColor = isDark ? "#d4d4d8" : "#374151";
   const mutedTextColor = isDark ? "#a1a1aa" : "#6b7280";
@@ -348,248 +351,253 @@ const TrackActivities = () => {
       edges={["top", "left", "right"]}
       className={`flex-1 px-4 py-6 ${isDark ? "bg-[#121212]" : "bg-primary-200"}`}
     >
-      <Text
-        style={{
-          fontSize: 30,
-          fontFamily: "Poppins-Bold",
-          paddingBottom: 8,
-          color: primaryTextColor,
-        }}
-      >
-        {" "}
-        Track Activities
-      </Text>
-      {loading && !refreshing && (
-        <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
-      )}
-      {error && (
-        <Text className="text-red-500 font-PoppinsRegular my-4">
-          Error loading activities: {error}
-        </Text>
-      )}
-      <InputField
-        label=""
-        placeholder="Search Activities"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-      />
-      <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
-        {sortChoices.map((choice) => {
-          const isSelected = sortOption === choice.key;
-          return (
-            <TouchableOpacity
-              key={choice.key}
-              onPress={() => setSortOption(choice.key)}
-              style={{
-                flex: 1,
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                gap: 5,
-                paddingVertical: 9,
-                paddingHorizontal: 8,
-                borderRadius: 10,
-                borderWidth: 1,
-                borderColor: isSelected ? "#5b55f6" : borderColor,
-                backgroundColor: isSelected ? "#5b55f6" : surfaceColor,
-              }}
-            >
-              <MaterialCommunityIcons
-                name={choice.icon}
-                size={14}
-                color={isSelected ? "#fff" : secondaryTextColor}
-              />
-              <Text
-                style={{
-                  fontFamily: isSelected
-                    ? "Poppins-SemiBold"
-                    : "Poppins-Regular",
-                  fontSize: 12,
-                  color: isSelected ? "#fff" : primaryTextColor,
-                }}
-              >
-                {choice.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-      {!loading && filteredActivities.length === 0 ? (
+      <ResponsiveContainer maxWidth={contentMaxWidth} style={{ flex: 1 }}>
         <Text
           style={{
-            textAlign: "center",
-            color: mutedTextColor,
-            fontFamily: "Poppins-Regular",
-            marginTop: 40,
+            fontSize: 30,
+            fontFamily: "Poppins-Bold",
+            paddingBottom: 8,
+            color: primaryTextColor,
           }}
         >
-          No activities found.
+          {" "}
+          Track Activities
         </Text>
-      ) : (
-        <FlatList
-          data={filteredActivities}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={{ paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={async () => {
-                await Haptics.selectionAsync();
-                await openLogs(item);
-              }}
-              style={{
-                backgroundColor: surfaceColor,
-                padding: 16,
-                marginBottom: 16,
-                borderRadius: 10,
-                shadowColor: "#000",
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
-              }}
-            >
-              <View
+        {loading && !refreshing && (
+          <ActivityIndicator size="large" color="#5b55f6" className="my-4" />
+        )}
+        {error && (
+          <Text className="text-red-500 font-PoppinsRegular my-4">
+            Error loading activities: {error}
+          </Text>
+        )}
+        <InputField
+          label=""
+          placeholder="Search Activities"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        <View style={{ flexDirection: "row", gap: 8, marginBottom: 16 }}>
+          {sortChoices.map((choice) => {
+            const isSelected = sortOption === choice.key;
+            return (
+              <TouchableOpacity
+                key={choice.key}
+                onPress={() => setSortOption(choice.key)}
                 style={{
-                  alignSelf: "flex-start",
-                  backgroundColor: isDark ? "#2d2b5e" : "#ededfd",
-                  borderRadius: 6,
-                  paddingHorizontal: 10,
-                  paddingVertical: 3,
-                  marginBottom: 10,
+                  flex: 1,
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 5,
+                  paddingVertical: 9,
+                  paddingHorizontal: 8,
+                  borderRadius: 10,
+                  borderWidth: 1,
+                  borderColor: isSelected ? "#5b55f6" : borderColor,
+                  backgroundColor: isSelected ? "#5b55f6" : surfaceColor,
                 }}
               >
+                <MaterialCommunityIcons
+                  name={choice.icon}
+                  size={14}
+                  color={isSelected ? "#fff" : secondaryTextColor}
+                />
                 <Text
                   style={{
-                    fontFamily: "Poppins-SemiBold",
+                    fontFamily: isSelected
+                      ? "Poppins-SemiBold"
+                      : "Poppins-Regular",
                     fontSize: 12,
-                    color: "#5b55f6",
+                    color: isSelected ? "#fff" : primaryTextColor,
                   }}
                 >
-                  {item.category}
+                  {choice.label}
                 </Text>
-              </View>
-
-              <View className="flex-row">
-                <View className="w-24">
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      fontSize: 12,
-                      marginBottom: 4,
-                      color: secondaryTextColor,
-                    }}
-                  >
-                    {item.grade}
-                  </Text>
-
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      fontSize: 12,
-                      marginBottom: 4,
-                      color: secondaryTextColor,
-                    }}
-                  >
-                    {" "}
-                    {item.hoursPerWeek} hr/wk
-                  </Text>
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      fontSize: 12,
-                      marginBottom: 4,
-                      color: secondaryTextColor,
-                    }}
-                  >
-                    {" "}
-                    {item.weeksPerYear} wk/yr
-                  </Text>
-                </View>
-                <View className="flex-1">
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        {!loading && filteredActivities.length === 0 ? (
+          <Text
+            style={{
+              textAlign: "center",
+              color: mutedTextColor,
+              fontFamily: "Poppins-Regular",
+              marginTop: 40,
+            }}
+          >
+            No activities found.
+          </Text>
+        ) : (
+          <FlatList
+            data={filteredActivities}
+            keyExtractor={(item) => item.id.toString()}
+            contentContainerStyle={{ paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            }
+            renderItem={({ item }) => (
+              <TouchableOpacity
+                onPress={async () => {
+                  await Haptics.selectionAsync();
+                  await openLogs(item);
+                }}
+                style={{
+                  backgroundColor: surfaceColor,
+                  padding: 16,
+                  marginBottom: 16,
+                  borderRadius: 10,
+                  shadowColor: "#000",
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <View
+                  style={{
+                    alignSelf: "flex-start",
+                    backgroundColor: isDark ? "#2d2b5e" : "#ededfd",
+                    borderRadius: 6,
+                    paddingHorizontal: 10,
+                    paddingVertical: 3,
+                    marginBottom: 10,
+                  }}
+                >
                   <Text
                     style={{
                       fontFamily: "Poppins-SemiBold",
-                      marginBottom: 4,
-                      color: primaryTextColor,
+                      fontSize: 12,
+                      color: "#5b55f6",
                     }}
                   >
-                    {item.name}
+                    {item.category}
                   </Text>
+                </View>
 
-                  {item.roles && (
+                <View className="flex-row">
+                  <View className="w-24">
                     <Text
                       style={{
                         fontFamily: "Poppins-Regular",
                         fontSize: 12,
-                        color: secondaryTextColor,
                         marginBottom: 4,
+                        color: secondaryTextColor,
                       }}
                     >
-                      Roles: {item.roles}
+                      {item.grade}
                     </Text>
-                  )}
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-Regular",
-                      fontSize: 12,
-                      color: mutedTextColor,
-                      marginBottom: 8,
+
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        marginBottom: 4,
+                        color: secondaryTextColor,
+                      }}
+                    >
+                      {" "}
+                      {item.hoursPerWeek} hr/wk
+                    </Text>
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        marginBottom: 4,
+                        color: secondaryTextColor,
+                      }}
+                    >
+                      {" "}
+                      {item.weeksPerYear} wk/yr
+                    </Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-SemiBold",
+                        marginBottom: 4,
+                        color: primaryTextColor,
+                      }}
+                    >
+                      {item.name}
+                    </Text>
+
+                    {item.roles && (
+                      <Text
+                        style={{
+                          fontFamily: "Poppins-Regular",
+                          fontSize: 12,
+                          color: secondaryTextColor,
+                          marginBottom: 4,
+                        }}
+                      >
+                        Roles: {item.roles}
+                      </Text>
+                    )}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-Regular",
+                        fontSize: 12,
+                        color: mutedTextColor,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {" "}
+                      {item.description}
+                    </Text>
+                  </View>
+                </View>
+                <View className="flex-row justify-end mt-2">
+                  <TouchableOpacity
+                    onPress={(e) => handleEditPress(item, e)}
+                    className="mr-4"
+                  >
+                    <MaterialCommunityIcons
+                      name="pencil-outline"
+                      size={24}
+                      color="#5b55f6"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      getAIDescription(item);
+                    }}
+                    disabled={aiDescriptionLoading}
+                    className="mr-4"
+                  >
+                    <MaterialCommunityIcons
+                      name="robot"
+                      size={24}
+                      color={aiDescriptionLoading ? "#A9A5D9" : "#5b55f6"}
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      e.stopPropagation();
+                      confirmDestructiveAction({
+                        title: "Delete Activity",
+                        message: `Delete "${item.name}"? This action cannot be undone.`,
+                        onConfirm: () => deleteActivity(item),
+                      });
                     }}
                   >
-                    {" "}
-                    {item.description}
-                  </Text>
+                    <MaterialCommunityIcons
+                      name="trash-can-outline"
+                      size={24}
+                      color="#f56565"
+                    />
+                  </TouchableOpacity>
                 </View>
-              </View>
-              <View className="flex-row justify-end mt-2">
-                <TouchableOpacity
-                  onPress={(e) => handleEditPress(item, e)}
-                  className="mr-4"
-                >
-                  <MaterialCommunityIcons
-                    name="pencil-outline"
-                    size={24}
-                    color="#5b55f6"
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    getAIDescription(item);
-                  }}
-                  disabled={aiDescriptionLoading}
-                  className="mr-4"
-                >
-                  <MaterialCommunityIcons
-                    name="robot"
-                    size={24}
-                    color={aiDescriptionLoading ? "#A9A5D9" : "#5b55f6"}
-                  />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={(e) => {
-                    e.stopPropagation();
-                    confirmDestructiveAction({
-                      title: "Delete Activity",
-                      message: `Delete "${item.name}"? This action cannot be undone.`,
-                      onConfirm: () => deleteActivity(item),
-                    });
-                  }}
-                >
-                  <MaterialCommunityIcons
-                    name="trash-can-outline"
-                    size={24}
-                    color="#f56565"
-                  />
-                </TouchableOpacity>
-              </View>
-            </TouchableOpacity>
-          )}
-        />
-      )}
+              </TouchableOpacity>
+            )}
+          />
+        )}
+      </ResponsiveContainer>
       {/* Edit Modal */}
       <ReactNativeModal
         isVisible={showEditModal}
@@ -618,6 +626,9 @@ const TrackActivities = () => {
             borderRadius: 16,
             marginBottom: 64,
             shadowColor: "#000",
+            width: "100%",
+            maxWidth: modalMaxWidth,
+            alignSelf: "center",
           }}
         >
           <TouchableOpacity
@@ -814,6 +825,9 @@ const TrackActivities = () => {
             borderRadius: 16,
             maxHeight: "80%",
             paddingBottom: 8,
+            width: "100%",
+            maxWidth: modalMaxWidth,
+            alignSelf: "center",
           }}
         >
           {/* Header */}
@@ -973,6 +987,9 @@ const TrackActivities = () => {
             borderRadius: 16,
             maxHeight: "82%",
             paddingBottom: 8,
+            width: "100%",
+            maxWidth: modalMaxWidth,
+            alignSelf: "center",
           }}
         >
           <View style={{ padding: 24, paddingBottom: 16 }}>
@@ -1089,6 +1106,8 @@ const TrackActivities = () => {
               shadowOpacity: 0.2,
               shadowRadius: 8,
               elevation: 8,
+              width: "100%",
+              maxWidth: Math.min(modalMaxWidth, 420),
             }}
           >
             <ActivityIndicator size="large" color="#5b55f6" />

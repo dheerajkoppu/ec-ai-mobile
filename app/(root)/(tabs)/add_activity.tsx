@@ -26,6 +26,8 @@ import * as Haptics from "expo-haptics";
 import { useColorScheme } from "react-native";
 import { formatDateToYMD } from "@/lib/formatters";
 import { GRADE_OPTIONS } from "@/constants";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 type DropdownItem = {
   label: string;
@@ -58,6 +60,8 @@ const ActivityTabs = () => {
   const [roles, setRoles] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const isDark = scheme === "dark";
+  const { contentMaxWidth } = useResponsiveLayout();
+  const activityFormMaxWidth = Math.min(contentMaxWidth, 720);
 
   const [milestone, setMilestone] = useState<string>("");
   const [selectedGrades, setSelectedGrades] = useState<string[]>([]);
@@ -276,178 +280,180 @@ const ActivityTabs = () => {
         paddingVertical: 24,
       }}
     >
-      <View className="flex-row justify-center mb-4">
-        {["add", "log"].map((tab) => (
-          <TouchableOpacity
-            key={tab}
-            className={`flex-1 py-2 rounded-2xl ${
-              activeTab === tab ? "bg-[#5b55f6]" : "bg-gray-300"
-            }`}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text className="text-center text-white font-PoppinsBold">
-              {tab === "add" ? "Add New Activity" : "Log Hours"}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+      <ResponsiveContainer maxWidth={activityFormMaxWidth} style={{ flex: 1 }}>
+        <View className="flex-row justify-center mb-4">
+          {["add", "log"].map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              className={`flex-1 py-2 rounded-2xl ${
+                activeTab === tab ? "bg-[#5b55f6]" : "bg-gray-300"
+              }`}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text className="text-center text-white font-PoppinsBold">
+                {tab === "add" ? "Add New Activity" : "Log Hours"}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
 
-      <KeyboardAwareScrollView
-        contentContainerStyle={{ flexGrow: 1 }}
-        keyboardShouldPersistTaps="handled"
-      >
-        {activeTab === "add" ? (
-          <View
-            style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-              paddingHorizontal: 16,
-              paddingVertical: 24,
-              borderRadius: 12,
-              marginBottom: 64,
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-            }}
-          >
-            <InputField
-              label={renderRequiredLabel("Name of Activity", isDark)}
-              value={activityName}
-              placeholder="ex. Future Business Leader of America"
-              onChangeText={setActivityName}
-            />
-            <DropdownField
-              label={renderRequiredLabel("Activity Type", isDark)}
-              placeholder="Select activity type"
-              data={activities}
-              value={activityType}
-              onChange={(item: DropdownItem) => setActivityType(item.value)}
-            />
-            <InputField
-              label={renderRequiredLabel("Hours Per Week", isDark)}
-              value={timeSpent}
-              placeholder="Enter hours"
-              onChangeText={setTimeSpent}
-              keyboardType="number-pad"
-            />
-            <InputField
-              label={renderRequiredLabel("Weeks Per Year", isDark)}
-              value={weeksPerYear}
-              placeholder="Enter weeks"
-              onChangeText={setWeeksPerYear}
-              keyboardType="number-pad"
-            />
-            <InputField
-              label={renderRequiredLabel("Roles", isDark)}
-              value={roles}
-              placeholder="ex. President (12)"
-              onChangeText={setRoles}
-            />
-            <Text
+        <KeyboardAwareScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          keyboardShouldPersistTaps="handled"
+        >
+          {activeTab === "add" ? (
+            <View
               style={{
-                color: isDark ? "#fff" : "#000",
-                fontWeight: "500",
-                fontSize: 18,
-                fontFamily: "Poppins-Bold",
-                marginTop: 16,
+                backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+                paddingHorizontal: 16,
+                paddingVertical: 24,
+                borderRadius: 12,
+                marginBottom: 64,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
               }}
             >
-              Grade Level <Text className="text-red-500">*</Text>
-            </Text>
-            <View className="flex-wrap flex-row mt-2">
-              {GRADE_OPTIONS.map((grade) => (
-                <Pressable
-                  key={grade}
-                  onPress={() => toggleGradeSelection(grade)}
-                  style={{
-                    marginRight: 16,
-                    marginBottom: 8,
-                    paddingVertical: 8,
-                    paddingHorizontal: 16,
-                    borderRadius: 8,
-                    borderWidth: 1,
-                    borderColor: isDark ? "#555" : "#ccc",
-                    backgroundColor: selectedGrades.includes(grade)
-                      ? "#5b55f7"
-                      : isDark
-                        ? "#1e1e1e"
-                        : "#fff",
-                  }}
-                >
-                  <Text
+              <InputField
+                label={renderRequiredLabel("Name of Activity", isDark)}
+                value={activityName}
+                placeholder="ex. Future Business Leader of America"
+                onChangeText={setActivityName}
+              />
+              <DropdownField
+                label={renderRequiredLabel("Activity Type", isDark)}
+                placeholder="Select activity type"
+                data={activities}
+                value={activityType}
+                onChange={(item: DropdownItem) => setActivityType(item.value)}
+              />
+              <InputField
+                label={renderRequiredLabel("Hours Per Week", isDark)}
+                value={timeSpent}
+                placeholder="Enter hours"
+                onChangeText={setTimeSpent}
+                keyboardType="number-pad"
+              />
+              <InputField
+                label={renderRequiredLabel("Weeks Per Year", isDark)}
+                value={weeksPerYear}
+                placeholder="Enter weeks"
+                onChangeText={setWeeksPerYear}
+                keyboardType="number-pad"
+              />
+              <InputField
+                label={renderRequiredLabel("Roles", isDark)}
+                value={roles}
+                placeholder="ex. President (12)"
+                onChangeText={setRoles}
+              />
+              <Text
+                style={{
+                  color: isDark ? "#fff" : "#000",
+                  fontWeight: "500",
+                  fontSize: 18,
+                  fontFamily: "Poppins-Bold",
+                  marginTop: 16,
+                }}
+              >
+                Grade Level <Text className="text-red-500">*</Text>
+              </Text>
+              <View className="flex-wrap flex-row mt-2">
+                {GRADE_OPTIONS.map((grade) => (
+                  <Pressable
+                    key={grade}
+                    onPress={() => toggleGradeSelection(grade)}
                     style={{
-                      fontSize: 14,
-                      fontFamily: "Poppins-Medium",
-                      color: selectedGrades.includes(grade)
-                        ? "#fff"
+                      marginRight: 16,
+                      marginBottom: 8,
+                      paddingVertical: 8,
+                      paddingHorizontal: 16,
+                      borderRadius: 8,
+                      borderWidth: 1,
+                      borderColor: isDark ? "#555" : "#ccc",
+                      backgroundColor: selectedGrades.includes(grade)
+                        ? "#5b55f7"
                         : isDark
-                          ? "#e0e0e0"
-                          : "#000",
+                          ? "#1e1e1e"
+                          : "#fff",
                     }}
                   >
-                    {grade}
-                  </Text>
-                </Pressable>
-              ))}
+                    <Text
+                      style={{
+                        fontSize: 14,
+                        fontFamily: "Poppins-Medium",
+                        color: selectedGrades.includes(grade)
+                          ? "#fff"
+                          : isDark
+                            ? "#e0e0e0"
+                            : "#000",
+                      }}
+                    >
+                      {grade}
+                    </Text>
+                  </Pressable>
+                ))}
+              </View>
+              <InputField
+                label="Description / Notes *"
+                value={description}
+                placeholder="ex. Grew club 7x..."
+                onChangeText={setDescription}
+                multiline
+              />
+              <CustomButton
+                title={isSubmitting ? "Submitting..." : "Add Activity"}
+                onPress={handleAddActivity}
+                className="mt-5"
+              />
             </View>
-            <InputField
-              label="Description / Notes *"
-              value={description}
-              placeholder="ex. Grew club 7x..."
-              onChangeText={setDescription}
-              multiline
-            />
-            <CustomButton
-              title={isSubmitting ? "Submitting..." : "Add Activity"}
-              onPress={handleAddActivity}
-              className="mt-5"
-            />
-          </View>
-        ) : (
-          <View
-            style={{
-              backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
-              paddingHorizontal: 16,
-              paddingVertical: 24,
-              borderRadius: 12,
-              marginBottom: 64,
-              shadowColor: "#000",
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              shadowOffset: { width: 0, height: 2 },
-            }}
-          >
-            <DropdownField
-              label={renderRequiredLabel("Name of Activity", isDark)}
-              placeholder="Select activity"
-              data={formattedActivityNames}
-              value={selectedActivityId}
-              onChange={(item: DropdownItem) =>
-                setSelectedActivityId(item.value)
-              }
-            />
-            <DateInputField logDate={logDate} setLogDate={setLogDate} />
-            <InputField
-              label={renderRequiredLabel("Hours", isDark)}
-              value={logHours}
-              placeholder="Enter hours"
-              onChangeText={setLogHours}
-              keyboardType="number-pad"
-            />
-            <InputField
-              label="Milestone"
-              placeholder="ex. FBLA Club Meeting"
-              value={milestone}
-              onChangeText={setMilestone}
-            />
-            <CustomButton
-              title={isSubmitting ? "Submitting..." : "Log Hours"}
-              onPress={handleLogHours}
-              className="mt-5"
-            />
-          </View>
-        )}
-      </KeyboardAwareScrollView>
+          ) : (
+            <View
+              style={{
+                backgroundColor: isDark ? "#1a1a1a" : "#ffffff",
+                paddingHorizontal: 16,
+                paddingVertical: 24,
+                borderRadius: 12,
+                marginBottom: 64,
+                shadowColor: "#000",
+                shadowOpacity: 0.1,
+                shadowRadius: 8,
+                shadowOffset: { width: 0, height: 2 },
+              }}
+            >
+              <DropdownField
+                label={renderRequiredLabel("Name of Activity", isDark)}
+                placeholder="Select activity"
+                data={formattedActivityNames}
+                value={selectedActivityId}
+                onChange={(item: DropdownItem) =>
+                  setSelectedActivityId(item.value)
+                }
+              />
+              <DateInputField logDate={logDate} setLogDate={setLogDate} />
+              <InputField
+                label={renderRequiredLabel("Hours", isDark)}
+                value={logHours}
+                placeholder="Enter hours"
+                onChangeText={setLogHours}
+                keyboardType="number-pad"
+              />
+              <InputField
+                label="Milestone"
+                placeholder="ex. FBLA Club Meeting"
+                value={milestone}
+                onChangeText={setMilestone}
+              />
+              <CustomButton
+                title={isSubmitting ? "Submitting..." : "Log Hours"}
+                onPress={handleLogHours}
+                className="mt-5"
+              />
+            </View>
+          )}
+        </KeyboardAwareScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 };
@@ -494,7 +500,7 @@ const DateInputField = ({
             displayedComponents={["date"]}
             range={{ end: new Date() }}
             modifiers={[datePickerStyle("compact"), controlSize("small")]}
-            onDateChange={(date) => setLogDate(date)}
+            onDateChange={(date: Date) => setLogDate(date)}
           />
         </iosPicker.Host>
       ) : (

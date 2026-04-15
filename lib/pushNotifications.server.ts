@@ -38,35 +38,35 @@ type ExpoPushMessage = {
 };
 
 export async function ensurePushNotificationInfrastructure(): Promise<void> {
-  await sql`
-    ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS wants_notifications BOOLEAN DEFAULT FALSE;
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS user_push_tokens (
-      id BIGSERIAL PRIMARY KEY,
-      clerk_id TEXT NOT NULL,
-      expo_push_token TEXT NOT NULL UNIQUE,
-      platform TEXT,
-      is_active BOOLEAN NOT NULL DEFAULT TRUE,
-      last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `;
-
-  await sql`
-    CREATE TABLE IF NOT EXISTS user_notification_history (
-      id BIGSERIAL PRIMARY KEY,
-      clerk_id TEXT NOT NULL,
-      notification_type TEXT NOT NULL,
-      dedupe_key TEXT NOT NULL,
-      sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      UNIQUE (clerk_id, notification_type, dedupe_key)
-    );
-  `;
+  await Promise.all([
+    sql`
+      ALTER TABLE users
+      ADD COLUMN IF NOT EXISTS wants_notifications BOOLEAN DEFAULT FALSE;
+    `,
+    sql`
+      CREATE TABLE IF NOT EXISTS user_push_tokens (
+        id BIGSERIAL PRIMARY KEY,
+        clerk_id TEXT NOT NULL,
+        expo_push_token TEXT NOT NULL UNIQUE,
+        platform TEXT,
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        last_seen_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `,
+    sql`
+      CREATE TABLE IF NOT EXISTS user_notification_history (
+        id BIGSERIAL PRIMARY KEY,
+        clerk_id TEXT NOT NULL,
+        notification_type TEXT NOT NULL,
+        dedupe_key TEXT NOT NULL,
+        sent_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        UNIQUE (clerk_id, notification_type, dedupe_key)
+      );
+    `,
+  ]);
 }
 
 export async function registerUserPushToken({
@@ -137,9 +137,9 @@ export async function updateUserNotificationPreference({
   }
 }
 
-export async function deactivatePushToken(expoPushToken: string): Promise<void> {
-  await ensurePushNotificationInfrastructure();
-
+export async function deactivatePushToken(
+  expoPushToken: string,
+): Promise<void> {
   await sql`
     UPDATE user_push_tokens
     SET is_active = FALSE, updated_at = NOW()
@@ -150,9 +150,7 @@ export async function deactivatePushToken(expoPushToken: string): Promise<void> 
 export async function buildPersonalizedAlertForUser(
   clerkId: string,
 ): Promise<PersonalizedAlertCandidate | null> {
-  await ensurePushNotificationInfrastructure();
-
-  const [target] = await sql`
+  const [target] = (await sql`
     SELECT
       upt.clerk_id,
       upt.expo_push_token,
@@ -166,7 +164,7 @@ export async function buildPersonalizedAlertForUser(
       AND u.wants_notifications = TRUE
     ORDER BY upt.last_seen_at DESC
     LIMIT 1;
-  ` as PushTarget[];
+  `) as PushTarget[];
 
   if (!target) return null;
 
@@ -174,7 +172,7 @@ export async function buildPersonalizedAlertForUser(
   const statedInterests = normalizeStringArray(target.career_interest);
   const notifiedKeys = await getNotifiedOpportunityKeys(clerkId);
 
-  const opportunities = await sql`
+  const opportunities = (await sql`
     SELECT
       id,
       activity_name,
@@ -189,7 +187,7 @@ export async function buildPersonalizedAlertForUser(
     )
     ORDER BY created_at DESC
     LIMIT 120;
-  ` as OpportunityCandidate[];
+  `) as OpportunityCandidate[];
 
   const bestMatch = opportunities
     .filter((opportunity) => {
@@ -224,13 +222,36 @@ export async function sendPersonalizedAlertsToUsers(
 ): Promise<{
   candidates: number;
   considered: number;
+  failed: number;
+  failureReasons: string[];
   sent: number;
 }> {
-  await ensurePushNotificationInfrastructure();
+  const candidateResults = await Promise.allSettled(
+    clerkIds.map((clerkId) => buildPersonalizedAlertForUser(clerkId)),
+  );
 
-  const candidates = (
-    await Promise.all(clerkIds.map((clerkId) => buildPersonalizedAlertForUser(clerkId)))
-  ).filter(Boolean) as PersonalizedAlertCandidate[];
+  const candidates = candidateResults
+    .filter(
+      (
+        result,
+      ): result is PromiseFulfilledResult<PersonalizedAlertCandidate | null> =>
+        result.status === "fulfilled",
+    )
+    .map((result) => result.value)
+    .filter(Boolean) as PersonalizedAlertCandidate[];
+
+  const failed = candidateResults.filter(
+    (result) => result.status === "rejected",
+  ).length;
+  const failureReasons = candidateResults
+    .filter(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    )
+    .map((result) => {
+      if (result.reason instanceof Error) return result.reason.message;
+      return String(result.reason);
+    })
+    .slice(0, 3);
 
   const results = await sendExpoPushMessages(
     candidates.map((candidate) => ({
@@ -248,6 +269,7 @@ export async function sendPersonalizedAlertsToUsers(
   );
 
   const successfulCandidates: PersonalizedAlertCandidate[] = [];
+  const tokensToDeactivate: string[] = [];
 
   for (const [index, ticket] of results.entries()) {
     const candidate = candidates[index];
@@ -259,8 +281,16 @@ export async function sendPersonalizedAlertsToUsers(
     }
 
     if (ticket?.details?.error === "DeviceNotRegistered") {
-      await deactivatePushToken(candidate.pushToken);
+      tokensToDeactivate.push(candidate.pushToken);
     }
+  }
+
+  if (tokensToDeactivate.length > 0) {
+    await sql`
+      UPDATE user_push_tokens
+      SET is_active = FALSE, updated_at = NOW()
+      WHERE expo_push_token = ANY(${tokensToDeactivate}::text[]);
+    `;
   }
 
   if (successfulCandidates.length > 0) {
@@ -270,25 +300,54 @@ export async function sendPersonalizedAlertsToUsers(
   return {
     candidates: candidates.length,
     considered: clerkIds.length,
+    failed,
+    failureReasons,
     sent: successfulCandidates.length,
   };
 }
 
-export async function getEligiblePushUserIds(limit = 50): Promise<string[]> {
-  await ensurePushNotificationInfrastructure();
+export async function getEligiblePushUserIdsPage({
+  cursor,
+  limit = 5,
+}: {
+  cursor?: string | null;
+  limit?: number;
+}): Promise<{ clerkIds: string[]; nextCursor: string | null }> {
+  const rows = (
+    cursor
+      ? await sql`
+        SELECT DISTINCT u.clerk_id
+        FROM users u
+        INNER JOIN user_push_tokens upt
+          ON upt.clerk_id = u.clerk_id
+        WHERE u.wants_notifications = TRUE
+          AND upt.is_active = TRUE
+          AND u.clerk_id > ${cursor}
+        ORDER BY u.clerk_id
+        LIMIT ${limit + 1};
+      `
+      : await sql`
+        SELECT DISTINCT u.clerk_id
+        FROM users u
+        INNER JOIN user_push_tokens upt
+          ON upt.clerk_id = u.clerk_id
+        WHERE u.wants_notifications = TRUE
+          AND upt.is_active = TRUE
+        ORDER BY u.clerk_id
+        LIMIT ${limit + 1};
+      `
+  ) as Array<{ clerk_id: string }>;
 
-  const rows = await sql`
-    SELECT DISTINCT u.clerk_id
-    FROM users u
-    INNER JOIN user_push_tokens upt
-      ON upt.clerk_id = u.clerk_id
-    WHERE u.wants_notifications = TRUE
-      AND upt.is_active = TRUE
-    ORDER BY u.clerk_id
-    LIMIT ${limit};
-  ` as Array<{ clerk_id: string }>;
+  const pageRows = rows.slice(0, limit);
+  const nextCursor =
+    rows.length > limit
+      ? (pageRows[pageRows.length - 1]?.clerk_id ?? null)
+      : null;
 
-  return rows.map((row) => row.clerk_id);
+  return {
+    clerkIds: pageRows.map((row) => row.clerk_id),
+    nextCursor,
+  };
 }
 
 function normalizeStringArray(value: unknown): string[] {
@@ -296,7 +355,11 @@ function normalizeStringArray(value: unknown): string[] {
 
   if (Array.isArray(value)) {
     return value
-      .map((item) => String(item).trim().replace(/^"+|"+$/g, ""))
+      .map((item) =>
+        String(item)
+          .trim()
+          .replace(/^"+|"+$/g, ""),
+      )
       .filter(Boolean);
   }
 
@@ -319,43 +382,39 @@ function normalizeStringArray(value: unknown): string[] {
 }
 
 async function getSignalFieldsForUser(clerkId: string): Promise<string[]> {
-  const rows = await sql`
-    SELECT o.career_field
-    FROM opportunities o
-    INNER JOIN user_saved_opportunities uso
-      ON uso.opportunity_id = o.id
-    WHERE uso.clerk_id = ${clerkId}
+  const rows = (await sql`
+    SELECT career_field
+    FROM (
+      SELECT o.career_field
+      FROM opportunities o
+      INNER JOIN user_saved_opportunities uso ON uso.opportunity_id = o.id
+      WHERE uso.clerk_id = ${clerkId}
 
-    UNION ALL
+      UNION ALL
 
-    SELECT o.career_field
-    FROM opportunities o
-    INNER JOIN user_swipes us
-      ON us.opportunity_id = o.id
-    WHERE us.user_clerk_id = ${clerkId}
-      AND us.liked = TRUE;
-  ` as Array<{ career_field: string | null }>;
+      SELECT o.career_field
+      FROM opportunities o
+      INNER JOIN user_swipes us ON us.opportunity_id = o.id
+      WHERE us.user_clerk_id = ${clerkId}
+        AND us.liked = TRUE
+    ) sub
+    WHERE career_field IS NOT NULL AND career_field <> ''
+    GROUP BY career_field
+    ORDER BY COUNT(*) DESC;
+  `) as Array<{ career_field: string }>;
 
-  const counts = new Map<string, number>();
-
-  for (const row of rows) {
-    const field = row.career_field?.trim();
-    if (!field) continue;
-    counts.set(field, (counts.get(field) ?? 0) + 1);
-  }
-
-  return [...counts.entries()]
-    .sort((left, right) => right[1] - left[1])
-    .map(([field]) => field);
+  return rows.map((row) => row.career_field);
 }
 
-async function getNotifiedOpportunityKeys(clerkId: string): Promise<Set<string>> {
-  const rows = await sql`
+async function getNotifiedOpportunityKeys(
+  clerkId: string,
+): Promise<Set<string>> {
+  const rows = (await sql`
     SELECT dedupe_key
     FROM user_notification_history
     WHERE clerk_id = ${clerkId}
       AND notification_type = ${PERSONALIZED_ALERT_TYPE};
-  ` as Array<{ dedupe_key: string }>;
+  `) as Array<{ dedupe_key: string }>;
 
   return new Set(rows.map((row) => row.dedupe_key));
 }
@@ -407,7 +466,9 @@ function calculateAlertScore({
   }
 
   const preferredTime = mapTimeRange(weeklyCommitment);
-  const opportunityTime = mapTimeRange(hoursToLabel(opportunity.hours_per_week));
+  const opportunityTime = mapTimeRange(
+    hoursToLabel(opportunity.hours_per_week),
+  );
   const difference = Math.abs(preferredTime - opportunityTime);
 
   if (preferredTime && opportunityTime) {
@@ -423,7 +484,9 @@ function calculateAlertScore({
         : 0;
 
   if (createdAt) {
-    const ageInDays = Math.floor((Date.now() - createdAt) / (1000 * 60 * 60 * 24));
+    const ageInDays = Math.floor(
+      (Date.now() - createdAt) / (1000 * 60 * 60 * 24),
+    );
     score += Math.max(0, 14 - ageInDays);
   }
 
@@ -459,21 +522,19 @@ function buildAlertBody(
 async function recordNotificationHistory(
   candidates: PersonalizedAlertCandidate[],
 ): Promise<void> {
-  for (const candidate of candidates) {
-    await sql`
-      INSERT INTO user_notification_history (
-        clerk_id,
-        notification_type,
-        dedupe_key
-      )
-      VALUES (
-        ${candidate.clerkId},
-        ${PERSONALIZED_ALERT_TYPE},
-        ${candidate.dedupeKey}
-      )
-      ON CONFLICT (clerk_id, notification_type, dedupe_key) DO NOTHING;
-    `;
-  }
+  const clerkIds = candidates.map((candidate) => candidate.clerkId);
+  const types = candidates.map(() => PERSONALIZED_ALERT_TYPE);
+  const dedupeKeys = candidates.map((candidate) => candidate.dedupeKey);
+
+  await sql`
+    INSERT INTO user_notification_history (clerk_id, notification_type, dedupe_key)
+    SELECT * FROM UNNEST(
+      ${clerkIds}::text[],
+      ${types}::text[],
+      ${dedupeKeys}::text[]
+    ) AS t(clerk_id, notification_type, dedupe_key)
+    ON CONFLICT (clerk_id, notification_type, dedupe_key) DO NOTHING;
+  `;
 }
 
 async function sendExpoPushMessages(
@@ -481,7 +542,11 @@ async function sendExpoPushMessages(
 ): Promise<Array<{ details?: { error?: string }; status?: string }>> {
   const tickets: Array<{ details?: { error?: string }; status?: string }> = [];
 
-  for (let index = 0; index < messages.length; index += MAX_MESSAGES_PER_REQUEST) {
+  for (
+    let index = 0;
+    index < messages.length;
+    index += MAX_MESSAGES_PER_REQUEST
+  ) {
     const chunk = messages.slice(index, index + MAX_MESSAGES_PER_REQUEST);
 
     const response = await fetch(EXPO_PUSH_API_URL, {

@@ -23,6 +23,8 @@ import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { fetchAPI } from "@/lib/fetch";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 interface Opportunity {
   id: string;
@@ -59,6 +61,7 @@ export default function Saved_opportunities() {
   const { user } = useUser();
   const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
+  const { contentMaxWidth, modalMaxWidth } = useResponsiveLayout();
   const surfaceColor = isDark ? "#1e1e1e" : "#ffffff";
   const primaryTextColor = isDark ? "#f5f5f5" : "#111827";
   const secondaryTextColor = isDark ? "#d4d4d8" : "#374151";
@@ -236,180 +239,182 @@ export default function Saved_opportunities() {
       }}
     >
       <SignedIn>
-        <Text
-          style={{
-            fontSize: 28,
-            fontFamily: "Poppins-Bold",
-            paddingBottom: 12,
-            color: isDark ? "#ffffff" : "#1a1a1a",
-          }}
-        >
-          Saved Opportunities
-        </Text>
-
-        <InputField
-          label=""
-          placeholder="Search Opportunities"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
-
-        {filteredSavedOpportunities.length === 0 ? (
+        <ResponsiveContainer maxWidth={contentMaxWidth} style={{ flex: 1 }}>
           <Text
             style={{
-              textAlign: "center",
-              marginTop: 40,
-              fontFamily: "Poppins-Regular",
-              color: isDark ? "#999" : "#666",
+              fontSize: 28,
+              fontFamily: "Poppins-Bold",
+              paddingBottom: 12,
+              color: isDark ? "#ffffff" : "#1a1a1a",
             }}
           >
-            No saved opportunities found.
+            Saved Opportunities
           </Text>
-        ) : (
-          <FlatList
-            data={filteredSavedOpportunities}
-            keyExtractor={(item) => item.id}
-            refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-            }
-            contentContainerStyle={{ paddingBottom: 24 }}
-            renderItem={({ item }) => (
-              <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
-                <View
-                  style={{
-                    backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
-                    padding: 16,
-                    marginBottom: 16,
-                    borderRadius: 10,
-                    shadowColor: "#000",
-                  }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: "Poppins-SemiBold",
-                      fontSize: 16,
-                      color: isDark ? "#fff" : "#111",
-                      marginBottom: 8,
-                    }}
-                  >
-                    {item.activityType}
-                  </Text>
-                  <View style={{ flexDirection: "row" }}>
-                    <View style={{ width: 112 }}>
-                      <Text
-                        style={{
-                          fontFamily: "Poppins-Regular",
-                          fontSize: 12,
-                          color: isDark ? "#ccc" : "#444",
-                          marginBottom: 4,
-                        }}
-                      >
-                        Location: {item.location}
-                      </Text>
-                      {item.duration && (
-                        <Text
-                          style={{
-                            fontFamily: "Poppins-Regular",
-                            fontSize: 12,
-                            color: isDark ? "#ccc" : "#444",
-                            marginBottom: 4,
-                          }}
-                        >
-                          Duration: {item.duration}
-                        </Text>
-                      )}
-                      {item.deadline && (
-                        <Text
-                          style={{
-                            fontFamily: "Poppins-Regular",
-                            fontSize: 12,
-                            color: isDark ? "#ccc" : "#444",
-                            marginBottom: 4,
-                          }}
-                        >
-                          Deadline: {item.deadline}
-                        </Text>
-                      )}
-                    </View>
-                    <View style={{ flex: 1, marginLeft: 8 }}>
-                      <Text
-                        style={{
-                          fontFamily: "Poppins-SemiBold",
-                          fontSize: 14,
-                          color: isDark ? "#fff" : "#111",
-                          marginBottom: 4,
-                        }}
-                      >
-                        {item.title}
-                      </Text>
-                      <Text
-                        style={{
-                          fontFamily: "Poppins-Regular",
-                          fontSize: 12,
-                          color: isDark ? "#bbb" : "#333",
-                          marginBottom: 8,
-                        }}
-                      >
-                        {item.description}
-                      </Text>
-                      {item.apply && (
-                        <TouchableOpacity
-                          onPress={async () => {
-                            if (item.apply) {
-                              await WebBrowser.openBrowserAsync(item.apply);
-                            }
-                          }}
-                        >
-                          <Text
-                            style={{
-                              color: "#5b55f6",
-                              textDecorationLine: "underline",
-                              fontSize: 13,
-                            }}
-                          >
-                            Apply Here
-                          </Text>
-                        </TouchableOpacity>
-                      )}
-                    </View>
-                  </View>
+
+          <InputField
+            label=""
+            placeholder="Search Opportunities"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+
+          {filteredSavedOpportunities.length === 0 ? (
+            <Text
+              style={{
+                textAlign: "center",
+                marginTop: 40,
+                fontFamily: "Poppins-Regular",
+                color: isDark ? "#999" : "#666",
+              }}
+            >
+              No saved opportunities found.
+            </Text>
+          ) : (
+            <FlatList
+              data={filteredSavedOpportunities}
+              keyExtractor={(item) => item.id}
+              refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              }
+              contentContainerStyle={{ paddingBottom: 24 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity onPress={() => setSelectedOpportunity(item)}>
                   <View
                     style={{
-                      flexDirection: "row",
-                      justifyContent: "flex-end",
-                      marginTop: 8,
+                      backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
+                      padding: 16,
+                      marginBottom: 16,
+                      borderRadius: 10,
+                      shadowColor: "#000",
                     }}
                   >
-                    <TouchableOpacity
-                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                      onPress={() => getAIReasons(item)}
-                      disabled={loadingReason}
-                      style={{ marginRight: 16 }}
+                    <Text
+                      style={{
+                        fontFamily: "Poppins-SemiBold",
+                        fontSize: 16,
+                        color: isDark ? "#fff" : "#111",
+                        marginBottom: 8,
+                      }}
                     >
-                      <MaterialCommunityIcons
-                        name="robot"
-                        size={24}
-                        color={loadingReason ? "#A9A5D9" : "#5b55f6"}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                      onPress={() =>
-                        confirmDestructiveAction({
-                          title: "Delete Saved Opportunity",
-                          message: `Delete "${item.title}" from your saved opportunities?`,
-                          onConfirm: () => deleteOpportunity(item.id),
-                        })
-                      }
+                      {item.activityType}
+                    </Text>
+                    <View style={{ flexDirection: "row" }}>
+                      <View style={{ width: 112 }}>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins-Regular",
+                            fontSize: 12,
+                            color: isDark ? "#ccc" : "#444",
+                            marginBottom: 4,
+                          }}
+                        >
+                          Location: {item.location}
+                        </Text>
+                        {item.duration && (
+                          <Text
+                            style={{
+                              fontFamily: "Poppins-Regular",
+                              fontSize: 12,
+                              color: isDark ? "#ccc" : "#444",
+                              marginBottom: 4,
+                            }}
+                          >
+                            Duration: {item.duration}
+                          </Text>
+                        )}
+                        {item.deadline && (
+                          <Text
+                            style={{
+                              fontFamily: "Poppins-Regular",
+                              fontSize: 12,
+                              color: isDark ? "#ccc" : "#444",
+                              marginBottom: 4,
+                            }}
+                          >
+                            Deadline: {item.deadline}
+                          </Text>
+                        )}
+                      </View>
+                      <View style={{ flex: 1, marginLeft: 8 }}>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins-SemiBold",
+                            fontSize: 14,
+                            color: isDark ? "#fff" : "#111",
+                            marginBottom: 4,
+                          }}
+                        >
+                          {item.title}
+                        </Text>
+                        <Text
+                          style={{
+                            fontFamily: "Poppins-Regular",
+                            fontSize: 12,
+                            color: isDark ? "#bbb" : "#333",
+                            marginBottom: 8,
+                          }}
+                        >
+                          {item.description}
+                        </Text>
+                        {item.apply && (
+                          <TouchableOpacity
+                            onPress={async () => {
+                              if (item.apply) {
+                                await WebBrowser.openBrowserAsync(item.apply);
+                              }
+                            }}
+                          >
+                            <Text
+                              style={{
+                                color: "#5b55f6",
+                                textDecorationLine: "underline",
+                                fontSize: 13,
+                              }}
+                            >
+                              Apply Here
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      </View>
+                    </View>
+                    <View
+                      style={{
+                        flexDirection: "row",
+                        justifyContent: "flex-end",
+                        marginTop: 8,
+                      }}
                     >
-                      <FontAwesome name="trash" size={22} color="#f56565" />
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                        onPress={() => getAIReasons(item)}
+                        disabled={loadingReason}
+                        style={{ marginRight: 16 }}
+                      >
+                        <MaterialCommunityIcons
+                          name="robot"
+                          size={24}
+                          color={loadingReason ? "#A9A5D9" : "#5b55f6"}
+                        />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                        onPress={() =>
+                          confirmDestructiveAction({
+                            title: "Delete Saved Opportunity",
+                            message: `Delete "${item.title}" from your saved opportunities?`,
+                            onConfirm: () => deleteOpportunity(item.id),
+                          })
+                        }
+                      >
+                        <FontAwesome name="trash" size={22} color="#f56565" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                </View>
-              </TouchableOpacity>
-            )}
-          />
-        )}
+                </TouchableOpacity>
+              )}
+            />
+          )}
+        </ResponsiveContainer>
 
         <ReactNativeModal
           backdropTransitionOutTiming={1}
@@ -426,6 +431,9 @@ export default function Saved_opportunities() {
               borderRadius: 16,
               maxHeight: "82%",
               paddingBottom: 8,
+              width: "100%",
+              maxWidth: modalMaxWidth,
+              alignSelf: "center",
             }}
           >
             <View style={{ padding: 24, paddingBottom: 16 }}>
@@ -516,6 +524,9 @@ export default function Saved_opportunities() {
               borderRadius: 16,
               maxHeight: "82%",
               paddingBottom: 8,
+              width: "100%",
+              maxWidth: modalMaxWidth,
+              alignSelf: "center",
             }}
           >
             {/* Header */}

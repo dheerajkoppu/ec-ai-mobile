@@ -1,11 +1,8 @@
 import {
-  getEligiblePushUserIds,
+  getEligiblePushUserIdsPage,
   sendPersonalizedAlertsToUsers,
 } from "@/lib/pushNotifications.server";
-
-function unauthorizedResponse() {
-  return Response.json({ error: "Unauthorized" }, { status: 401 });
-}
+import { unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
   const expectedSecret = process.env.PUSH_CRON_SECRET;
@@ -23,18 +20,32 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json().catch(() => ({}));
+    const targetClerkId =
+      typeof body?.clerkId === "string" && body.clerkId.trim().length > 0
+        ? body.clerkId.trim()
+        : null;
+    const cursor =
+      typeof body?.cursor === "string" && body.cursor.trim().length > 0
+        ? body.cursor.trim()
+        : null;
     const limit =
       typeof body?.limit === "number" && body.limit > 0
-        ? Math.min(body.limit, 200)
-        : 50;
+        ? Math.min(body.limit, 5)
+        : 1;
 
-    const clerkIds = await getEligiblePushUserIds(limit);
+    const page = targetClerkId
+      ? { clerkIds: [targetClerkId], nextCursor: null }
+      : await getEligiblePushUserIdsPage({ cursor, limit });
+    const clerkIds = page.clerkIds;
     const result = await sendPersonalizedAlertsToUsers(clerkIds);
 
     return Response.json(
       {
         ...result,
         limit,
+        nextCursor: page.nextCursor,
+        targetedClerkId: targetClerkId,
+        usedCursor: cursor,
       },
       { status: 200 },
     );

@@ -30,12 +30,15 @@ import {
   setNotificationsEnabled,
 } from "@/lib/notifications";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
+import ResponsiveContainer from "@/components/ResponsiveContainer";
+import { useResponsiveLayout } from "@/lib/responsive";
 
 const Profile = () => {
   const { user } = useUser();
   const { signOut } = useClerk();
   const { getToken } = useAuth();
   const isDark = useColorScheme() === "dark";
+  const { contentMaxWidth } = useResponsiveLayout();
 
   useFocusEffect(
     useCallback(() => {
@@ -243,241 +246,242 @@ const Profile = () => {
         paddingTop: 24,
       }}
     >
-      <ScrollView
-        contentContainerStyle={{ paddingBottom: 24 }}
-        showsVerticalScrollIndicator={false}
-      >
-        <View className="items-center mb-6 relative">
-          <View className="relative">
-            <Image
-              source={{ uri: imageUri }}
-              className="w-24 h-24 rounded-full"
-            />
-            <TouchableOpacity
-              onPress={pickImage}
-              className="absolute bottom-0 right-0 bg-[#5b55f7] p-2 rounded-full shadow"
+      <ResponsiveContainer maxWidth={contentMaxWidth} style={{ flex: 1 }}>
+        <ScrollView
+          contentContainerStyle={{ paddingBottom: 24 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="items-center mb-6 relative">
+            <View className="relative">
+              <Image
+                source={{ uri: imageUri }}
+                className="w-24 h-24 rounded-full"
+              />
+              <TouchableOpacity
+                onPress={pickImage}
+                className="absolute bottom-0 right-0 bg-[#5b55f7] p-2 rounded-full shadow"
+              >
+                <Ionicons name="cloud-upload" size={18} color="white" />
+              </TouchableOpacity>
+            </View>
+            <Text
+              className="text-xl font-PoppinsSemiBold mt-2"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
             >
-              <Ionicons name="cloud-upload" size={18} color="white" />
-            </TouchableOpacity>
+              {user?.fullName}
+            </Text>
+            <Text className="text-[#5b55f7] text-base font-PoppinsRegular">
+              {user?.primaryEmailAddress?.emailAddress}
+            </Text>
           </View>
-          <Text
-            className="text-xl font-PoppinsSemiBold mt-2"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
-          >
-            {user?.fullName}
-          </Text>
-          <Text className="text-[#5b55f7] text-base font-PoppinsRegular">
-            {user?.primaryEmailAddress?.emailAddress}
-          </Text>
-        </View>
 
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-semibold mb-2 font-PoppinsBold"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
           >
-            Subscription Status
-          </Text>
-          <CustomButton
-            title={isPremium ? "Premium" : "Subscribe to Premium"}
-            onPress={async () => {
-              if (!isPremium) {
-                const result = await presentPremiumPaywallIfNeeded();
-                if (
-                  [PAYWALL_RESULT.PURCHASED, PAYWALL_RESULT.RESTORED].includes(
-                    result,
-                  )
-                ) {
-                  await Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Success,
-                  );
-                  setIsPremium(true);
+            <Text
+              className="text-xl font-semibold mb-2 font-PoppinsBold"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+            >
+              Subscription Status
+            </Text>
+            <CustomButton
+              title={isPremium ? "Premium" : "Subscribe to Premium"}
+              onPress={async () => {
+                if (!isPremium) {
+                  const result = await presentPremiumPaywallIfNeeded();
+                  if (
+                    result === PAYWALL_RESULT.PURCHASED ||
+                    result === PAYWALL_RESULT.RESTORED
+                  ) {
+                    await Haptics.notificationAsync(
+                      Haptics.NotificationFeedbackType.Success,
+                    );
+                    setIsPremium(true);
+                  }
                 }
-              }
-            }}
-            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
-          />
-        </View>
+              }}
+              className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+            />
+          </View>
 
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-semibold mb-2 font-PoppinsBold"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
           >
-            Customization
-          </Text>
-          <CustomButton
-            title="Update User Data"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              router.replace("/(auth)/profile-setup?update=true");
-            }}
-            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
-          />
-        </View>
+            <Text
+              className="text-xl font-semibold mb-2 font-PoppinsBold"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+            >
+              Customization
+            </Text>
+            <CustomButton
+              title="Update User Data"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                router.replace("/(auth)/profile-setup?update=true");
+              }}
+              className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+            />
+          </View>
 
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-semibold mb-2 font-PoppinsBold"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
           >
-            Account Settings
-          </Text>
-          <CustomButton
-            title="Download Activities PDF"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              if (isPremium) {
-                Alert.alert(
-                  "Sent PDF",
-                  "Your activities PDF has been sent to your email.",
-                );
-                await downloadPDF();
-              } else {
-                const result = await presentPremiumPaywallIfNeeded();
-                if (
-                  result === PAYWALL_RESULT.PURCHASED ||
-                  result === PAYWALL_RESULT.RESTORED
-                ) {
-                  setIsPremium(true);
+            <Text
+              className="text-xl font-semibold mb-2 font-PoppinsBold"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+            >
+              Account Settings
+            </Text>
+            <CustomButton
+              title="Download Activities PDF"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                if (isPremium) {
                   Alert.alert(
-                    "Sending PDF...",
-                    "We're sending your activities PDF to your email now.",
+                    "Sent PDF",
+                    "Your activities PDF has been sent to your email.",
                   );
                   await downloadPDF();
-                  await Haptics.notificationAsync(
-                    Haptics.NotificationFeedbackType.Success,
-                  );
+                } else {
+                  const result = await presentPremiumPaywallIfNeeded();
+                  if (
+                    result === PAYWALL_RESULT.PURCHASED ||
+                    result === PAYWALL_RESULT.RESTORED
+                  ) {
+                    setIsPremium(true);
+                    Alert.alert(
+                      "Sending PDF...",
+                      "We're sending your activities PDF to your email now.",
+                    );
+                    await downloadPDF();
+                    await Haptics.notificationAsync(
+                      Haptics.NotificationFeedbackType.Success,
+                    );
+                  }
                 }
+              }}
+              className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+            />
+            <CustomButton
+              title="Export Data"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                await requestDataExport();
+              }}
+              className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+            />
+            <CustomButton
+              title={
+                notificationsEnabledState
+                  ? "Notifications Enabled"
+                  : "Enable Notifications"
               }
-            }}
-            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
-          />
-          <CustomButton
-            title="Export Data"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              await requestDataExport();
-            }}
-            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
-          />
-          <CustomButton
-            title={
-              notificationsEnabledState
-                ? "Notifications Enabled"
-                : "Enable Notifications"
-            }
-            onPress={handleEnableNotifications}
-            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
-          />
-        </View>
+              onPress={handleEnableNotifications}
+              className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+            />
+          </View>
 
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-semibold mb-3 font-PoppinsBold"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
           >
-            Help & Support
-          </Text>
-          <CustomButton
-            title="Contact Support"
-            onPress={async () => {
-              await Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=Support%20Request&body=Hello%20EC-AI%20Team%2C%0A%0ADescribe%20your%20issue%3A%0A%0A%0ASteps%20to%20reproduce%3A%0A1.%20%0A2.%20%0A3.%20%0A%0ADevice%3A%20%0AApp%20version%3A%20%0A%0AThank%20you",
-              );
-            }}
-            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
-          />
-          <CustomButton
-            title="Submit Feedback"
-            onPress={async () => {
-              await Linking.openURL(
-                "mailto:ask.ecai@gmail.com?subject=App%20Feedback&body=Hello%20EC-AI%20Team%2C%0A%0AWhat%20I%20liked%3A%0A%0A%0AWhat%20could%20be%20improved%3A%0A%0A%0AFeature%20requests%3A%0A%0A%0AThank%20you",
-              );
-            }}
-            className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
-          />
-        </View>
+            <Text
+              className="text-xl font-semibold mb-3 font-PoppinsBold"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+            >
+              Help & Support
+            </Text>
+            <CustomButton
+              title="Contact Support"
+              onPress={async () => {
+                await Linking.openURL(
+                  "mailto:ask.ecai@gmail.com?subject=Support%20Request&body=Hello%20EC-AI%20Team%2C%0A%0ADescribe%20your%20issue%3A%0A%0A%0ASteps%20to%20reproduce%3A%0A1.%20%0A2.%20%0A3.%20%0A%0ADevice%3A%20%0AApp%20version%3A%20%0A%0AThank%20you",
+                );
+              }}
+              className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+            />
+            <CustomButton
+              title="Submit Feedback"
+              onPress={async () => {
+                await Linking.openURL(
+                  "mailto:ask.ecai@gmail.com?subject=App%20Feedback&body=Hello%20EC-AI%20Team%2C%0A%0AWhat%20I%20liked%3A%0A%0A%0AWhat%20could%20be%20improved%3A%0A%0A%0AFeature%20requests%3A%0A%0A%0AThank%20you",
+                );
+              }}
+              className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
+            />
+          </View>
 
-        {/* Legal Section */}
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <Text
-            className="text-xl font-semibold mb-3 font-PoppinsBold"
-            style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+          {/* Legal Section */}
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
           >
-            Legal
-          </Text>
-          <CustomButton
-            title="Privacy Policy"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              await WebBrowser.openBrowserAsync(
-                "https://ec-ai.app/privacy-policy",
-              );
-            }}
-            className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
-          />
-          <CustomButton
-            title="Terms of Use"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              await WebBrowser.openBrowserAsync(
-                "https://ec-ai.app/terms-of-use",
-              );
-            }}
-            className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
-          />
-        </View>
+            <Text
+              className="text-xl font-semibold mb-3 font-PoppinsBold"
+              style={{ color: isDark ? "#FFFFFF" : "#000000" }}
+            >
+              Legal
+            </Text>
+            <CustomButton
+              title="Privacy Policy"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                await WebBrowser.openBrowserAsync(
+                  "https://ec-ai.app/privacy-policy",
+                );
+              }}
+              className="w-auto p-1 rounded-lg mb-2 font-PoppinsRegular shadow-md"
+            />
+            <CustomButton
+              title="Terms of Use"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                await WebBrowser.openBrowserAsync(
+                  "https://ec-ai.app/terms-of-use",
+                );
+              }}
+              className="w-auto p-1 rounded-lg font-PoppinsRegular shadow-md"
+            />
+          </View>
 
-        <View
-          className="p-4 mb-4 rounded-lg shadow-md"
-          style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
-        >
-          <CustomButton
-            title="Log Out"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              confirmDestructiveAction({
-                title: "Log Out",
-                message: "Are you sure you want to log out?",
-                confirmLabel: "Log Out",
-                onConfirm: handleSignOut,
-              });
-            }}
-            bgVariant="danger"
-            className="mb-4 shadow-md"
-          />
+          <View
+            className="p-4 mb-4 rounded-lg shadow-md"
+            style={{ backgroundColor: isDark ? "#1E1E1E" : "#FFFFFF" }}
+          >
+            <CustomButton
+              title="Log Out"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                confirmDestructiveAction({
+                  title: "Log Out",
+                  message: "Are you sure you want to log out?",
+                  confirmLabel: "Log Out",
+                  onConfirm: handleSignOut,
+                });
+              }}
+              bgVariant="danger"
+              className="mb-4 shadow-md"
+            />
 
-          <CustomButton
-            title="Delete Account"
-            onPress={async () => {
-              await Haptics.selectionAsync();
-              confirmDestructiveAction({
-                title: "Delete Account",
-                message:
-                  "Are you sure you want to delete your account? This action cannot be undone.",
-                onConfirm: deleteAccount,
-              });
-            }}
-            className="shadow-md"
-          />
-        </View>
-      </ScrollView>
+            <CustomButton
+              title="Delete Account"
+              onPress={async () => {
+                await Haptics.selectionAsync();
+                confirmDestructiveAction({
+                  title: "Delete Account",
+                  message:
+                    "Are you sure you want to delete your account? This action cannot be undone.",
+                  onConfirm: deleteAccount,
+                });
+              }}
+              className="shadow-md"
+            />
+          </View>
+        </ScrollView>
+      </ResponsiveContainer>
     </SafeAreaView>
   );
 };

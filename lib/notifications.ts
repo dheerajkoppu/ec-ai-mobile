@@ -55,6 +55,11 @@ export async function requestNotificationPermission(): Promise<boolean> {
   return hasGrantedPermission(requestedPermissions);
 }
 
+async function areNotificationsGranted(): Promise<boolean> {
+  const permissions = await Notifications.getPermissionsAsync();
+  return hasGrantedPermission(permissions);
+}
+
 async function scheduleReminders(): Promise<void> {
   await cancelReminders();
 
@@ -134,7 +139,8 @@ async function getExpoPushToken(): Promise<string | null> {
   await ensureAndroidNotificationChannel();
 
   const projectId =
-    Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+    Constants.expoConfig?.extra?.eas?.projectId ??
+    Constants.easConfig?.projectId;
 
   if (!projectId) {
     throw new Error("Missing Expo projectId for push token registration");
@@ -164,7 +170,9 @@ async function enablePremiumNotifications(
   return true;
 }
 
-async function enableFreeNotifications(authToken?: string | null): Promise<boolean> {
+async function enableFreeNotifications(
+  authToken?: string | null,
+): Promise<boolean> {
   await scheduleReminders();
   await disableRemotePush(authToken).catch(() => undefined);
   return true;
@@ -218,15 +226,17 @@ export async function initializeNotifications(
 ): Promise<void> {
   const { authToken, isPremium = false } = options;
   const enabled = await getNotificationsEnabled();
-  if (!enabled) return;
-
-  const granted = await requestNotificationPermission();
+  const granted = await areNotificationsGranted();
   if (!granted) {
-    await cancelReminders();
-    await disableRemotePush(authToken).catch(() => undefined);
-    await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "false");
+    if (enabled) {
+      await cancelReminders();
+      await AsyncStorage.setItem(NOTIFICATIONS_ENABLED_KEY, "false");
+      await disableRemotePush(authToken).catch(() => undefined);
+    }
     return;
   }
+
+  if (!enabled) return;
 
   const synced = isPremium
     ? await enablePremiumNotifications(authToken)

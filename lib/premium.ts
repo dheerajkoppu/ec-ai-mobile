@@ -1,4 +1,6 @@
 import { Alert, Platform } from "react-native";
+
+export const PREMIUM_ENTITLEMENT_ID = "premium";
 import Purchases from "react-native-purchases";
 import RevenueCatUI from "react-native-purchases-ui";
 
@@ -40,7 +42,7 @@ export async function presentPremiumPaywallIfNeeded() {
 
   try {
     return await RevenueCatUI.presentPaywallIfNeeded({
-      requiredEntitlementIdentifier: "premium",
+      requiredEntitlementIdentifier: PREMIUM_ENTITLEMENT_ID,
     });
   } catch (error) {
     if (Platform.OS === "android" && isAndroidBillingUnavailable(error)) {

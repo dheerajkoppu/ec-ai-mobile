@@ -1,0 +1,108 @@
+name: Send Personalized Alerts
+
+on:
+  schedule:
+    - cron: "15 16 * * 1" # Mondays at 16:15 GMT
+  workflow_dispatch: {}
+
+jobs:
+  send_alerts:
+    name: Send Personalized Alerts
+    environment: production
+    runs_on: linux-medium
+    steps:
+      - name: Trigger personalized alerts in batches
+        env:
+          ALERTS_URL: https://ec-ai.expo.app/sendpersonalizedalerts
+          BATCH_LIMIT: "5"
+          MAX_BATCHES: "20"
+        run: |
+          node <<'EOF'
+          (async () => {
+            const alertsUrl = process.env.ALERTS_URL;
+            const pushCronSecret = process.env.PUSH_CRON_SECRET;
+            const batchLimit = Number(process.env.BATCH_LIMIT ?? "5");
+            const maxBatches = Number(process.env.MAX_BATCHES ?? "20");
+
+            if (!alertsUrl) {
+              throw new Error("Missing ALERTS_URL environment variable.");
+            }
+
+            if (!pushCronSecret) {
+              throw new Error("Missing PUSH_CRON_SECRET environment variable.");
+            }
+
+            let cursor = null;
+            let batchIndex = 0;
+            let totalConsidered = 0;
+            let totalCandidates = 0;
+            let totalSent = 0;
+            let totalFailed = 0;
+
+            while (batchIndex < maxBatches) {
+              const response = await fetch(alertsUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "x-push-cron-secret": pushCronSecret,
+                },
+                body: JSON.stringify({
+                  limit: batchLimit,
+                  cursor,
+                }),
+              });
+
+              const result = await response.json();
+
+              if (!response.ok) {
+                throw new Error(
+                  `Alerts request failed with status ${response.status}: ${JSON.stringify(result)}`,
+                );
+              }
+
+              batchIndex += 1;
+              totalConsidered += Number(result.considered ?? 0);
+              totalCandidates += Number(result.candidates ?? 0);
+              totalSent += Number(result.sent ?? 0);
+              totalFailed += Number(result.failed ?? 0);
+
+              console.log(
+                JSON.stringify(
+                  {
+                    batch: batchIndex,
+                    candidates: result.candidates,
+                    considered: result.considered,
+                    failed: result.failed,
+                    nextCursor: result.nextCursor,
+                    sent: result.sent,
+                  },
+                  null,
+                  2,
+                ),
+              );
+
+              if (!result.nextCursor) {
+                break;
+              }
+
+              cursor = result.nextCursor;
+            }
+
+            console.log(
+              JSON.stringify(
+                {
+                  batches: batchIndex,
+                  totalCandidates,
+                  totalConsidered,
+                  totalFailed,
+                  totalSent,
+                },
+                null,
+                2,
+              ),
+            );
+          })().catch((error) => {
+            console.error(error);
+            process.exit(1);
+          });
+          EOF
