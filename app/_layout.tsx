@@ -4,10 +4,22 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect } from "react";
 import "react-native-reanimated";
 import { tokenCache } from "@/lib/auth";
+import NotificationBootstrap from "@/components/NotificationBootstrap";
 import RevenueCatInit from "@/components/RevenueCatInit";
 import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
 import Purchases, { LOG_LEVEL } from "react-native-purchases";
 import { Platform } from "react-native";
+import * as Notifications from "expo-notifications";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
 
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 const revenuecatApiKey = Platform.select({
@@ -52,7 +64,7 @@ export default function RootLayout() {
 
     // RevenueCat
     if (revenuecatApiKey) {
-      Purchases.setLogLevel(LOG_LEVEL.VERBOSE);
+      Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.ERROR);
       Purchases.configure({ apiKey: revenuecatApiKey });
     }
 
@@ -63,6 +75,7 @@ export default function RootLayout() {
         .then(() => console.log("AdMob initialized"))
         .catch(() => undefined);
     }
+
   }, [loaded]);
 
   if (!loaded) return null;
@@ -70,6 +83,7 @@ export default function RootLayout() {
   return (
     <ClerkProvider tokenCache={tokenCache} publishableKey={publishableKey}>
       <ClerkLoaded>
+        <NotificationBootstrap />
         <RevenueCatInit />
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />

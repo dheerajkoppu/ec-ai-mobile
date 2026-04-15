@@ -25,6 +25,10 @@ import Purchases from "react-native-purchases";
 import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import { fetchAPI } from "@/lib/fetch";
 import * as Haptics from "expo-haptics";
+import {
+  getNotificationsEnabled,
+  setNotificationsEnabled,
+} from "@/lib/notifications";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 
 const Profile = () => {
@@ -45,6 +49,13 @@ const Profile = () => {
             "Failed to check premium status (on screen focus):",
             error,
           );
+        }
+
+        try {
+          const enabled = await getNotificationsEnabled();
+          setNotificationsEnabledState(enabled);
+        } catch (error) {
+          console.error("Failed to load notification state:", error);
         }
       })();
     }, []),
@@ -86,6 +97,47 @@ const Profile = () => {
 
   const email = user?.primaryEmailAddress?.emailAddress;
   const [isPremium, setIsPremium] = useState(false);
+  const [notificationsEnabledState, setNotificationsEnabledState] =
+    useState(false);
+
+  const handleEnableNotifications = async () => {
+    try {
+      await Haptics.selectionAsync();
+      const token = await getToken();
+      const customerInfo = await Purchases.getCustomerInfo().catch(() => null);
+      const hasPremium = !!customerInfo?.entitlements.active["premium"];
+
+      const enabled = await setNotificationsEnabled(true, {
+        authToken: token,
+        isPremium: hasPremium,
+      });
+
+      setNotificationsEnabledState(enabled);
+
+      if (!enabled) {
+        Alert.alert(
+          "Enable Notifications",
+          "Notifications are off for EC-AI. Open Settings to turn them on.",
+          [
+            { text: "Cancel", style: "cancel" },
+            { text: "Open Settings", onPress: () => Linking.openSettings() },
+          ],
+        );
+        return;
+      }
+
+      Alert.alert(
+        "Notifications Enabled",
+        hasPremium
+          ? "EC-AI will send personalized alerts for opportunities and activity updates."
+          : "EC-AI will send reminders and important updates.",
+      );
+    } catch (error) {
+      console.error("Failed to enable notifications:", error);
+      Alert.alert("Error", "We couldn't enable notifications right now.");
+    }
+  };
+
   const downloadPDF = async (): Promise<boolean> => {
     try {
       const token = await getToken();
@@ -316,6 +368,15 @@ const Profile = () => {
               await Haptics.selectionAsync();
               await requestDataExport();
             }}
+            className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
+          />
+          <CustomButton
+            title={
+              notificationsEnabledState
+                ? "Notifications Enabled"
+                : "Enable Notifications"
+            }
+            onPress={handleEnableNotifications}
             className="w-auto p-1 rounded-lg mt-2 font-PoppinsRegular shadow-md"
           />
         </View>

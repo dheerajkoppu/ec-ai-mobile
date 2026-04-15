@@ -24,24 +24,20 @@ export async function POST(request: Request) {
     // RETURNING lets us reliably detect whether a row was actually written.
     const insertedLogs = await sql`
       INSERT INTO hours_logged (
-        user_id,
         activity_id,
         date_of_activity,
         hours_logged,
         description
       )
       SELECT
-        u.clerk_id,
         a.id,
         ${date_of_activity},
         ${hours_logged},
         ${description || null}
-      FROM users u
-      JOIN activities a
-        ON a.user_id = u.id
-      WHERE u.clerk_id = ${clerkId}
+      FROM activities a
+      WHERE a.clerk_id = ${clerkId}
         AND a.id = ${activity_id}
-      RETURNING id, user_id, activity_id, date_of_activity, hours_logged, description;
+      RETURNING id, activity_id, date_of_activity, hours_logged, description;
     `;
 
     if (insertedLogs.length === 0) {

@@ -15,8 +15,7 @@ export async function POST(request: Request) {
         a.id,
         a.name
       FROM activities a
-             JOIN users u ON a.user_id = u.id
-      WHERE u.clerk_id = ${clerkId};
+      WHERE a.clerk_id = ${clerkId};
     `;
 
     return new Response(JSON.stringify({ data: activities }), { status: 200 });

@@ -13,31 +13,17 @@ export async function POST(request: Request) {
     const [recentLogs, totalHoursResult] = await Promise.all([
       sql`
         SELECT hl.description, hl.date_of_activity
-        FROM users u
-        JOIN activities a
-          ON a.user_id = u.id
-        JOIN hours_logged hl
-          ON hl.activity_id = a.id
-        WHERE u.clerk_id = ${clerkId}
-          AND (
-            hl.user_id = u.clerk_id
-            OR hl.user_id = u.id::text
-          )
+        FROM activities a
+        JOIN hours_logged hl ON hl.activity_id = a.id
+        WHERE a.clerk_id = ${clerkId}
         ORDER BY hl.date_of_activity DESC
         LIMIT 3;
       `,
       sql`
         SELECT SUM(hl.hours_logged) as total_hours
-        FROM users u
-        JOIN activities a
-          ON a.user_id = u.id
-        JOIN hours_logged hl
-          ON hl.activity_id = a.id
-        WHERE u.clerk_id = ${clerkId}
-          AND (
-            hl.user_id = u.clerk_id
-            OR hl.user_id = u.id::text
-          );
+        FROM activities a
+        JOIN hours_logged hl ON hl.activity_id = a.id
+        WHERE a.clerk_id = ${clerkId};
       `,
     ]);
 

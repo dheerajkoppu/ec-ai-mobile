@@ -4,6 +4,7 @@ import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
   try {
+    // Opportunities are public reference data; auth is enforced to require sign-in
     await requireAuth(request);
   } catch {
     return unauthorizedResponse();

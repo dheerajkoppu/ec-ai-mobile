@@ -1,8 +1,14 @@
 import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function GET(request: Request) {
   try {
+    await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
 
+  try {
     // Run all reference data queries concurrently for efficiency
     const [
       questions,

@@ -13,9 +13,56 @@ export async function POST(request: Request) {
   try {
     const [row] = await sql`
       SELECT
-        u.*,
+        u.name,
+        u.age,
+        u.grade_level,
+        u.race_ethnicity,
+        u.gender,
+        u.free_reduced_lunch,
+        u.first_gen_college,
+        u.gpa_weighted,
+        u.gpa_unweighted,
+        u.career_interest,
+        u.interested_in_research,
+        u.wants_to_start_business,
+        u.extracurricular_motivation,
+        u.field_goal,
+        u.seeking_leadership,
+        u.extracurricular_format,
+        u.weekly_commitment,
+        u.interested_in_travel,
+        u.interested_in_paid_opportunities,
+        u.opportunity_selectivity,
         (
-          SELECT json_agg(o)
+          SELECT json_agg(
+            json_build_object(
+              'id', o.id,
+              'school', o.school,
+              'activity_name', o.activity_name,
+              'career_field', o.career_field,
+              'activity_type', o.activity_type,
+              'location', o.location,
+              'duration', o.duration,
+              'deadline', o.deadline,
+              'application_link', o.application_link,
+              'grade_requirements', o.grade_requirements,
+              'race_requirements', o.race_requirements,
+              'gender_requirements', o.gender_requirements,
+              'age_requirements', o.age_requirements,
+              'primary_city', o.primary_city,
+              'only_frl_students', o.only_frl_students,
+              'only_first_gen', o.only_first_gen,
+              'min_gpa', o.min_gpa,
+              'min_sat', o.min_sat,
+              'min_act', o.min_act,
+              'min_psat', o.min_psat,
+              'has_leadership_roles', o.has_leadership_roles,
+              'selectivity_level', o.selectivity_level,
+              'outside_us', o.outside_us,
+              'hours_per_week', o.hours_per_week,
+              'created_at', o.created_at
+            )
+          )
           FROM opportunities o
         ) AS opportunities
       FROM users u

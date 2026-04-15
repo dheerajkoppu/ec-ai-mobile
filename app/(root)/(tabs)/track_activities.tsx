@@ -777,7 +777,6 @@ const TrackActivities = () => {
                 />
                 <InputField
                   label="Description"
-                  scrollEnabled={false}
                   placeholder="Describe your role..."
                   value={editingActivity.description}
                   onChangeText={(value) =>

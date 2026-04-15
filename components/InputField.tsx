@@ -15,6 +15,7 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
       iconStyle,
       value,
       onChangeText,
+      multiline,
       ...props
     },
     ref,
@@ -43,7 +44,7 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
           style={[
             {
               flexDirection: "row",
-              alignItems: "center",
+              alignItems: multiline ? "flex-start" : "center",
               backgroundColor: isDark ? "#1e1e1e" : "#ffffff",
               borderRadius: 12,
               borderWidth: 1.5,
@@ -68,6 +69,7 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
             onChangeText={onChangeText}
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
+            multiline={multiline}
             style={[
               {
                 fontSize: 15,
@@ -75,6 +77,10 @@ const InputField = forwardRef<TextInput, InputFieldProps>(
                 fontFamily: "Poppins-Regular",
                 textAlign: "left",
                 color: isDark ? "#ffffff" : "#000000",
+                ...(multiline && {
+                  minHeight: 120,
+                  textAlignVertical: "top",
+                }),
               },
               inputStyle,
             ]}

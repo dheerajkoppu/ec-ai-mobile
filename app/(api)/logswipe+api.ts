@@ -19,9 +19,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedOpportunityId = String(opportunityId).trim();
+    if (!/^\d+$/.test(normalizedOpportunityId)) {
+      return Response.json(
+        { error: "Invalid opportunityId" },
+        { status: 400 },
+      );
+    }
+    const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
+
     const inserted = await sql`
       INSERT INTO user_swipes (user_clerk_id, opportunity_id, liked)
-      VALUES (${clerkId}, ${opportunityId}, ${liked})
+      VALUES (${clerkId}, ${parsedOpportunityId}, ${liked})
       RETURNING *;
     `;
 

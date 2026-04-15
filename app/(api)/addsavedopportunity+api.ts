@@ -19,9 +19,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedOpportunityId = String(opportunity_id).trim();
+    if (!/^\d+$/.test(normalizedOpportunityId)) {
+      return Response.json(
+        { error: "Invalid opportunity_id" },
+        { status: 400 },
+      );
+    }
+    const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
+
     const response = await sql`
       INSERT INTO user_saved_opportunities (clerk_id, opportunity_id)
-      VALUES (${clerkId}, ${opportunity_id});
+      VALUES (${clerkId}, ${parsedOpportunityId});
     `;
 
     return new Response(JSON.stringify({ data: response }), { status: 201 });

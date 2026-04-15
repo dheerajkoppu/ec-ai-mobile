@@ -1,6 +1,13 @@
 import { sql } from "@/lib/db";
+import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
+  try {
+    await requireAuth(request);
+  } catch {
+    return unauthorizedResponse();
+  }
+
   try {
     // Fetch and aggregate all dropdown data into a single JSON object
     const [{ data }] = await sql`
@@ -55,9 +62,9 @@ export async function POST(request: Request) {
       status: 200,
       headers: { "Content-Type": "application/json" },
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error("Error fetching dropdowns:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
     });
   }

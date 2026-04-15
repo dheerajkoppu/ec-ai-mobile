@@ -27,14 +27,10 @@ export async function POST(request: Request) {
           array_remove(array_agg(h.description), NULL),
           ARRAY[]::text[]
         ) AS descriptions
-      FROM users u
-      JOIN activities a
-        ON a.user_id = u.id
-       AND u.clerk_id = ${clerkId}
-       AND a.id = ${activity_id}
-      LEFT JOIN hours_logged h
-        ON h.activity_id = a.id
-       AND h.user_id = ${clerkId}
+      FROM activities a
+      LEFT JOIN hours_logged h ON h.activity_id = a.id
+      WHERE a.clerk_id = ${clerkId}
+        AND a.id = ${activity_id}
       GROUP BY a.name, a.roles, a.description
     `;
 

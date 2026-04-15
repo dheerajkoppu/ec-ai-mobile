@@ -19,9 +19,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedOpportunityId = String(opportunity_id).trim();
+    if (!/^\d+$/.test(normalizedOpportunityId)) {
+      return new Response(
+        JSON.stringify({ error: "Invalid opportunity_id" }),
+        { status: 400 },
+      );
+    }
+    const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
+
     const response = await sql`
       DELETE FROM user_saved_opportunities
-      WHERE clerk_id = ${clerkId} AND opportunity_id = ${opportunity_id};
+      WHERE clerk_id = ${clerkId} AND opportunity_id = ${parsedOpportunityId};
     `;
 
     return new Response(JSON.stringify({ data: response }), { status: 200 });

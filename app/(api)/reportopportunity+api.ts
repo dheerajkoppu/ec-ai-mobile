@@ -20,9 +20,18 @@ export async function POST(request: Request) {
       );
     }
 
+    const normalizedOpportunityId = String(opportunity_id).trim();
+    if (!/^\d+$/.test(normalizedOpportunityId)) {
+      return Response.json(
+        { error: "Invalid opportunity_id" },
+        { status: 400 },
+      );
+    }
+    const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
+
     await sql`
       INSERT INTO reported_opportunities (clerk_id, opportunity_id, reason, details)
-      VALUES (${clerkId}, ${opportunity_id}, ${reason}, ${details || null});
+      VALUES (${clerkId}, ${parsedOpportunityId}, ${reason}, ${details || null});
     `;
 
     await resend.emails.send({
@@ -32,7 +41,7 @@ export async function POST(request: Request) {
       text: `
 A new opportunity has been reported:
 
-Opportunity ID: ${opportunity_id}
+Opportunity ID: ${parsedOpportunityId}
 Reason: ${reason}
 Details: ${details || "(No additional details provided)"}
       `,

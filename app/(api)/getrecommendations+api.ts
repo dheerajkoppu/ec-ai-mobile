@@ -116,7 +116,12 @@ export async function POST(request: Request) {
     }));
 
     const sorted = scored
-      .sort((a, b) => b.matchScore - a.matchScore)
+      .sort(
+        (
+          a: { matchScore: number },
+          b: { matchScore: number },
+        ) => b.matchScore - a.matchScore,
+      )
       .slice(0, RECOMMENDATION_BATCH_SIZE);
 
     return new Response(JSON.stringify({ data: sorted }), {

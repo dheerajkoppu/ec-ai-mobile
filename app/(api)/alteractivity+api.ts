@@ -30,21 +30,26 @@ export async function POST(request: Request) {
 
     // Update only if the activity belongs to the authenticated user
     const updatedActivity = await sql`
-      UPDATE activities a
+      UPDATE activities
       SET
-        name        = ${name},
+        name = ${name},
         activity_type = ${category},
-        roles       = ${roles},
-        grades      = ${grade},
-        hours_per_week  = ${hoursPerWeek},
-        weeks_per_year  = ${weeksPerYear},
+        roles = ${roles},
+        grades = ${grade},
+        hours_per_week = ${hoursPerWeek},
+        weeks_per_year = ${weeksPerYear},
         description = ${description}
-      FROM users u
-      WHERE a.user_id = u.id
-        AND u.clerk_id = ${clerkId}
-        AND a.id = ${activityId}
-      RETURNING a.id, a.name, a.activity_type, a.roles, a.grades,
-                a.hours_per_week, a.weeks_per_year, a.description;
+      WHERE clerk_id = ${clerkId}
+        AND id = ${activityId}
+      RETURNING
+        id,
+        name,
+        activity_type,
+        roles,
+        grades,
+        hours_per_week,
+        weeks_per_year,
+        description;
     `;
 
     return new Response(JSON.stringify({ data: updatedActivity }), {

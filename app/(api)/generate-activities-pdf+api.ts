@@ -29,8 +29,7 @@ export async function POST(request: Request) {
         a.description,
         a.grades
       FROM activities a
-      JOIN users u ON a.user_id = u.id
-      WHERE u.clerk_id = ${clerkId}
+      WHERE a.clerk_id = ${clerkId}
       ORDER BY a.id ASC
       LIMIT ${MAX_ACTIVITIES}
     `;

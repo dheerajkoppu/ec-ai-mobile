@@ -18,11 +18,11 @@ export async function POST(request: Request) {
       });
     }
 
-    // Hours logs are keyed by Clerk user IDs in this table.
     const logs = await sql`
       SELECT hl.date_of_activity, hl.hours_logged, hl.description
       FROM hours_logged hl
-      WHERE hl.user_id = ${clerkId}
+      JOIN activities a ON a.id = hl.activity_id
+      WHERE a.clerk_id = ${clerkId}
         AND hl.activity_id = ${activity_id}
       ORDER BY hl.date_of_activity DESC;
     `;

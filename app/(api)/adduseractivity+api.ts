@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     const response = await sql`
       INSERT INTO activities (
-        user_id,
+        clerk_id,
         name,
         activity_type,
         hours_per_week,
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
         grades
       )
       VALUES (
-        (SELECT id FROM users WHERE clerk_id = ${clerkId} LIMIT 1),
+        ${clerkId},
         ${name},
         ${activity_type},
         ${hours_per_week},

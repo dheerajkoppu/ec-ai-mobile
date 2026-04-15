@@ -15,10 +15,16 @@ import { useAuth } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
 import { fetchAPI } from "@/lib/fetch";
+import {
+  hasSeenNotificationsPrompt,
+  markNotificationsPromptSeen,
+  setNotificationsEnabled,
+} from "@/lib/notifications";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { router, useLocalSearchParams } from "expo-router";
 import * as WebBrowser from "expo-web-browser";
 import * as Haptics from "expo-haptics";
+import Purchases from "react-native-purchases";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -468,6 +474,7 @@ const ProfileSetup: React.FC = () => {
   const [formData, setFormData] = useState<IFormData>({});
   const swiperRef = useRef<Swiper | null>(null);
   const hasLoadedProfileRef = useRef(false);
+  const originalFormDataRef = useRef<IFormData>({});
   const [dropdowns, setDropdowns] = useState<IDropdowns | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -505,6 +512,24 @@ const ProfileSetup: React.FC = () => {
   const handleBack = () => {
     if (step > 0) {
       swiperRef.current?.scrollBy(-1);
+    }
+  };
+
+  const handleClose = () => {
+    const hasChanges =
+      JSON.stringify(formData) !== JSON.stringify(originalFormDataRef.current);
+
+    if (hasChanges) {
+      Alert.alert("Discard changes?", "Your changes won't be saved.", [
+        { text: "Keep editing", style: "cancel" },
+        {
+          text: "Discard",
+          style: "destructive",
+          onPress: () => router.replace("/(root)/(tabs)/profile"),
+        },
+      ]);
+    } else {
+      router.replace("/(root)/(tabs)/profile");
     }
   };
 
@@ -589,7 +614,7 @@ const ProfileSetup: React.FC = () => {
           ecLevelArr = userData.field_goal;
         }
 
-        setFormData({
+        const loadedFormData: IFormData = {
           gradeLevel: userData.grade_level,
           race: userData.race_ethnicity,
           gender: userData.gender,
@@ -620,7 +645,9 @@ const ProfileSetup: React.FC = () => {
           source: userData.referral_source,
           usedOtherApps: userData.used_other_ec_finders ? "Yes" : "No",
           agreeTerms: userData.agreed_to_terms ? "Yes" : "No",
-        });
+        };
+        originalFormDataRef.current = loadedFormData;
+        setFormData(loadedFormData);
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
@@ -649,6 +676,59 @@ const ProfileSetup: React.FC = () => {
       });
       if (update !== "true") {
         await presentPremiumPaywallIfNeeded();
+        const hasSeenPrompt = await hasSeenNotificationsPrompt();
+        if (!hasSeenPrompt) {
+          await new Promise<void>((resolve) => {
+            const finishPrompt = async (enableNotifications: boolean) => {
+              try {
+                await markNotificationsPromptSeen();
+                const customerInfo = await Purchases.getCustomerInfo().catch(
+                  () => null,
+                );
+                const isPremium = !!customerInfo?.entitlements.active["premium"];
+                const result = await setNotificationsEnabled(
+                  enableNotifications,
+                  {
+                    authToken: token,
+                    isPremium,
+                  },
+                );
+
+                if (enableNotifications && !result) {
+                  Alert.alert(
+                    "Notifications unavailable",
+                    "Enable notifications on a physical device to receive EC-AI alerts.",
+                  );
+                }
+              } catch (error) {
+                console.error("Failed to update notification preference:", error);
+              } finally {
+                resolve();
+              }
+            };
+
+            Alert.alert(
+              "Stay in the loop?",
+              "Can we send reminders to log activities, check new opportunities, and keep you on track each week?",
+              [
+                {
+                  text: "Not now",
+                  style: "cancel",
+                  onPress: () => {
+                    void finishPrompt(false);
+                  },
+                },
+                {
+                  text: "Allow",
+                  onPress: () => {
+                    void finishPrompt(true);
+                  },
+                },
+              ],
+              { cancelable: false },
+            );
+          });
+        }
       }
       router.replace("/(root)/(tabs)/opportunity_match");
       return true;
@@ -829,6 +909,19 @@ const ProfileSetup: React.FC = () => {
           >
             {step + 1}/6
           </Text>
+
+          {update === "true" && (
+            <TouchableOpacity
+              onPress={handleClose}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <MaterialCommunityIcons
+                name="close"
+                size={22}
+                color={textColor}
+              />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 

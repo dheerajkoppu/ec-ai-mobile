@@ -13,14 +13,11 @@ export async function DELETE(request: Request) {
   try {
     // Delete user and their activities; get email for the notification
     const deletionResult = await sql`
-      WITH target_user AS (
-        SELECT id, email FROM users WHERE clerk_id = ${clerkId} LIMIT 1
-      ),
-      deleted_activities AS (
-        DELETE FROM activities WHERE user_id = (SELECT id FROM target_user)
+      WITH deleted_activities AS (
+        DELETE FROM activities WHERE clerk_id = ${clerkId}
       )
       DELETE FROM users
-      WHERE id = (SELECT id FROM target_user)
+      WHERE clerk_id = ${clerkId}
       RETURNING email;
     `;
 

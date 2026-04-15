@@ -24,7 +24,7 @@ export async function POST(request: Request) {
       UPDATE activities
       SET description = ${description}
       WHERE id = ${activityId}
-        AND user_id = (SELECT id FROM users WHERE clerk_id = ${clerkId} LIMIT 1)
+        AND clerk_id = ${clerkId}
       RETURNING id, description;
     `;
 

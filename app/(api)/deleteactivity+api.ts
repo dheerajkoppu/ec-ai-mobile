@@ -20,7 +20,7 @@ export async function DELETE(request: Request) {
     const result = await sql`
       DELETE FROM activities
       WHERE id = ${activityId}
-        AND user_id = (SELECT id FROM users WHERE clerk_id = ${clerkId} LIMIT 1)
+        AND clerk_id = ${clerkId}
       RETURNING id;
     `;
 
