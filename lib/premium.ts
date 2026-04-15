@@ -2,7 +2,6 @@ import { Alert, Platform } from "react-native";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
 import Purchases from "react-native-purchases";
-import RevenueCatUI from "react-native-purchases-ui";
 
 const isAndroidBillingUnavailable = (error: unknown) => {
   const details = JSON.stringify(error ?? "").toLowerCase();
@@ -41,6 +40,7 @@ export async function presentPremiumPaywallIfNeeded() {
   }
 
   try {
+    const RevenueCatUI = (await import("react-native-purchases-ui")).default;
     return await RevenueCatUI.presentPaywallIfNeeded({
       requiredEntitlementIdentifier: PREMIUM_ENTITLEMENT_ID,
     });

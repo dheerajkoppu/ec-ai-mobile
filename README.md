@@ -4,21 +4,21 @@ An AI-powered extracurricular activity tracker for students. Discover opportunit
 
 ## Tech Stack
 
-| Category           | Library                                               |
-| ------------------ | ----------------------------------------------------- |
-| Framework          | Expo SDK 55, React Native 0.83.4, React 19            |
-| Routing            | expo-router v5 (file-based)                           |
-| Styling            | NativeWind v2 (Tailwind CSS)                          |
-| Auth               | Clerk (`@clerk/clerk-expo`)                           |
-| Database           | Neon serverless Postgres (`@neondatabase/serverless`) |
-| Subscriptions      | RevenueCat (`react-native-purchases` v8)              |
-| Ads                | Google AdMob (`react-native-google-mobile-ads`)       |
-| Email              | Resend                                                |
-| File uploads       | UploadThing                                           |
-| Push notifications | `expo-notifications`                                  |
-| Biometric auth     | `expo-local-authentication`                           |
-| Swipe deck         | `react-native-deck-swiper`                            |
-| PDF generation     | PDFKit                                                |
+| Category           | Library                                                                |
+| ------------------ | ---------------------------------------------------------------------- |
+| Framework          | Expo SDK 55, React Native 0.83.4, React 19                             |
+| Routing            | expo-router (SDK 55, file-based)                                       |
+| Styling            | NativeWind v2 (Tailwind CSS)                                           |
+| Auth               | Clerk (`@clerk/clerk-expo`)                                            |
+| Database           | Neon serverless Postgres (`@neondatabase/serverless`)                  |
+| Subscriptions      | RevenueCat (`react-native-purchases` + `react-native-purchases-ui` v8) |
+| Ads                | Google AdMob (`react-native-google-mobile-ads`)                        |
+| Email              | Resend                                                                 |
+| File uploads       | UploadThing                                                            |
+| Push notifications | `expo-notifications`                                                   |
+| Biometric auth     | `expo-local-authentication`                                            |
+| Swipe deck         | `react-native-deck-swiper`                                             |
+| PDF generation     | PDFKit                                                                 |
 
 New Architecture is enabled (`newArchEnabled: true`).
 
@@ -46,7 +46,7 @@ app/
       saved_opportunities.tsx
       profile.tsx
     _layout.tsx
-  (api)/                   # 29 API route handlers (+api.ts)
+  (api)/                   # 32 API route handlers (+api.ts)
 components/                # Shared UI components
 assets/                    # Images, fonts
 ```
@@ -154,6 +154,14 @@ All API routes live under `app/(api)/` and follow Expo Router's `+api.ts` conven
 | `deleteuser`  | Delete user account        |
 | `exportdata`  | Export all user data       |
 | `questions`   | Fetch onboarding questions |
+
+### Push Notifications
+
+| Route                     | Description                            |
+| ------------------------- | -------------------------------------- |
+| `registerpush`            | Register a device push token           |
+| `notificationpreferences` | Get/update notification preferences    |
+| `sendpersonalizedalerts`  | Send personalized push alerts to users |
 
 ### Reports
 
