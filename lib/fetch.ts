@@ -73,6 +73,18 @@ export async function fetchCachedAPI<T>(
   return pending;
 }
 
+export function deleteResponseCache(key: string): void {
+  responseCache.delete(key);
+}
+
+export function deleteResponseCacheByPrefix(prefix: string): void {
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(prefix)) {
+      responseCache.delete(key);
+    }
+  }
+}
+
 export const useFetch = <T>(
   url: string,
   options?: RequestInit,

@@ -20,7 +20,13 @@ import ReactNativeModal from "react-native-modal";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import CustomButton from "@/components/CustomButton";
 import { confirmDestructiveAction } from "@/lib/confirmDestructiveAction";
-import { useFetch, fetchAPI } from "@/lib/fetch";
+import {
+  deleteResponseCache,
+  deleteResponseCacheByPrefix,
+  fetchAPI,
+  fetchCachedAPI,
+  useFetch,
+} from "@/lib/fetch";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
 import { useLocalSearchParams } from "expo-router";
@@ -35,6 +41,7 @@ import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
 
 const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+const USER_READ_TTL_MS = 60 * 1000;
 
 const TrackActivities = () => {
   const { user } = useUser();
@@ -113,7 +120,11 @@ const TrackActivities = () => {
   } = useFetch<Activity[]>(
     "https://ec-ai.expo.app/getactivities",
     requestOptions,
-    { enabled: !!requestOptions },
+    {
+      cacheKey: user?.id ? `activities:${user.id}` : undefined,
+      enabled: !!requestOptions,
+      staleTimeMs: USER_READ_TTL_MS,
+    },
   );
 
   const {
@@ -148,6 +159,9 @@ const TrackActivities = () => {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
+      if (user?.id) {
+        deleteResponseCache(`activities:${user.id}`);
+      }
       await refetch();
     } finally {
       setRefreshing(false);
@@ -190,6 +204,10 @@ const TrackActivities = () => {
           }),
         });
 
+        if (user?.id) {
+          deleteResponseCache(`activities:${user.id}`);
+          deleteResponseCache(`activity-names:${user.id}`);
+        }
         await refetch();
         setEditingActivity(null);
         setShowEditModal(false);
@@ -212,6 +230,13 @@ const TrackActivities = () => {
         },
         body: JSON.stringify({ activityId: activity.id }),
       });
+      if (user?.id) {
+        deleteResponseCache(`activities:${user.id}`);
+        deleteResponseCache(`activity-names:${user.id}`);
+        deleteResponseCacheByPrefix(
+          `activity-logs:${user.id}:${activity.id}:`,
+        );
+      }
       setDeletedActivityIds((prev) => new Set([...prev, activity.id]));
       Alert.alert("Deleted", "Activity deleted successfully.");
     } catch (error) {
@@ -256,14 +281,28 @@ const TrackActivities = () => {
   const openLogs = async (activity: Activity) => {
     try {
       const token = await getToken();
-      const result = await fetchAPI("https://ec-ai.expo.app/getactivitylogs", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ activity_id: activity.id }),
-      });
+      const result = user?.id
+        ? await fetchCachedAPI<{ data: any[] }>(
+            `activity-logs:${user.id}:${activity.id}:v1`,
+            USER_READ_TTL_MS,
+            "https://ec-ai.expo.app/getactivitylogs",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({ activity_id: activity.id }),
+            },
+          )
+        : await fetchAPI("https://ec-ai.expo.app/getactivitylogs", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ activity_id: activity.id }),
+          });
 
       if (!Array.isArray(result.data) || result.data.length === 0) {
         setLogs([]);
@@ -344,6 +383,9 @@ const TrackActivities = () => {
           description: aiDescription,
         }),
       });
+      if (user?.id) {
+        deleteResponseCache(`activities:${user.id}`);
+      }
       await refetch();
       resetAIDescriptionState();
       Alert.alert("Success", "Activity description replaced successfully.");

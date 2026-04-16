@@ -1,27 +1,37 @@
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
-import { fetchAPI } from "@/lib/fetch";
+import { fetchCachedAPI } from "@/lib/fetch";
+
+const USER_DATA_TTL_MS = 60 * 1000;
 
 const Page = () => {
   const { isSignedIn, getToken } = useAuth();
+  const { user } = useUser();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
     null,
   );
 
   useEffect(() => {
-    if (!isSignedIn) return;
+    if (!isSignedIn || !user?.id) return;
 
     const checkOnboarding = async () => {
       try {
         const token = await getToken();
-        const response = await fetchAPI("https://ec-ai.expo.app/getuserdata", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const response = await fetchCachedAPI<{
+          user?: { agreed_to_terms?: boolean };
+        }>(
+          `user-data:${user.id}`,
+          USER_DATA_TTL_MS,
+          "https://ec-ai.expo.app/getuserdata",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
           },
-        });
+        );
         setOnboardingComplete(response?.user?.agreed_to_terms === true);
       } catch {
         // Network failure or user not found — fail safe for existing users
@@ -30,7 +40,7 @@ const Page = () => {
     };
 
     checkOnboarding();
-  }, [isSignedIn]);
+  }, [getToken, isSignedIn, user?.id]);
 
   if (!isSignedIn) return <Redirect href="/(auth)/welcome" />;
 

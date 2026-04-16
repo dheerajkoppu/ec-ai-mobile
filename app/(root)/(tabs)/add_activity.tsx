@@ -16,7 +16,12 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import InputField from "@/components/InputField";
 import DropdownField from "@/components/DropdownField";
 import CustomButton from "@/components/CustomButton";
-import { fetchAPI, useFetch } from "@/lib/fetch";
+import {
+  deleteResponseCache,
+  deleteResponseCacheByPrefix,
+  fetchAPI,
+  useFetch,
+} from "@/lib/fetch";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import { router } from "expo-router";
@@ -35,6 +40,7 @@ type DropdownItem = {
 };
 
 const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+const USER_READ_TTL_MS = 60 * 1000;
 
 const getFormLabelStyle = (isDark: boolean) => ({
   color: isDark ? "#fff" : "#000",
@@ -121,7 +127,11 @@ const ActivityTabs = () => {
   const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
     "https://ec-ai.expo.app/getactivitynames",
     activityNamesRequestOptions,
-    { enabled: !!activityNamesRequestOptions },
+    {
+      cacheKey: user?.id ? `activity-names:${user.id}` : undefined,
+      enabled: !!activityNamesRequestOptions,
+      staleTimeMs: USER_READ_TTL_MS,
+    },
   );
 
   const formattedActivityNames: DropdownItem[] = Array.isArray(activityNamesRaw)
@@ -191,6 +201,10 @@ const ActivityTabs = () => {
           grades: selectedGrades.join(","),
         }),
       });
+      if (user?.id) {
+        deleteResponseCache(`activities:${user.id}`);
+        deleteResponseCache(`activity-names:${user.id}`);
+      }
       setActivityName("");
       setActivityType("");
       setTimeSpent("");
@@ -255,6 +269,11 @@ const ActivityTabs = () => {
           description: milestone,
         }),
       });
+      if (user?.id) {
+        deleteResponseCacheByPrefix(
+          `activity-logs:${user.id}:${selectedActivityId}:`,
+        );
+      }
 
       setSelectedActivityId("");
       setLogDate(new Date());

@@ -27,7 +27,7 @@ import Purchases from "react-native-purchases";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
 import { renderStars } from "@/lib/formatters";
-import { fetchAPI } from "@/lib/fetch";
+import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 // TypeScript resolves the platform suffixes here, but eslint-import-resolver-typescript does not.
 // eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
@@ -47,6 +47,7 @@ const CARD_WIDTH = width - 40;
 const CARD_HEIGHT = 600;
 const REPORT_BUTTON_SIZE = 38;
 const REPORT_ICON_COLOR = "#5B55F6";
+const USER_READ_TTL_MS = 60 * 1000;
 
 const styles = StyleSheet.create({
   reportButtonShell: {
@@ -229,17 +230,28 @@ const Opportunities = () => {
   const loadSavedIds = async () => {
     try {
       const token = await getToken();
-      const json = await fetchAPI(
-        "https://ec-ai.expo.app/getsavedopportunities",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        },
-      );
+      const json = user?.id
+        ? await fetchCachedAPI<{ data: Array<{ id: string }> }>(
+            `saved-opportunities:${user.id}`,
+            USER_READ_TTL_MS,
+            "https://ec-ai.expo.app/getsavedopportunities",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({}),
+            },
+          )
+        : await fetchAPI("https://ec-ai.expo.app/getsavedopportunities", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
+          });
       savedOpportunityIdsRef.current = new Set(
         json?.data?.map((item: any) => item.id) ?? [],
       );
@@ -252,7 +264,7 @@ const Opportunities = () => {
     useCallback(() => {
       checkPremiumAndUnlock();
       loadSavedIds();
-    }, []),
+    }, [getToken, user?.id]),
   );
 
   const fetchOpportunities = useCallback(async () => {
@@ -351,6 +363,9 @@ const Opportunities = () => {
         },
         body: JSON.stringify({ opportunity_id: op.id }),
       });
+      if (user?.id) {
+        deleteResponseCache(`saved-opportunities:${user.id}`);
+      }
       savedOpportunityIdsRef.current.add(op.id);
     } catch (err) {
       console.error("Error saving opportunity:", err);

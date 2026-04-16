@@ -1,3 +1,5 @@
+import { createHash } from "node:crypto";
+
 type CacheEntry<T> = {
   expiresAt: number;
   pending?: Promise<T>;
@@ -50,4 +52,23 @@ export async function getOrSetServerCache<T>(
   });
 
   return pending;
+}
+
+export function deleteServerCache(key: string): void {
+  serverCache.delete(key);
+}
+
+export function deleteServerCacheByPrefix(prefix: string): void {
+  for (const key of serverCache.keys()) {
+    if (key.startsWith(prefix)) {
+      serverCache.delete(key);
+    }
+  }
+}
+
+export function hashServerCacheValue(value: unknown): string {
+  return createHash("sha256")
+    .update(JSON.stringify(value))
+    .digest("hex")
+    .slice(0, 16);
 }

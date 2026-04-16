@@ -11,10 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
-import { useAuth } from "@clerk/clerk-expo";
+import { useAuth, useUser } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
-import { fetchAPI, fetchCachedAPI } from "@/lib/fetch";
+import {
+  deleteResponseCache,
+  fetchAPI,
+  fetchCachedAPI,
+} from "@/lib/fetch";
 import {
   hasSeenNotificationsPrompt,
   markNotificationsPromptSeen,
@@ -80,6 +84,7 @@ interface IFormData {
 }
 
 const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+const USER_DATA_TTL_MS = 60 * 1000;
 
 // ─── Animated Progress Bar ───────────────────────────────────────────────────
 
@@ -486,6 +491,7 @@ const StepLayout = ({
 
 const ProfileSetup: React.FC = () => {
   const { getToken } = useAuth();
+  const { user } = useUser();
   const isDark = useColorScheme() === "dark";
   const { contentMaxWidth } = useResponsiveLayout();
   const { update } = useLocalSearchParams<{ update?: string }>();
@@ -593,16 +599,29 @@ const ProfileSetup: React.FC = () => {
     const fetchUserData = async () => {
       try {
         const token = await getToken();
-        const response = await fetch("https://ec-ai.expo.app/getuserdata", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        });
-        const result = await response.json();
-        if (!isMounted || !response.ok || !result?.user) return;
+        const result = user?.id
+          ? await fetchCachedAPI<{ user?: Record<string, any> }>(
+              `user-data:${user.id}`,
+              USER_DATA_TTL_MS,
+              "https://ec-ai.expo.app/getuserdata",
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({}),
+              },
+            )
+          : await fetchAPI("https://ec-ai.expo.app/getuserdata", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({}),
+            });
+        if (!isMounted || !result?.user) return;
 
         const userData = result.user;
         const satScoreNum = parseInt(userData.sat_score);
@@ -676,7 +695,7 @@ const ProfileSetup: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [update, getToken]);
+  }, [update, getToken, user?.id]);
 
   const handleSubmit = async () => {
     if (isSubmitting) return false;
@@ -692,6 +711,9 @@ const ProfileSetup: React.FC = () => {
         },
         body: JSON.stringify(formData),
       });
+      if (user?.id) {
+        deleteResponseCache(`user-data:${user.id}`);
+      }
       if (update !== "true") {
         await presentPremiumPaywallIfNeeded();
         const hasSeenPrompt = await hasSeenNotificationsPrompt();

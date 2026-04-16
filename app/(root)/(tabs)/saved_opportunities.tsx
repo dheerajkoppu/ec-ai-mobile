@@ -22,7 +22,7 @@ import Purchases from "react-native-purchases";
 import { PAYWALL_RESULT } from "react-native-purchases-ui";
 import * as WebBrowser from "expo-web-browser";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
-import { fetchAPI } from "@/lib/fetch";
+import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
 
@@ -57,6 +57,8 @@ interface Opportunity {
   prestige?: number;
 }
 
+const USER_READ_TTL_MS = 60 * 1000;
+
 export default function Saved_opportunities() {
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -90,17 +92,28 @@ export default function Saved_opportunities() {
   const loadSavedOpportunities = useCallback(async () => {
     try {
       const token = await getToken();
-      const json = await fetchAPI(
-        `https://ec-ai.expo.app/getsavedopportunities`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        },
-      );
+      const json = user?.id
+        ? await fetchCachedAPI<{ data: any[] }>(
+            `saved-opportunities:${user.id}`,
+            USER_READ_TTL_MS,
+            "https://ec-ai.expo.app/getsavedopportunities",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({}),
+            },
+          )
+        : await fetchAPI(`https://ec-ai.expo.app/getsavedopportunities`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
+          });
       const mapped = json.data.map((op: any) => ({
         id: op.id,
         school: op.school,
@@ -138,7 +151,7 @@ export default function Saved_opportunities() {
       console.error("Error loading saved opportunities:", error);
       setSavedOpportunities([]);
     }
-  }, [getToken]);
+  }, [getToken, user?.id]);
 
   // Fetch AI-generated personalized reasons for a specific opportunity
   const getAIReasons = async (opportunity: Opportunity) => {
@@ -203,6 +216,9 @@ export default function Saved_opportunities() {
         },
         body: JSON.stringify({ opportunity_id: id }),
       });
+      if (user?.id) {
+        deleteResponseCache(`saved-opportunities:${user.id}`);
+      }
       setSavedOpportunities((prev) => prev.filter((opp) => opp.id !== id));
     } catch (error) {
       console.error("Error deleting opportunity:", error);
@@ -212,6 +228,9 @@ export default function Saved_opportunities() {
 
   const onRefresh = async () => {
     setRefreshing(true);
+    if (user?.id) {
+      deleteResponseCache(`saved-opportunities:${user.id}`);
+    }
     await loadSavedOpportunities();
     setRefreshing(false);
   };

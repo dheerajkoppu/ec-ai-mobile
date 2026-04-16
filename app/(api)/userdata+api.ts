@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { deleteServerCache } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -99,6 +100,8 @@ export async function POST(request: Request) {
         agreed_to_terms = ${agreedToTerms}
       WHERE clerk_id = ${clerkId};
     `;
+
+    deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: response }), { status: 200 });
   } catch (error) {

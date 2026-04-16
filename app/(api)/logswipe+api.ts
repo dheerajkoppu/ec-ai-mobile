@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { deleteServerCache } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -33,6 +34,8 @@ export async function POST(request: Request) {
       VALUES (${clerkId}, ${parsedOpportunityId}, ${liked})
       RETURNING *;
     `;
+
+    deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: inserted }), { status: 200 });
   } catch (error) {

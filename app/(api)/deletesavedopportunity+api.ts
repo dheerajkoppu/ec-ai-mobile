@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { deleteServerCache } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -32,6 +33,8 @@ export async function POST(request: Request) {
       DELETE FROM user_saved_opportunities
       WHERE clerk_id = ${clerkId} AND opportunity_id = ${parsedOpportunityId};
     `;
+
+    deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: response }), { status: 200 });
   } catch (error) {
