@@ -34,6 +34,8 @@ type DropdownItem = {
   value: string;
 };
 
+const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+
 const getFormLabelStyle = (isDark: boolean) => ({
   color: isDark ? "#fff" : "#000",
   fontSize: 18,
@@ -91,6 +93,11 @@ const ActivityTabs = () => {
   // Fetch activity types for dropdown
   const { data: activitiesRaw } = useFetch(
     "https://ec-ai.expo.app/getactivitytypes",
+    undefined,
+    {
+      cacheKey: "activity-types",
+      staleTimeMs: STATIC_LOOKUP_TTL_MS,
+    },
   );
   const activities: DropdownItem[] = Array.isArray(activitiesRaw)
     ? activitiesRaw

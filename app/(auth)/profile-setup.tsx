@@ -14,7 +14,7 @@ import Swiper from "react-native-swiper";
 import { useAuth } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
-import { fetchAPI } from "@/lib/fetch";
+import { fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 import {
   hasSeenNotificationsPrompt,
   markNotificationsPromptSeen,
@@ -78,6 +78,8 @@ interface IFormData {
   usedOtherApps?: string;
   agreeTerms?: string;
 }
+
+const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
 
 // ─── Animated Progress Bar ───────────────────────────────────────────────────
 
@@ -852,14 +854,19 @@ const ProfileSetup: React.FC = () => {
     const getDropdowns = async () => {
       try {
         const token = await getToken();
-        const result = await fetchAPI("https://ec-ai.expo.app/fetchdropdowns", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+        const result = await fetchCachedAPI<{ data: IDropdowns }>(
+          "profile-dropdowns",
+          STATIC_LOOKUP_TTL_MS,
+          "https://ec-ai.expo.app/fetchdropdowns",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
           },
-          body: JSON.stringify({}),
-        });
+        );
         setDropdowns(result.data);
       } catch (err) {
         console.error("Error fetching dropdown data:", err);

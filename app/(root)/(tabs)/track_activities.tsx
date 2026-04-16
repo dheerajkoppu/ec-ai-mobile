@@ -34,6 +34,8 @@ import { GRADE_OPTIONS } from "@/constants";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
 
+const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
+
 const TrackActivities = () => {
   const { user } = useUser();
   const { getToken } = useAuth();
@@ -120,6 +122,11 @@ const TrackActivities = () => {
     error: errorCareerFields,
   } = useFetch<{ label: string; value: string }[]>(
     "https://ec-ai.expo.app/getactivitytypes",
+    undefined,
+    {
+      cacheKey: "activity-types",
+      staleTimeMs: STATIC_LOOKUP_TTL_MS,
+    },
   );
 
   const filteredActivities = useMemo(() => {
