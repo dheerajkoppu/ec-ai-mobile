@@ -21,20 +21,24 @@ export async function POST(request: Request) {
     }
 
     // Insert a log only if the activity belongs to the authenticated user.
-    // RETURNING lets us reliably detect whether a row was actually written.
+    // Also attach the internal users.id because hours_logged.user_id is
+    // required by the current database schema.
     const insertedLogs = await sql`
       INSERT INTO hours_logged (
+        user_id,
         activity_id,
         date_of_activity,
         hours_logged,
         description
       )
       SELECT
+        u.id,
         a.id,
         ${date_of_activity},
         ${hours_logged},
         ${description || null}
       FROM activities a
+      JOIN users u ON u.clerk_id = ${clerkId}
       WHERE a.clerk_id = ${clerkId}
         AND a.id = ${activity_id}
       RETURNING id, activity_id, date_of_activity, hours_logged, description;
@@ -42,7 +46,7 @@ export async function POST(request: Request) {
 
     if (insertedLogs.length === 0) {
       return Response.json(
-        { error: "Activity not found or access denied" },
+        { error: "Activity or user profile not found" },
         { status: 404 },
       );
     }

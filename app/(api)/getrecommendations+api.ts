@@ -1,55 +1,8 @@
 import { sql } from "@/lib/db";
+import { calculateRecommendationScore } from "@/lib/recommendationScore";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 const RECOMMENDATION_BATCH_SIZE = 120;
-
-function mapTimeRange(label: string): number {
-  switch (label) {
-    case "<2 hours":
-      return 1;
-    case "2-5 hours":
-      return 2;
-    case "5-10 hours":
-      return 3;
-    case "10+ hours":
-      return 4;
-    default:
-      return 0;
-  }
-}
-
-function hoursToLabel(hours: any): string {
-  if (typeof hours === "string") return hours; // already label
-  if (hours < 2) return "<2 hours";
-  if (hours < 5) return "2-5 hours";
-  if (hours < 10) return "5-10 hours";
-  return "10+ hours";
-}
-
-function calculateMatchScore(
-  user: { interests: string[]; time: string },
-  opp: any,
-): number {
-  let score = 0;
-
-  if (
-    user.interests &&
-    opp.career_field &&
-    user.interests.includes(opp.career_field)
-  ) {
-    score += 50;
-  }
-
-  const userBand = mapTimeRange(user.time);
-  const oppBand = mapTimeRange(hoursToLabel(opp.hours_per_week));
-
-  const diff = Math.abs(userBand - oppBand);
-
-  if (diff === 0) score += 50;
-  else if (diff === 1) score += 25;
-
-  return score;
-}
 
 export async function POST(request: Request) {
   let clerkId: string;
@@ -62,7 +15,13 @@ export async function POST(request: Request) {
 
   try {
     const [user] = await sql`
-      SELECT career_interest, weekly_commitment
+      SELECT
+        career_interest,
+        weekly_commitment,
+        seeking_leadership,
+        opportunity_selectivity,
+        interested_in_travel,
+        grade_level
       FROM users
       WHERE clerk_id = ${clerkId}
       LIMIT 1;
@@ -74,16 +33,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const interests = user.career_interest
-      ? user.career_interest
-          .replace(/^{|}$/g, "")
-          .split(",")
-          .map((s: string) => s.trim())
-      : [];
-
-    const time = user.weekly_commitment || "";
-
-    // 🔥 ONLY filter in SQL (no complex scoring)
     const opportunitiesRaw = await sql`
       SELECT
         id,
@@ -91,6 +40,10 @@ export async function POST(request: Request) {
         career_field,
         activity_type,
         hours_per_week,
+        has_leadership_roles,
+        selectivity_level,
+        outside_us,
+        grade_requirements,
         description,
         pictureurl,
         prestige,
@@ -112,7 +65,24 @@ export async function POST(request: Request) {
       description: op.description ?? "",
       pictureurl: op.pictureurl ?? null,
       prestige: op.prestige ?? 0,
-      matchScore: calculateMatchScore({ interests, time }, op),
+      matchScore: calculateRecommendationScore(
+        {
+          careerInterest: user.career_interest,
+          weeklyCommitment: user.weekly_commitment,
+          seekingLeadership: user.seeking_leadership,
+          opportunitySelectivity: user.opportunity_selectivity,
+          interestedInTravel: user.interested_in_travel,
+          gradeLevel: user.grade_level,
+        },
+        {
+          careerField: op.career_field,
+          hoursPerWeek: op.hours_per_week,
+          hasLeadershipRoles: op.has_leadership_roles,
+          selectivityLevel: op.selectivity_level,
+          outsideUS: op.outside_us,
+          gradeRequirements: op.grade_requirements,
+        },
+      ),
     }));
 
     const sorted = scored

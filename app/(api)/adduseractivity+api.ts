@@ -34,8 +34,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const response = await sql`
+    const insertedActivities = await sql`
       INSERT INTO activities (
+        user_id,
         clerk_id,
         name,
         activity_type,
@@ -45,7 +46,8 @@ export async function POST(request: Request) {
         description,
         grades
       )
-      VALUES (
+      SELECT
+        u.id,
         ${clerkId},
         ${name},
         ${activity_type},
@@ -54,10 +56,21 @@ export async function POST(request: Request) {
         ${roles},
         ${description},
         ${grades}
-      );
+      FROM users u
+      WHERE u.clerk_id = ${clerkId}
+      RETURNING id;
     `;
 
-    return new Response(JSON.stringify({ data: response }), { status: 201 });
+    if (insertedActivities.length === 0) {
+      return Response.json(
+        { error: "User profile not found" },
+        { status: 404 },
+      );
+    }
+
+    return new Response(JSON.stringify({ data: insertedActivities[0] }), {
+      status: 201,
+    });
   } catch (error) {
     console.error("Error creating activity:", error);
     return Response.json({ error: "Internal Server Error" }, { status: 500 });
