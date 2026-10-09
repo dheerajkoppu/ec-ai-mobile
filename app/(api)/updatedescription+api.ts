@@ -1,5 +1,4 @@
 import { sql } from "@/lib/db";
-import { deleteServerCacheByPrefix } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -28,8 +27,6 @@ export async function POST(request: Request) {
         AND clerk_id = ${clerkId}
       RETURNING id, description;
     `;
-
-    deleteServerCacheByPrefix(`ai-description:${clerkId}:${String(activityId)}:`);
 
     return new Response(JSON.stringify({ data: updated }), { status: 200 });
   } catch (error) {

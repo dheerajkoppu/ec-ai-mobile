@@ -34,7 +34,7 @@ export async function POST(request: Request) {
       VALUES (${clerkId}, ${parsedOpportunityId});
     `;
 
-    deleteServerCache(`recommendations:${clerkId}:v1`);
+    await deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: response }), { status: 201 });
   } catch (error) {

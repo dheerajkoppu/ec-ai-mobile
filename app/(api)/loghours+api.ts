@@ -1,5 +1,4 @@
 import { sql } from "@/lib/db";
-import { deleteServerCacheByPrefix } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function POST(request: Request) {
@@ -51,8 +50,6 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
-
-    deleteServerCacheByPrefix(`ai-description:${clerkId}:${String(activity_id)}:`);
 
     return new Response(JSON.stringify({ data: insertedLogs[0] }), {
       status: 201,

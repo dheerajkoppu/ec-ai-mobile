@@ -1,5 +1,4 @@
 import { sql } from "@/lib/db";
-import { deleteServerCacheByPrefix } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 export async function DELETE(request: Request) {
@@ -31,8 +30,6 @@ export async function DELETE(request: Request) {
         { status: 404 },
       );
     }
-
-    deleteServerCacheByPrefix(`ai-description:${clerkId}:${String(activityId)}:`);
 
     return new Response(
       JSON.stringify({ message: "Activity deleted successfully" }),

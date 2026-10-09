@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       WHERE clerk_id = ${clerkId};
     `;
 
-    deleteServerCache(`recommendations:${clerkId}:v1`);
+    await deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: response }), { status: 200 });
   } catch (error) {
