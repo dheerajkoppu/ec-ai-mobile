@@ -1,6 +1,6 @@
 # EC-AI
 
-An AI-powered extracurricular activity tracker for students. Discover opportunities, log activities, track hours, and get AI-driven recommendations — all in one app.
+An AI-powered extracurricular activity tracker for students. Discover opportunities, log activities, track hours, and get AI-driven recommendations, all in one app.
 
 ## Tech Stack
 
@@ -11,6 +11,7 @@ An AI-powered extracurricular activity tracker for students. Discover opportunit
 | Styling            | NativeWind v2 (Tailwind CSS)                                           |
 | Auth               | Clerk (`@clerk/clerk-expo`)                                            |
 | Database           | Neon serverless Postgres (`@neondatabase/serverless`)                  |
+| Server cache       | Upstash Redis (REST API)                                               |
 | Subscriptions      | RevenueCat (`react-native-purchases` + `react-native-purchases-ui` v8) |
 | Ads                | Google AdMob (`react-native-google-mobile-ads`)                        |
 | Email              | Resend                                                                 |
@@ -24,11 +25,11 @@ New Architecture is enabled (`newArchEnabled: true`).
 
 ## Features
 
-- **Opportunity Match** — swipe-deck interface for discovering extracurricular opportunities with AI-generated match reasons
-- **Track Activities** — log and manage your extracurricular activities with hour tracking
-- **Add Activity** — add new activities with descriptions and metadata
-- **Saved Opportunities** — bookmark opportunities for later
-- **Profile** — manage your account, export data as PDF, email activity reports, and configure notifications
+- **Opportunity Match**: swipe-deck interface for discovering extracurricular opportunities with AI-generated match reasons
+- **Track Activities**: log and manage your extracurricular activities with hour tracking
+- **Add Activity**: add new activities with descriptions and metadata
+- **Saved Opportunities**: bookmark opportunities for later
+- **Profile**: manage your account, export data as PDF, email activity reports, and configure notifications
 
 ## Project Structure
 
@@ -74,6 +75,8 @@ RESEND_API_KEY=
 ADMIN_EMAIL=
 UPLOADTHING_TOKEN=
 OPENAI_API_KEY=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 ```
 
 ### Install & Run
