@@ -1,7 +1,13 @@
+export type OpenAIJsonSchema = {
+  name: string;
+  schema: Record<string, unknown>;
+};
+
 export async function callOpenAI(
   prompt: string,
-  model = "gpt-5-nano",
+  model = "gpt-6-luna",
   maxTokens?: number,
+  jsonSchema?: OpenAIJsonSchema,
 ): Promise<string> {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) {
@@ -21,6 +27,12 @@ export async function callOpenAI(
   const baseBody = {
     model,
     messages: [{ role: "user" as const, content: prompt }],
+    ...(jsonSchema && {
+      response_format: {
+        type: "json_schema",
+        json_schema: { ...jsonSchema, strict: true },
+      },
+    }),
   };
 
   let response = await request({
@@ -67,4 +79,33 @@ export async function callOpenAI(
     throw new Error("No content in OpenAI response");
   }
   return content;
+}
+
+// Leaves out blank fields so the model is never handed "null" as if it were a fact
+export function formatPromptFacts(facts: Record<string, unknown>): string {
+  return Object.entries(facts)
+    .filter(
+      ([, value]) =>
+        value !== null && value !== undefined && String(value).trim() !== "",
+    )
+    .map(([label, value]) => {
+      if (typeof value === "boolean")
+        return `${label}: ${value ? "Yes" : "No"}`;
+      if (value instanceof Date) {
+        return `${label}: ${value.toISOString().slice(0, 10)}`;
+      }
+      return `${label}: ${value}`;
+    })
+    .join("\n");
+}
+
+// The reply is constrained to the schema, so the parsed value always has that shape
+export async function callOpenAIStructured<T>(
+  prompt: string,
+  jsonSchema: OpenAIJsonSchema,
+  model?: string,
+): Promise<T> {
+  const content = await callOpenAI(prompt, model, undefined, jsonSchema);
+
+  return JSON.parse(content) as T;
 }

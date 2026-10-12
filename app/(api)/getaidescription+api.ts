@@ -1,13 +1,21 @@
 import { sql } from "@/lib/db";
-import { callOpenAI } from "@/lib/openai";
-import {
-  getOrSetServerCache,
-  hashServerCacheValue,
-} from "@/lib/serverCache";
+import { callOpenAIStructured, formatPromptFacts } from "@/lib/openai";
+import { getOrSetServerCache, hashServerCacheValue } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
 const AI_DESCRIPTION_CACHE_TTL_MS = 3 * 24 * 60 * 60 * 1000;
-const AI_DESCRIPTION_PROMPT_VERSION = "v1";
+const AI_DESCRIPTION_PROMPT_VERSION = "v2";
+const AI_DESCRIPTION_SCHEMA = {
+  name: "activity_summary",
+  schema: {
+    type: "object",
+    properties: {
+      summary: { type: "string" },
+    },
+    required: ["summary"],
+    additionalProperties: false,
+  },
+};
 const PRIVATE_CACHE_CONTROL =
   "private, max-age=259200, stale-while-revalidate=604800";
 
@@ -70,17 +78,30 @@ export async function POST(request: Request) {
       cacheKey,
       AI_DESCRIPTION_CACHE_TTL_MS,
       async () => {
-        const allLoggedDescriptions = descriptions.join(" ").slice(0, 1500);
+        const facts = formatPromptFacts({
+          "Activity Name": row.name,
+          Roles: row.roles,
+          "Current Description": row.description,
+          "Logged Hours Descriptions": descriptions.join(" ").slice(0, 1500),
+        });
         const prompt = `
-Act as an elite Ivy League admissions officer. Write a 150-character activity summary using the info below. Use numbers to quantify impact, strong verbs, and precise adjectives. Avoid filler. Focus on leadership, uniqueness, sustained commitment, and tangible results. Only use "I" as a pronoun. Do NOT explain anything. Return ONLY the 150-character summary. No intro or closing.
+Act as an elite Ivy League admissions officer. Write an activity summary of at most 150 characters using only the info below. Use strong verbs and precise adjectives. Avoid filler. Focus on leadership, uniqueness, sustained commitment, and tangible results. Include a number only if it appears in the info below. Never invent numbers, awards, results, or any detail that is not given. Only use "I" as a pronoun.
 
-Current Description: ${row.description ?? "N/A"}
-Activity Name: ${row.name}
-Roles: ${row.roles}
-All Logged Hours Descriptions: ${allLoggedDescriptions}
+${facts}
 `.trim();
 
-        return callOpenAI(prompt);
+        const { summary } = await callOpenAIStructured<{ summary: string }>(
+          prompt,
+          AI_DESCRIPTION_SCHEMA,
+        );
+
+        // An empty summary must fail here, otherwise it would be cached for days
+        if (!summary.trim()) {
+          throw new Error("OpenAI returned an empty activity summary");
+        }
+
+        // Installed app versions read this field as a plain string
+        return summary.trim();
       },
     );
 

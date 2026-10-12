@@ -153,7 +153,7 @@ Return ONLY your answer as raw JSON, with no markdown formatting, code fences, o
 [[1, "reason1", "reason2", "reason3"], [2, "reason1", "reason2", "reason3"], [3, "reason1", "reason2", "reason3"]]
 `;
 
-    const responseText = await callOpenAI(prompt, "gpt-5-nano");
+    const responseText = await callOpenAI(prompt);
 
     type Suggestion = [string, string, string, string];
     let suggestions: Suggestion[];
