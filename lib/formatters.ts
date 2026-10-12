@@ -1,6 +1,8 @@
+/** Renders a 0 to 5 rating as five filled or empty stars, or "N/A" when there is none. */
 export function renderStars(rating?: number): string {
   if (rating === undefined || rating === null) return "N/A";
-  const fullStars = Math.round(rating);
+  // Clamped because repeat() throws on a negative count
+  const fullStars = Math.min(5, Math.max(0, Math.round(rating)));
   return "★".repeat(fullStars) + "☆".repeat(5 - fullStars);
 }
 
