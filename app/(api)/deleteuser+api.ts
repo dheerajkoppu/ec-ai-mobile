@@ -1,6 +1,6 @@
 import { sql } from "@/lib/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
-import { resend, FROM_ADDRESS } from "@/lib/resend";
+import { sendEmail, FROM_ADDRESS } from "@/lib/resend";
 
 export async function DELETE(request: Request) {
   let clerkId: string;
@@ -27,11 +27,14 @@ export async function DELETE(request: Request) {
 
     const userEmail = deletionResult[0].email;
 
-    await resend.emails.send({
+    // The rows are already deleted, so a failed notice is logged instead of failing the request
+    await sendEmail({
       from: FROM_ADDRESS,
       to: "ask.ecai@gmail.com",
       subject: "User Deletion Request",
       text: `The user with email ${userEmail} has requested account deletion. Please delete the user from both Clerk and RevenueCat`,
+    }).catch((error) => {
+      console.error(`Deletion notice failed for ${clerkId}:`, error);
     });
 
     return new Response(

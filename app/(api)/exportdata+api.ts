@@ -1,6 +1,6 @@
 import { createClerkClient } from "@clerk/backend";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
-import { resend, FROM_ADDRESS } from "@/lib/resend";
+import { sendEmail, FROM_ADDRESS } from "@/lib/resend";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
       return Response.json({ error: "No email on account" }, { status: 422 });
     }
 
-    await resend.emails.send({
+    await sendEmail({
       from: FROM_ADDRESS,
       to: "ask.ecai@gmail.com",
       subject: "User Data Request",

@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { createClerkClient } from "@clerk/backend";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 import { sql } from "@/lib/db";
-import { resend, FROM_ADDRESS } from "@/lib/resend";
+import { sendEmail, FROM_ADDRESS } from "@/lib/resend";
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY!,
 });
@@ -180,7 +180,7 @@ export async function POST(request: Request) {
     const pdfBuffer = await pdfBufferPromise;
 
     // Send email with generated PDF
-    await resend.emails.send({
+    await sendEmail({
       from: FROM_ADDRESS,
       to: recipientEmail,
       replyTo: "ask.ecai@gmail.com",

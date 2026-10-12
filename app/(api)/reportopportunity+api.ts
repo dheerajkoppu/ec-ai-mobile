@@ -1,6 +1,6 @@
 import { sql } from "@/lib/db";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
-import { resend, FROM_ADDRESS } from "@/lib/resend";
+import { sendEmail, FROM_ADDRESS } from "@/lib/resend";
 
 export async function POST(request: Request) {
   let clerkId: string;
@@ -34,7 +34,8 @@ export async function POST(request: Request) {
       VALUES (${clerkId}, ${parsedOpportunityId}, ${reason}, ${details || null});
     `;
 
-    await resend.emails.send({
+    // The report is already stored, so a failed notice is logged instead of failing the request
+    await sendEmail({
       from: FROM_ADDRESS,
       to: "ask.ecai@gmail.com",
       subject: "New Opportunity Report Submitted",
@@ -45,6 +46,11 @@ Opportunity ID: ${parsedOpportunityId}
 Reason: ${reason}
 Details: ${details || "(No additional details provided)"}
       `,
+    }).catch((error) => {
+      console.error(
+        `Report notice failed for opportunity ${parsedOpportunityId}:`,
+        error,
+      );
     });
 
     return new Response(JSON.stringify({ message: "Report submitted." }), {
