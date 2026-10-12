@@ -267,42 +267,36 @@ const Opportunities = () => {
     }, [getToken, user?.id]),
   );
 
-  const fetchOpportunities = useCallback(async () => {
-    if (!user) return;
-    try {
-      const token = await getToken();
-      const response = await fetch(
-        "https://ec-ai.expo.app/getrecommendations",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({}),
-        },
-      );
-
-      const responseText = await response.text();
-      let json: any;
+  const fetchOpportunities = useCallback(
+    async (options?: { forceRefresh?: boolean }) => {
+      if (!user) return;
       try {
-        json = JSON.parse(responseText);
-      } catch {
-        throw new Error(
-          `Server returned non-JSON (${response.status}): ${responseText.slice(0, 300)}`,
+        const token = await getToken();
+        const cacheKey = `recommendations:${user.id}`;
+        if (options?.forceRefresh) deleteResponseCache(cacheKey);
+        const json = await fetchCachedAPI<{ data: Opportunity[] }>(
+          cacheKey,
+          USER_READ_TTL_MS,
+          "https://ec-ai.expo.app/getrecommendations",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({}),
+          },
         );
+        setOpportunities(json.data);
+        setError(null);
+      } catch (err: any) {
+        setError(err.message || "Error fetching opportunities");
+      } finally {
+        setLoading(false);
       }
-      if (!response.ok) {
-        throw new Error(json?.error || `Request failed (${response.status})`);
-      }
-      setOpportunities(json.data);
-      setError(null);
-    } catch (err: any) {
-      setError(err.message || "Error fetching opportunities");
-    } finally {
-      setLoading(false);
-    }
-  }, [user, getToken]);
+    },
+    [user, getToken],
+  );
 
   useEffect(() => {
     if (!user) return;
@@ -317,11 +311,12 @@ const Opportunities = () => {
       if (lastSwipeDate !== today) {
         setSwipeCount(1);
         setLastSwipeDate(today);
-        await fetchOpportunities();
+        await fetchOpportunities({ forceRefresh: true });
       } else {
         const updated = swipeCount + 1;
         setSwipeCount(updated);
-        if (updated % 10 === 0) await fetchOpportunities();
+        if (updated % 10 === 0)
+          await fetchOpportunities({ forceRefresh: true });
       }
 
       await Promise.all([
@@ -442,7 +437,9 @@ const Opportunities = () => {
         disableBottomSwipe
         stackSize={3}
         verticalSwipe={false}
-        cardHorizontalMargin={isMatchDeckTablet ? matchCardHorizontalMargin : 20}
+        cardHorizontalMargin={
+          isMatchDeckTablet ? matchCardHorizontalMargin : 20
+        }
         cardStyle={
           isMatchDeckTablet
             ? {
