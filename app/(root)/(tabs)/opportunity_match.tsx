@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import {
   View,
   Text,
@@ -24,7 +30,6 @@ import Swiper from "react-native-deck-swiper";
 import { useUser, useAuth } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import CustomButton from "@/components/CustomButton";
 import { renderStars } from "@/lib/formatters";
 import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
@@ -48,6 +53,25 @@ const CARD_HEIGHT = 600;
 const REPORT_BUTTON_SIZE = 38;
 const REPORT_ICON_COLOR = "#5B55F6";
 const USER_READ_TTL_MS = 60 * 1000;
+const AD_INTERVAL = 3;
+
+type DeckCard =
+  | { kind: "opportunity"; opportunity: Opportunity }
+  | { kind: "ad" };
+
+// Ads go between opportunities so a free user never loses a card to one
+function buildDeck(opportunities: Opportunity[], showAds: boolean): DeckCard[] {
+  const deck: DeckCard[] = [];
+
+  for (const opportunity of opportunities) {
+    if (showAds && (deck.length + 1) % AD_INTERVAL === 0) {
+      deck.push({ kind: "ad" });
+    }
+    deck.push({ kind: "opportunity", opportunity });
+  }
+
+  return deck;
+}
 
 const styles = StyleSheet.create({
   reportButtonShell: {
@@ -67,7 +91,6 @@ const styles = StyleSheet.create({
 });
 
 const Opportunities = () => {
-  const [swipeCount, setSwipeCount] = useState(0);
   const [lastSwipeDate, setLastSwipeDate] = useState<string>(
     () => new Date().toISOString().split("T")[0],
   );
@@ -102,9 +125,15 @@ const Opportunities = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [cardIndex, setCardIndex] = useState(0);
+  const [deckVersion, setDeckVersion] = useState(0);
   const [isPremium, setIsPremium] = useState(false);
+  const deck = useMemo(
+    () => buildDeck(opportunities, !isPremium),
+    [opportunities, isPremium],
+  );
 
   const savedOpportunityIdsRef = useRef<Set<string>>(new Set());
+  const swipedIdsRef = useRef<Set<string>>(new Set());
   const [reportingOp, setReportingOp] = useState<Opportunity | null>(null);
   const [reportReason, setReportReason] = useState<string>("");
   const [reportDetails, setReportDetails] = useState<string>("");
@@ -193,29 +222,25 @@ const Opportunities = () => {
     }
   };
 
-  const onSwiped = async (i: number, liked: boolean) => {
-    setCardIndex(i + 1);
-    await AsyncStorage.setItem("lastCardIndex", String(i + 1));
-    await handleSwipe(i, liked);
-  };
+  const onSwiped = async (index: number, liked: boolean) => {
+    setCardIndex(index + 1);
 
-  useEffect(() => {
-    (async () => {
-      const saved = await AsyncStorage.getItem("lastCardIndex");
-      if (saved !== null) setCardIndex(Number(saved));
-    })();
-  }, []);
+    const card = deck[index];
+    if (card?.kind !== "opportunity") return;
 
-  useEffect(() => {
-    if (opportunities.length === 0 || cardIndex < opportunities.length) {
-      return;
+    const today = new Date().toISOString().split("T")[0];
+    const needsNextBatch = index === deck.length - 1 || lastSwipeDate !== today;
+
+    if (needsNextBatch) {
+      setLastSwipeDate(today);
+      setLoading(true);
     }
 
-    setCardIndex(0);
-    AsyncStorage.setItem("lastCardIndex", "0").catch(() => {
-      // Ignore storage reset failures and let the in-memory state recover.
-    });
-  }, [cardIndex, opportunities.length]);
+    await handleSwipe(card.opportunity, liked);
+
+    // Fetched only after the swipe is logged, so the server leaves this card out
+    if (needsNextBatch) await fetchOpportunities({ forceRefresh: true });
+  };
 
   const checkPremiumAndUnlock = async () => {
     try {
@@ -267,12 +292,14 @@ const Opportunities = () => {
     }, [getToken, user?.id]),
   );
 
+  const userId = user?.id;
+
   const fetchOpportunities = useCallback(
     async (options?: { forceRefresh?: boolean }) => {
-      if (!user) return;
+      if (!userId) return;
       try {
         const token = await getToken();
-        const cacheKey = `recommendations:${user.id}`;
+        const cacheKey = `recommendations:${userId}`;
         if (options?.forceRefresh) deleteResponseCache(cacheKey);
         const json = await fetchCachedAPI<{ data: Opportunity[] }>(
           cacheKey,
@@ -287,7 +314,16 @@ const Opportunities = () => {
             body: JSON.stringify({}),
           },
         );
-        setOpportunities(json.data);
+        // Hides cards swiped this session that the server has not recorded yet
+        const unseen = json.data.filter(
+          (opportunity) => !swipedIdsRef.current.has(opportunity.id),
+        );
+        if (unseen.length === 0) swipedIdsRef.current.clear();
+
+        setOpportunities(unseen.length > 0 ? unseen : json.data);
+        setCardIndex(0);
+        // The swiper reads its start index only on mount, so a new deck needs a remount
+        setDeckVersion((version) => version + 1);
         setError(null);
       } catch (err: any) {
         setError(err.message || "Error fetching opportunities");
@@ -295,30 +331,18 @@ const Opportunities = () => {
         setLoading(false);
       }
     },
-    [user, getToken],
+    [userId, getToken],
   );
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
     fetchOpportunities();
-  }, [user, fetchOpportunities]);
+  }, [userId, fetchOpportunities]);
 
-  const handleSwipe = async (i: number, liked: boolean) => {
-    const today = new Date().toISOString().split("T")[0];
-    const opportunity = opportunities[i];
+  const handleSwipe = async (opportunity: Opportunity, liked: boolean) => {
+    swipedIdsRef.current.add(opportunity.id);
 
     try {
-      if (lastSwipeDate !== today) {
-        setSwipeCount(1);
-        setLastSwipeDate(today);
-        await fetchOpportunities({ forceRefresh: true });
-      } else {
-        const updated = swipeCount + 1;
-        setSwipeCount(updated);
-        if (updated % 10 === 0)
-          await fetchOpportunities({ forceRefresh: true });
-      }
-
       await Promise.all([
         liked ? handleSave(opportunity) : Promise.resolve(),
         logSwipe(opportunity.id, liked),
@@ -396,6 +420,47 @@ const Opportunities = () => {
     );
   }
 
+  // Skipped cards come back on their own, so this only shows when every opportunity is saved
+  if (deck.length === 0) {
+    return (
+      <SafeAreaView
+        edges={["top", "left", "right"]}
+        style={{
+          flex: 1,
+          backgroundColor: isDark ? "#121212" : "#F5F7FA",
+          justifyContent: "center",
+          alignItems: "center",
+          paddingHorizontal: 32,
+        }}
+      >
+        <Text
+          allowFontScaling={false}
+          style={{
+            fontSize: 20,
+            color: isDark ? "#fff" : "#1f2937",
+            textAlign: "center",
+            fontFamily: "Poppins-Bold",
+            paddingBottom: 8,
+          }}
+        >
+          You're all caught up
+        </Text>
+        <Text
+          allowFontScaling={false}
+          style={{
+            color: isDark ? "#ccc" : "#6b7280",
+            fontFamily: "Poppins-Regular",
+            textAlign: "center",
+            fontSize: 14,
+          }}
+        >
+          You've saved every opportunity we have right now. Check back soon for
+          new ones.
+        </Text>
+      </SafeAreaView>
+    );
+  }
+
   const screenContent = (
     <>
       {/* Header */}
@@ -428,7 +493,8 @@ const Opportunities = () => {
 
       {/* Card swiper */}
       <Swiper
-        cards={opportunities}
+        key={deckVersion}
+        cards={deck}
         cardIndex={cardIndex}
         onSwipedRight={(i) => onSwiped(i, true)}
         onSwipedLeft={(i) => onSwiped(i, false)}
@@ -456,12 +522,12 @@ const Opportunities = () => {
           flex: 1,
           marginTop: isMatchDeckTablet ? matchTopOffset : 130,
         }}
-        renderCard={(item, index) => {
-          // Show ad every 3 swipes (index 2, 5, 8, ...)
-          if (!isPremium && (index + 1) % 3 === 0) {
+        renderCard={(card, index) => {
+          if (card.kind === "ad") {
             return <NativeAdCard />;
           }
 
+          const item = card.opportunity;
           const isTopCard = index === cardIndex;
 
           return (

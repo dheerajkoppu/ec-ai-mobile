@@ -53,14 +53,21 @@ export async function POST(request: Request) {
             description,
             pictureurl,
             prestige,
-            created_at
+            created_at,
+            swipes.opportunity_id IS NOT NULL AS already_swiped
           FROM opportunities
+          LEFT JOIN (
+            SELECT opportunity_id, MAX(created_at) AS last_swiped_at
+            FROM user_swipes
+            WHERE user_clerk_id = ${clerkId}
+            GROUP BY opportunity_id
+          ) swipes ON swipes.opportunity_id = opportunities.id
           WHERE id NOT IN (
             SELECT opportunity_id
             FROM user_saved_opportunities
             WHERE clerk_id = ${clerkId}
           )
-          ORDER BY created_at DESC
+          ORDER BY already_swiped, swipes.last_swiped_at NULLS FIRST, created_at DESC
           LIMIT ${RECOMMENDATION_BATCH_SIZE * 3}; -- grab more, rank later
         `;
 
@@ -91,14 +98,21 @@ export async function POST(request: Request) {
           ),
         }));
 
-        return scored
-          .sort(
-            (
-              a: { matchScore: number },
-              b: { matchScore: number },
-            ) => b.matchScore - a.matchScore,
-          )
-          .slice(0, RECOMMENDATION_BATCH_SIZE);
+        // The query lists unswiped cards first, then swiped ones from least recently swiped.
+        // Only the unswiped part is ranked by score, so skipped cards return in turn once nothing new is left.
+        const unswipedCount = opportunitiesRaw.filter(
+          (op: any) => !op.already_swiped,
+        ).length;
+
+        return [
+          ...scored
+            .slice(0, unswipedCount)
+            .sort(
+              (a: { matchScore: number }, b: { matchScore: number }) =>
+                b.matchScore - a.matchScore,
+            ),
+          ...scored.slice(unswipedCount),
+        ].slice(0, RECOMMENDATION_BATCH_SIZE);
       },
     );
 
