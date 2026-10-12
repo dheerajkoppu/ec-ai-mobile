@@ -33,6 +33,10 @@ async function redisCommand(command: (string | number)[]): Promise<unknown> {
   }
 }
 
+/**
+ * Returns the cached value for a key, or runs the loader and caches its result.
+ * A null or undefined result is not cached, so a missing row is looked up again next time.
+ */
 export async function getOrSetServerCache<T>(
   key: string,
   ttlMs: number,
@@ -77,6 +81,7 @@ export async function deleteServerCache(key: string): Promise<void> {
   await redisCommand(["DEL", key]);
 }
 
+/** Short, stable fingerprint of a value, for putting content into a cache key. */
 export function hashServerCacheValue(value: unknown): string {
   return createHash("sha256")
     .update(JSON.stringify(value))

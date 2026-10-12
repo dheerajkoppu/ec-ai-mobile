@@ -88,7 +88,6 @@ export default function Saved_opportunities() {
     setPendingReasonsResult(false);
   };
 
-  // Fetch saved opportunities for the current user from the backend
   const loadSavedOpportunities = useCallback(async () => {
     try {
       const token = await getToken();
@@ -153,7 +152,7 @@ export default function Saved_opportunities() {
     }
   }, [getToken, user?.id]);
 
-  // Fetch AI-generated personalized reasons for a specific opportunity
+  // AI reasons are a premium feature, so a free user sees the paywall first
   const getAIReasons = async (opportunity: Opportunity) => {
     if (loadingReason) return;
 
@@ -204,7 +203,6 @@ export default function Saved_opportunities() {
     }
   };
 
-  // Delete a saved opportunity by ID and update UI
   const deleteOpportunity = async (id: string) => {
     try {
       const token = await getToken();

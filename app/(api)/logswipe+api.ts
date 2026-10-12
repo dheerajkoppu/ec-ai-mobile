@@ -22,10 +22,7 @@ export async function POST(request: Request) {
 
     const normalizedOpportunityId = String(opportunityId).trim();
     if (!/^\d+$/.test(normalizedOpportunityId)) {
-      return Response.json(
-        { error: "Invalid opportunityId" },
-        { status: 400 },
-      );
+      return Response.json({ error: "Invalid opportunityId" }, { status: 400 });
     }
     const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
 
@@ -35,6 +32,7 @@ export async function POST(request: Request) {
       RETURNING *;
     `;
 
+    // The cached deck still contains this card, so it is dropped and rebuilt on the next request
     await deleteServerCache(`recommendations:${clerkId}:v1`);
 
     return new Response(JSON.stringify({ data: inserted }), { status: 200 });

@@ -5,6 +5,7 @@ const LOOKUP_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
 const PUBLIC_CACHE_CONTROL =
   "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 
+// Public lookup data, so this route needs no sign-in and can be cached by a CDN
 export async function GET(request: Request) {
   try {
     const formatted = await getOrSetServerCache(

@@ -30,6 +30,7 @@ export const OAUTH_REDIRECT_URL = "ec-ai://oauth-redirect";
 
 export const getOAuthRedirectUrl = () => OAUTH_REDIRECT_URL;
 
+// A first-time OAuth sign-in also creates the user's row in the database
 async function oauthSignIn(
   provider: "Google" | "Apple",
   startOAuthFlow: any,

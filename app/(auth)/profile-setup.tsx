@@ -14,11 +14,7 @@ import Swiper from "react-native-swiper";
 import { useAuth, useUser } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
-import {
-  deleteResponseCache,
-  fetchAPI,
-  fetchCachedAPI,
-} from "@/lib/fetch";
+import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 import {
   hasSeenNotificationsPrompt,
   markNotificationsPromptSeen,
@@ -31,8 +27,6 @@ import * as Haptics from "expo-haptics";
 import Purchases from "react-native-purchases";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
-
-// ─── Types ───────────────────────────────────────────────────────────────────
 
 interface DropdownOption {
   label: string;
@@ -86,8 +80,7 @@ interface IFormData {
 const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_DATA_TTL_MS = 60 * 1000;
 
-// ─── Animated Progress Bar ───────────────────────────────────────────────────
-
+/** Progress bar that animates as the student moves between steps. */
 const ProgressBar = ({
   step,
   total,
@@ -134,8 +127,7 @@ const ProgressBar = ({
   );
 };
 
-// ─── Field Label ─────────────────────────────────────────────────────────────
-
+/** Uppercase label above a field, with a red asterisk when the field is required. */
 const FieldLabel = ({
   text,
   isDark,
@@ -160,8 +152,7 @@ const FieldLabel = ({
   </Text>
 );
 
-// ─── Inline Single-Select (replaces DropdownField) ───────────────────────────
-
+/** Single-choice list shown inline, in one or two columns. */
 const InlineSelect = ({
   options,
   value,
@@ -244,8 +235,7 @@ const InlineSelect = ({
   );
 };
 
-// ─── Chip Multi-Select (replaces MultiSelectDropdown) ────────────────────────
-
+/** Multi-choice chips. Tapping a chip toggles it. */
 const ChipSelect = ({
   options,
   selectedValues,
@@ -307,8 +297,7 @@ const ChipSelect = ({
   );
 };
 
-// ─── Yes / No Card Pair ───────────────────────────────────────────────────────
-
+/** Two side-by-side cards for a yes or no answer. */
 const CardPair = ({
   value,
   onChange,
@@ -374,8 +363,7 @@ const CardPair = ({
   );
 };
 
-// ─── Step Layout (replaces SlideWrapper) ─────────────────────────────────────
-
+/** Shared frame for one onboarding step: icon, title, fields and the continue button. */
 const StepLayout = ({
   children,
   icon,
@@ -487,8 +475,7 @@ const StepLayout = ({
   );
 };
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
+/** Onboarding questionnaire. Opened with update=true, it loads the saved profile for editing. */
 const ProfileSetup: React.FC = () => {
   const { getToken } = useAuth();
   const { user } = useUser();
@@ -927,7 +914,7 @@ const ProfileSetup: React.FC = () => {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: background }}>
-      {/* ── Top nav: back arrow + animated progress bar + step counter ── */}
+      {/* Top nav: back arrow, progress bar, step counter */}
       <View
         style={{
           paddingHorizontal: 20,

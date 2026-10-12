@@ -192,6 +192,10 @@ export async function markNotificationsPromptSeen(): Promise<void> {
   await AsyncStorage.setItem(NOTIFICATIONS_PROMPT_SEEN_KEY, "true");
 }
 
+/**
+ * Turns notifications on or off and returns whether they ended up on.
+ * Premium users get server push alerts. Free users get two local weekly reminders.
+ */
 export async function setNotificationsEnabled(
   enabled: boolean,
   options: NotificationSyncOptions = {},
@@ -221,6 +225,10 @@ export async function setNotificationsEnabled(
   return false;
 }
 
+/**
+ * Re-applies the saved notification choice on launch, and turns it off if the OS
+ * permission was revoked.
+ */
 export async function initializeNotifications(
   options: NotificationSyncOptions = {},
 ): Promise<void> {

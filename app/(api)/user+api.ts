@@ -19,7 +19,6 @@ export async function POST(request: Request) {
       );
     }
 
-    // Insert new user into the users table
     const response = await sql`
       INSERT INTO users (
         name,

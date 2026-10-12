@@ -18,7 +18,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Fetch activities from DB — never trust caller-supplied data
+    // Activities come from the database, never from the request body
     const rows = await sql`
       SELECT
         a.name,
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
       grade: row.grades,
     }));
 
-    // Derive recipient email from Clerk — never trust caller-supplied address
+    // The recipient comes from Clerk, never from the request body
     const clerkUser = await clerkClient.users.getUser(clerkId);
     const recipientEmail = clerkUser.emailAddresses.find(
       (entry) => entry.id === clerkUser.primaryEmailAddressId,
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
       });
     }
 
-    // Dynamically load fonts from /public/fonts
+    // The fonts are static files of this deployment, so they are fetched from its own origin
     const { origin } = new URL(request.url);
     async function fetchFont(name: string) {
       const response = await fetch(`${origin}/fonts/${name}`);
@@ -72,10 +72,11 @@ export async function POST(request: Request) {
     const poppinsRegular = await fetchFont("Poppins-Regular.ttf");
     const poppinsBold = await fetchFont("Poppins-Bold.ttf");
 
-    // Initialize PDF document
     const doc = new PDFDocument({
       size: "A4",
       margin: 40,
+      // font: null skips PDFKit's built-in Helvetica, which needs font files that are
+      // not deployed with the server
       // @ts-ignore
       font: null,
       autoFirstPage: false,
@@ -87,14 +88,14 @@ export async function POST(request: Request) {
     doc.addPage();
     doc.font("Poppins-Regular");
 
-    // Collect output as buffer
+    // PDFKit streams its output, so the chunks are collected until it ends
     const buffers: Uint8Array[] = [];
     doc.on("data", (chunk) => buffers.push(chunk));
     const pdfBufferPromise = new Promise<Buffer>((resolve) =>
       doc.on("end", () => resolve(Buffer.concat(buffers))),
     );
 
-    // Header section
+    // Header
     doc.rect(40, doc.y, doc.page.width - 80, 6).fill("#5B55F7");
     doc.moveDown(1);
     doc
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
       .stroke();
     doc.moveDown(1);
 
-    // Render each activity
+    // One block per activity
     for (const act of activities) {
       const startY = doc.y;
 
@@ -179,7 +180,6 @@ export async function POST(request: Request) {
     doc.end();
     const pdfBuffer = await pdfBufferPromise;
 
-    // Send email with generated PDF
     await sendEmail({
       from: FROM_ADDRESS,
       to: recipientEmail,

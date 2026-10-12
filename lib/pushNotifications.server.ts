@@ -1,6 +1,7 @@
 import { sql } from "@/lib/db";
 
 const EXPO_PUSH_API_URL = "https://exp.host/--/api/v2/push/send";
+// Expo's push API accepts at most 100 messages per request
 const MAX_MESSAGES_PER_REQUEST = 100;
 const PERSONALIZED_ALERT_TYPE = "personalized_opportunity";
 
@@ -37,6 +38,10 @@ type ExpoPushMessage = {
   to: string;
 };
 
+/**
+ * Creates the push tables and column if they are missing. The repo has no
+ * migrations, so this runs before each write.
+ */
 export async function ensurePushNotificationInfrastructure(): Promise<void> {
   await Promise.all([
     sql`
@@ -69,6 +74,10 @@ export async function ensurePushNotificationInfrastructure(): Promise<void> {
   ]);
 }
 
+/**
+ * Saves a device's push token and opts the user in. A token follows the device if
+ * another user signs in on it.
+ */
 export async function registerUserPushToken({
   clerkId,
   expoPushToken,
@@ -147,6 +156,10 @@ export async function deactivatePushToken(
   `;
 }
 
+/**
+ * Picks the best opportunity to alert a user about, or null when there is nothing
+ * new worth sending.
+ */
 export async function buildPersonalizedAlertForUser(
   clerkId: string,
 ): Promise<PersonalizedAlertCandidate | null> {
@@ -217,6 +230,10 @@ export async function buildPersonalizedAlertForUser(
   };
 }
 
+/**
+ * Sends one alert per user through Expo, records what was sent, and deactivates
+ * tokens Expo reports as dead.
+ */
 export async function sendPersonalizedAlertsToUsers(
   clerkIds: string[],
 ): Promise<{
@@ -306,6 +323,10 @@ export async function sendPersonalizedAlertsToUsers(
   };
 }
 
+/**
+ * Returns one page of users who can receive push alerts, ordered by id, with a
+ * cursor for the next page.
+ */
 export async function getEligiblePushUserIdsPage({
   cursor,
   limit = 5,
@@ -336,7 +357,7 @@ export async function getEligiblePushUserIdsPage({
         ORDER BY u.clerk_id
         LIMIT ${limit + 1};
       `
-  ) as Array<{ clerk_id: string }>;
+  ) as { clerk_id: string }[];
 
   const pageRows = rows.slice(0, limit);
   const nextCursor =
@@ -381,6 +402,7 @@ function normalizeStringArray(value: unknown): string[] {
   return [];
 }
 
+// Career fields of the opportunities the student saved or liked, most frequent first
 async function getSignalFieldsForUser(clerkId: string): Promise<string[]> {
   const rows = (await sql`
     SELECT career_field
@@ -401,7 +423,7 @@ async function getSignalFieldsForUser(clerkId: string): Promise<string[]> {
     WHERE career_field IS NOT NULL AND career_field <> ''
     GROUP BY career_field
     ORDER BY COUNT(*) DESC;
-  `) as Array<{ career_field: string }>;
+  `) as { career_field: string }[];
 
   return rows.map((row) => row.career_field);
 }
@@ -414,7 +436,7 @@ async function getNotifiedOpportunityKeys(
     FROM user_notification_history
     WHERE clerk_id = ${clerkId}
       AND notification_type = ${PERSONALIZED_ALERT_TYPE};
-  `) as Array<{ dedupe_key: string }>;
+  `) as { dedupe_key: string }[];
 
   return new Set(rows.map((row) => row.dedupe_key));
 }
@@ -443,6 +465,8 @@ function hoursToLabel(hours: number | string | null): string {
   return "10+ hours";
 }
 
+// Weights: a field the student liked or saved 80, a field they listed 50, a matching weekly
+// time 40 (20 if one band off), plus up to 14 for an opportunity added in the last two weeks.
 function calculateAlertScore({
   opportunity,
   signalFields,
@@ -519,6 +543,7 @@ function buildAlertBody(
   return "Based on your recent activity, we found a new opportunity that looks worth checking out.";
 }
 
+// One row per alert sent, read back later so the same opportunity is not sent twice
 async function recordNotificationHistory(
   candidates: PersonalizedAlertCandidate[],
 ): Promise<void> {
@@ -539,8 +564,8 @@ async function recordNotificationHistory(
 
 async function sendExpoPushMessages(
   messages: ExpoPushMessage[],
-): Promise<Array<{ details?: { error?: string }; status?: string }>> {
-  const tickets: Array<{ details?: { error?: string }; status?: string }> = [];
+): Promise<{ details?: { error?: string }; status?: string }[]> {
+  const tickets: { details?: { error?: string }; status?: string }[] = [];
 
   for (
     let index = 0;

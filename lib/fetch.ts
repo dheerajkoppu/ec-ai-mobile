@@ -14,15 +14,15 @@ type ResponseCacheEntry<T> = {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __ecaiResponseCache:
-    | Map<string, ResponseCacheEntry<unknown>>
-    | undefined;
+  var __ecaiResponseCache: Map<string, ResponseCacheEntry<unknown>> | undefined;
 }
 
+// Stored on globalThis so a module reload, such as Fast Refresh, does not empty the cache
 const responseCache = globalThis.__ecaiResponseCache ?? new Map();
 
 globalThis.__ecaiResponseCache = responseCache;
 
+/** Fetches JSON and throws on any non-2xx status. */
 export const fetchAPI = async (url: string, options?: RequestInit) => {
   const response = await fetch(url, options);
   if (!response.ok) {
@@ -31,6 +31,10 @@ export const fetchAPI = async (url: string, options?: RequestInit) => {
   return await response.json();
 };
 
+/**
+ * Fetches JSON through an in-memory cache that lasts for the app session.
+ * Callers asking for the same key while a request is in flight share that request.
+ */
 export async function fetchCachedAPI<T>(
   cacheKey: string,
   ttlMs: number,
@@ -85,6 +89,7 @@ export function deleteResponseCacheByPrefix(prefix: string): void {
   }
 }
 
+/** Loads a URL into state. Pass cacheKey and staleTimeMs to reuse responses across screens. */
 export const useFetch = <T>(
   url: string,
   options?: RequestInit,
@@ -97,10 +102,8 @@ export const useFetch = <T>(
   const cacheKey = config?.cacheKey;
   const staleTimeMs = config?.staleTimeMs ?? 0;
 
-  // Keep a stable ref so object-literal options don't cause infinite refetch
-  // loops when callers pass a new reference on every render. The ref is
-  // always synced to the latest value so real changes (e.g. auth token
-  // becoming available) are picked up on the next triggered fetch.
+  // Callers often pass a new options object on every render. Reading it from a ref
+  // keeps fetchData stable while still using the latest options, such as a fresh token.
   const optionsRef = useRef(options);
   useEffect(() => {
     optionsRef.current = options;

@@ -22,10 +22,9 @@ export async function POST(request: Request) {
 
     const normalizedOpportunityId = String(opportunity_id).trim();
     if (!/^\d+$/.test(normalizedOpportunityId)) {
-      return new Response(
-        JSON.stringify({ error: "Invalid opportunity_id" }),
-        { status: 400 },
-      );
+      return new Response(JSON.stringify({ error: "Invalid opportunity_id" }), {
+        status: 400,
+      });
     }
     const parsedOpportunityId = Number.parseInt(normalizedOpportunityId, 10);
 

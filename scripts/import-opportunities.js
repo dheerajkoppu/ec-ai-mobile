@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+// Syncs the opportunities table with a JSON file. It is a dry run unless --apply is passed.
 const fs = require("fs");
 const path = require("path");
 const { execFileSync } = require("child_process");

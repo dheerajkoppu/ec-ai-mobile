@@ -15,7 +15,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    // Derive email from Clerk — never trust caller-supplied address
+    // The email comes from Clerk, never from the request body
     const clerkUser = await clerkClient.users.getUser(clerkId);
     const userEmail = clerkUser.emailAddresses.find(
       (entry) => entry.id === clerkUser.primaryEmailAddressId,

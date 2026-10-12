@@ -233,9 +233,7 @@ const TrackActivities = () => {
       if (user?.id) {
         deleteResponseCache(`activities:${user.id}`);
         deleteResponseCache(`activity-names:${user.id}`);
-        deleteResponseCacheByPrefix(
-          `activity-logs:${user.id}:${activity.id}:`,
-        );
+        deleteResponseCacheByPrefix(`activity-logs:${user.id}:${activity.id}:`);
       }
       setDeletedActivityIds((prev) => new Set([...prev, activity.id]));
       Alert.alert("Deleted", "Activity deleted successfully.");

@@ -7,6 +7,10 @@ import { PREMIUM_ENTITLEMENT_ID } from "@/lib/premium";
 
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 
+/**
+ * Syncs notification setup on launch and when the app returns to the foreground,
+ * at most once every five minutes.
+ */
 export default function NotificationBootstrap() {
   const { getToken, isLoaded, isSignedIn } = useAuth();
   const lastSyncRef = useRef(0);

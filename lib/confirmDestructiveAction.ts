@@ -7,6 +7,10 @@ type ConfirmDestructiveActionArgs = {
   onConfirm: () => void | Promise<void>;
 };
 
+/**
+ * Asks the user to confirm a destructive action, with an action sheet on iOS and
+ * an alert elsewhere.
+ */
 export const confirmDestructiveAction = ({
   title,
   message,

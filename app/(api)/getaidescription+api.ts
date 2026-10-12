@@ -60,6 +60,7 @@ export async function POST(request: Request) {
     const descriptions = Array.isArray(row.descriptions)
       ? row.descriptions.filter(Boolean)
       : [];
+    // The key changes whenever the activity text changes, so an edit gets a fresh summary
     const fingerprint = hashServerCacheValue({
       name: row.name,
       roles: row.roles,

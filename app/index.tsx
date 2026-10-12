@@ -5,6 +5,7 @@ import { fetchCachedAPI } from "@/lib/fetch";
 
 const USER_DATA_TTL_MS = 60 * 1000;
 
+/** Entry route. Sends each visitor to sign-in, onboarding, or the app. */
 const Page = () => {
   const { isSignedIn, getToken } = useAuth();
   const { user } = useUser();
@@ -34,7 +35,7 @@ const Page = () => {
         );
         setOnboardingComplete(response?.user?.agreed_to_terms === true);
       } catch {
-        // Network failure or user not found — fail safe for existing users
+        // Fails open so a network error never sends an existing user back through onboarding
         setOnboardingComplete(true);
       }
     };

@@ -4,6 +4,10 @@ import {
 } from "@/lib/pushNotifications.server";
 import { unauthorizedResponse } from "@/lib/serverAuth";
 
+/**
+ * Sends personalized push alerts to one small page of users. The weekly EAS
+ * workflow calls it with a shared secret, because there is no signed-in user.
+ */
 export async function POST(request: Request) {
   const expectedSecret = process.env.PUSH_CRON_SECRET;
   if (!expectedSecret) {

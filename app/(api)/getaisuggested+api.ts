@@ -2,6 +2,10 @@ import { sql } from "@/lib/db";
 import { callOpenAI } from "@/lib/openai";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
+/**
+ * Asks the model to pick three opportunities for a student. No screen in the
+ * current app calls this route.
+ */
 export async function POST(request: Request) {
   let clerkId: string;
   try {

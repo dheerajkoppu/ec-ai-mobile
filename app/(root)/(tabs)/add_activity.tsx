@@ -96,7 +96,6 @@ const ActivityTabs = () => {
     };
   }, [getToken]);
 
-  // Fetch activity types for dropdown
   const { data: activitiesRaw } = useFetch(
     "https://ec-ai.expo.app/getactivitytypes",
     undefined,
@@ -109,7 +108,7 @@ const ActivityTabs = () => {
     ? activitiesRaw
     : [];
 
-  // Prepare request options to fetch activity names for current user
+  // Stays undefined until the token loads, which keeps the request below disabled
   const activityNamesRequestOptions = useMemo(() => {
     if (!authToken) return undefined;
 
@@ -123,7 +122,6 @@ const ActivityTabs = () => {
     };
   }, [authToken]);
 
-  // Fetch previously added activity names
   const { data: activityNamesRaw } = useFetch<{ name: string; id: string }[]>(
     "https://ec-ai.expo.app/getactivitynames",
     activityNamesRequestOptions,
@@ -493,6 +491,8 @@ const DateInputField = ({
 }) => {
   const isDark = useColorScheme() === "dark";
   const [showAndroidPicker, setShowAndroidPicker] = useState(false);
+  // SwiftUI only exists on iOS, so the module is loaded there and nowhere else
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const iosPicker = Platform.OS === "ios" ? require("@expo/ui/swift-ui") : null;
 
   const handleAndroidDateChange = (

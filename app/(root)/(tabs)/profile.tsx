@@ -98,7 +98,6 @@ const Profile = () => {
     }
   };
 
-  const email = user?.primaryEmailAddress?.emailAddress;
   const [isPremium, setIsPremium] = useState(false);
   const [notificationsEnabledState, setNotificationsEnabledState] =
     useState(false);

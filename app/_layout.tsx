@@ -62,20 +62,18 @@ export default function RootLayout() {
       SplashScreen.hideAsync();
     }
 
-    // RevenueCat
     if (revenuecatApiKey) {
       Purchases.setLogLevel(__DEV__ ? LOG_LEVEL.VERBOSE : LOG_LEVEL.ERROR);
       Purchases.configure({ apiKey: revenuecatApiKey });
     }
 
-    // ✅ Safe AdMob initialization (only on native)
+    // AdMob has no web build, so it is imported only on native
     if (Platform.OS !== "web") {
       import("react-native-google-mobile-ads")
         .then(({ default: mobileAds }) => mobileAds().initialize())
         .then(() => console.log("AdMob initialized"))
         .catch(() => undefined);
     }
-
   }, [loaded]);
 
   if (!loaded) return null;

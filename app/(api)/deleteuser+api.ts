@@ -11,7 +11,7 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    // Delete user and their activities; get email for the notification
+    // One statement deletes the user and their activities and returns the email for the notice
     const deletionResult = await sql`
       WITH deleted_activities AS (
         DELETE FROM activities WHERE clerk_id = ${clerkId}

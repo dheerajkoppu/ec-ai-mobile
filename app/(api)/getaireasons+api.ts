@@ -40,6 +40,7 @@ export async function POST(request: Request) {
       });
     }
 
+    // Reasons depend only on the opportunity, so one cached answer serves every user
     const reasons = await getOrSetServerCache(
       `ai-reasons:${activity_id}:${AI_REASONS_PROMPT_VERSION}`,
       AI_REASONS_CACHE_TTL_MS,

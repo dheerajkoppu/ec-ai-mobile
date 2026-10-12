@@ -286,7 +286,7 @@ const Sign_Up = () => {
         </View>
       </ResponsiveContainer>
 
-      {/* VERIFICATION MODAL */}
+      {/* Verification modal */}
       <ReactNativeModal
         backdropTransitionOutTiming={1}
         useNativeDriver={true}

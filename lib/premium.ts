@@ -1,7 +1,7 @@
 import { Alert, Platform } from "react-native";
+import Purchases from "react-native-purchases";
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
-import Purchases from "react-native-purchases";
 
 const isAndroidBillingUnavailable = (error: unknown) => {
   const details = JSON.stringify(error ?? "").toLowerCase();
@@ -21,7 +21,12 @@ const showBillingUnavailableAlert = () => {
   );
 };
 
+/**
+ * Shows the RevenueCat paywall unless the user already has premium, and returns
+ * the result. Returns null when the paywall could not be shown.
+ */
 export async function presentPremiumPaywallIfNeeded() {
+  // Offerings are loaded first on Android, so a device without Play billing gets a clear message
   if (Platform.OS === "android") {
     try {
       await Purchases.getOfferings();

@@ -8,6 +8,7 @@ const MODAL_MAX_WIDTH = 680;
 const MATCH_CARD_MAX_WIDTH = 760;
 const MATCH_CARD_MAX_HEIGHT = 820;
 
+/** Layout sizes for the current window, so screens can widen on tablets and in landscape. */
 export const useResponsiveLayout = () => {
   const { width, height } = useWindowDimensions();
   const isTablet = width >= TABLET_BREAKPOINT;
@@ -22,13 +23,7 @@ export const useResponsiveLayout = () => {
     : Math.min(width - 84, 680);
   const tabletMatchCardHeight = isLandscape
     ? Math.min(Math.max(height - 170, 520), 650)
-    : Math.min(
-        Math.max(height - 250, 640),
-        MATCH_CARD_MAX_HEIGHT,
-      );
-  const matchCardHorizontalMargin = isTablet
-    ? Math.max((width - tabletMatchCardWidth) / 2, 24)
-    : 20;
+    : Math.min(Math.max(height - 250, 640), MATCH_CARD_MAX_HEIGHT);
 
   return {
     width,
@@ -45,8 +40,6 @@ export const useResponsiveLayout = () => {
       ? Math.max((width - tabletMatchCardWidth) / 2, 24)
       : 20,
     matchTopOffset: isMatchDeckTablet ? (isLandscape ? 210 : 190) : 130,
-    matchCardVerticalMargin: isMatchDeckTablet
-      ? (isLandscape ? 18 : 12)
-      : 20,
+    matchCardVerticalMargin: isMatchDeckTablet ? (isLandscape ? 18 : 12) : 20,
   };
 };

@@ -3,6 +3,10 @@ export type OpenAIJsonSchema = {
   schema: Record<string, unknown>;
 };
 
+/**
+ * Sends one prompt to OpenAI and returns the reply text. With a JSON schema,
+ * the reply is constrained to that schema and comes back as a JSON string.
+ */
 export async function callOpenAI(
   prompt: string,
   model = "gpt-6-luna",

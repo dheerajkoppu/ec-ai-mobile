@@ -9,6 +9,7 @@ import {
 } from "react-native-google-mobile-ads";
 import { useResponsiveLayout } from "@/lib/responsive";
 
+/** AdMob native ad shown as a card in the swipe deck. Renders nothing until an ad loads. */
 export default function NativeAdCardNative() {
   const [nativeAd, setNativeAd] = useState<NativeAd | null>(null);
   const { isTablet, matchCardWidth, matchCardHeight } = useResponsiveLayout();
@@ -23,7 +24,7 @@ export default function NativeAdCardNative() {
         if (mounted) {
           setNativeAd(ad);
         } else {
-          // Component unmounted before ad resolved — destroy immediately.
+          // The card unmounted before the ad loaded, so the ad is destroyed here
           ad.destroy();
         }
       })

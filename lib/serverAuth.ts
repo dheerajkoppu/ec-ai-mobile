@@ -16,7 +16,7 @@ export async function requireAuth(request: Request): Promise<string> {
   }
   if (!process.env.CLERK_SECRET_KEY) {
     console.error(
-      "CLERK_SECRET_KEY is not set — token verification will always fail",
+      "CLERK_SECRET_KEY is not set, so token verification will always fail",
     );
     throw new Error("Unauthorized: server misconfiguration");
   }

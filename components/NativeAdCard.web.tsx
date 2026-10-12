@@ -1,6 +1,6 @@
-// components/NativeAdCard.web.tsx
 import { View, Text } from "react-native";
 
+/** Web stand-in for the native ad card. AdMob only runs on iOS and Android. */
 export default function NativeAdCard() {
   return (
     <View
