@@ -1,5 +1,8 @@
 import { sql } from "@/lib/db";
-import { calculateRecommendationScore } from "@/lib/recommendationScore";
+import {
+  calculateRecommendationScore,
+  rankRecommendations,
+} from "@/lib/recommendationScore";
 import { getOrSetServerCache } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
 
@@ -98,21 +101,16 @@ export async function POST(request: Request) {
           ),
         }));
 
-        // The query lists unswiped cards first, then swiped ones from least recently swiped.
-        // Only the unswiped part is ranked by score, so skipped cards return in turn once nothing new is left.
+        // The query lists unswiped opportunities first, which is what the ranking expects
         const unswipedCount = opportunitiesRaw.filter(
           (op: any) => !op.already_swiped,
         ).length;
 
-        return [
-          ...scored
-            .slice(0, unswipedCount)
-            .sort(
-              (a: { matchScore: number }, b: { matchScore: number }) =>
-                b.matchScore - a.matchScore,
-            ),
-          ...scored.slice(unswipedCount),
-        ].slice(0, RECOMMENDATION_BATCH_SIZE);
+        return rankRecommendations(
+          scored,
+          unswipedCount,
+          RECOMMENDATION_BATCH_SIZE,
+        );
       },
     );
 

@@ -22,6 +22,7 @@ function normalize(value: string): string {
   return value.toLowerCase().replace(/[^a-z0-9]+/g, "");
 }
 
+// Postgres arrays can arrive as a literal like {STEM,"Law"} instead of a JS array
 function toArray(value: Maybe<string[] | string>): string[] {
   if (Array.isArray(value)) {
     return value.map((item) => String(item).trim()).filter(Boolean);
@@ -47,6 +48,7 @@ function matchInterestScore(
   }
 
   const normalizedField = normalize(careerField);
+  // Substrings count both ways, so "Engineering" matches "Software Engineering"
   const isMatch = interests.some((interest) => {
     const normalizedInterest = normalize(interest);
     return (
@@ -59,6 +61,7 @@ function matchInterestScore(
   return isMatch ? 35 : 0;
 }
 
+// Puts hours per week into four bands, so a number can be compared with a label like "2-5 hours"
 function mapTimeBand(value: Maybe<string | number>): number {
   if (typeof value === "number") {
     if (value < 2) return 1;
@@ -73,7 +76,11 @@ function mapTimeBand(value: Maybe<string | number>): number {
   if (text.includes("<2") || text.includes("under 2")) return 1;
   if (text.includes("2-5") || text.includes("2 to 5")) return 2;
   if (text.includes("5-10") || text.includes("5 to 10")) return 3;
-  if (text.includes("10+") || text.includes("10 +") || text.includes("10 or more")) {
+  if (
+    text.includes("10+") ||
+    text.includes("10 +") ||
+    text.includes("10 or more")
+  ) {
     return 4;
   }
 
@@ -109,6 +116,7 @@ function matchLeadershipScore(
     return hasLeadershipRoles ? 15 : 0;
   }
 
+  // A student not seeking leadership is neutral about whether it is offered
   return 8;
 }
 
@@ -116,6 +124,7 @@ function mapSelectivityBand(value: Maybe<string>): number {
   if (!value) return 0;
 
   const text = value.toLowerCase();
+  // Checked from most to least selective, because "very selective" also contains "selective"
   if (
     text.includes("high") ||
     text.includes("very selective") ||
@@ -196,9 +205,17 @@ function matchTravelScore(
   if (interestedInTravel && outsideUS) return 5;
   if (!interestedInTravel && !outsideUS) return 5;
   if (interestedInTravel && !outsideUS) return 3;
+  // A student who does not want to travel gets nothing for an opportunity abroad
   return 0;
 }
 
+/**
+ * Scores how well an opportunity fits a student, from 0 to 100.
+ *
+ * Weights: career interest 35, weekly time 20, leadership 15, selectivity 15,
+ * grade 10, travel 5. A factor with missing data earns partial credit instead
+ * of zero, so an incomplete listing is not buried.
+ */
 export function calculateRecommendationScore(
   user: RecommendationUser,
   opportunity: RecommendationOpportunity,
@@ -220,4 +237,22 @@ export function calculateRecommendationScore(
     matchTravelScore(user.interestedInTravel, opportunity.outsideUS);
 
   return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Orders one batch for the swipe deck. `scored` must list unswiped
+ * opportunities first. Those are ranked by score, and already-swiped ones
+ * follow in the order given, so skipped cards only return once nothing new is left.
+ */
+export function rankRecommendations<T extends { matchScore: number }>(
+  scored: T[],
+  unswipedCount: number,
+  limit: number,
+): T[] {
+  return [
+    ...scored
+      .slice(0, unswipedCount)
+      .sort((first, second) => second.matchScore - first.matchScore),
+    ...scored.slice(unswipedCount),
+  ].slice(0, limit);
 }

@@ -1,30 +1,11 @@
 import { sql } from "@/lib/db";
+import {
+  PROFILE_NUMBER_RULES,
+  ProfileValidationError,
+  parseProfileNumber,
+} from "@/lib/profileValidation";
 import { deleteServerCache } from "@/lib/serverCache";
 import { requireAuth, unauthorizedResponse } from "@/lib/serverAuth";
-
-class ProfileValidationError extends Error {}
-
-// The app sends these for an unanswered field, including when it echoes back a stored value
-const BLANK_VALUES = new Set(["", "none", "nan", "null", "undefined"]);
-
-// Score dropdowns send ranges like "1200-1390" or "1500+", so only the leading number is read
-function parseProfileNumber(
-  value: unknown,
-  label: string,
-  { min, max, integer }: { min: number; max: number; integer: boolean },
-): number | null {
-  const text = String(value ?? "").trim();
-  if (BLANK_VALUES.has(text.toLowerCase())) return null;
-
-  const parsed = integer ? parseInt(text, 10) : parseFloat(text);
-  if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
-    throw new ProfileValidationError(
-      `${label} must be a number between ${min} and ${max}`,
-    );
-  }
-
-  return parsed;
-}
 
 export async function POST(request: Request) {
   let clerkId: string;
@@ -63,38 +44,32 @@ export async function POST(request: Request) {
       agreeTerms,
     } = await request.json();
 
-    const ageInt = parseProfileNumber(age, "Age", {
-      min: 1,
-      max: 120,
-      integer: true,
-    });
-    // The GPA columns are numeric(3,2), so anything above 9.99 overflows
-    const gpaRange = { min: 0, max: 9.99, integer: false };
+    const ageInt = parseProfileNumber(age, "Age", PROFILE_NUMBER_RULES.age);
     const gpaWeightedNum = parseProfileNumber(
       gpaWeighted,
       "Weighted GPA",
-      gpaRange,
+      PROFILE_NUMBER_RULES.gpa,
     );
     const gpaUnweightedNum = parseProfileNumber(
       gpaUnweighted,
       "Unweighted GPA",
-      gpaRange,
+      PROFILE_NUMBER_RULES.gpa,
     );
-    const satScoreInt = parseProfileNumber(satScore, "SAT score", {
-      min: 400,
-      max: 1600,
-      integer: true,
-    });
-    const actScoreInt = parseProfileNumber(actScore, "ACT score", {
-      min: 1,
-      max: 36,
-      integer: true,
-    });
-    const psatScoreInt = parseProfileNumber(psatScore, "PSAT score", {
-      min: 320,
-      max: 1520,
-      integer: true,
-    });
+    const satScoreInt = parseProfileNumber(
+      satScore,
+      "SAT score",
+      PROFILE_NUMBER_RULES.sat,
+    );
+    const actScoreInt = parseProfileNumber(
+      actScore,
+      "ACT score",
+      PROFILE_NUMBER_RULES.act,
+    );
+    const psatScoreInt = parseProfileNumber(
+      psatScore,
+      "PSAT score",
+      PROFILE_NUMBER_RULES.psat,
+    );
 
     const toBool = (val: string | undefined) =>
       val && val.toLowerCase() === "yes";

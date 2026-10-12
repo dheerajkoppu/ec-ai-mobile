@@ -37,6 +37,7 @@ import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 // eslint-disable-next-line import/no-unresolved
 import NativeAdCard from "@/components/NativeAdCard";
 import { useResponsiveLayout } from "@/lib/responsive";
+import { buildDeck } from "@/lib/swipeDeck";
 
 interface Opportunity {
   id: string;
@@ -53,25 +54,6 @@ const CARD_HEIGHT = 600;
 const REPORT_BUTTON_SIZE = 38;
 const REPORT_ICON_COLOR = "#5B55F6";
 const USER_READ_TTL_MS = 60 * 1000;
-const AD_INTERVAL = 3;
-
-type DeckCard =
-  | { kind: "opportunity"; opportunity: Opportunity }
-  | { kind: "ad" };
-
-// Ads go between opportunities so a free user never loses a card to one
-function buildDeck(opportunities: Opportunity[], showAds: boolean): DeckCard[] {
-  const deck: DeckCard[] = [];
-
-  for (const opportunity of opportunities) {
-    if (showAds && (deck.length + 1) % AD_INTERVAL === 0) {
-      deck.push({ kind: "ad" });
-    }
-    deck.push({ kind: "opportunity", opportunity });
-  }
-
-  return deck;
-}
 
 const styles = StyleSheet.create({
   reportButtonShell: {
@@ -256,7 +238,7 @@ const Opportunities = () => {
     try {
       const token = await getToken();
       const json = user?.id
-        ? await fetchCachedAPI<{ data: Array<{ id: string }> }>(
+        ? await fetchCachedAPI<{ data: { id: string }[] }>(
             `saved-opportunities:${user.id}`,
             USER_READ_TTL_MS,
             "https://ec-ai.expo.app/getsavedopportunities",
