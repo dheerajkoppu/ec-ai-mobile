@@ -62,6 +62,17 @@ target 'ECAI' do
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
 
+    # EAS Release builds start clean, and swapping the prebuilt React Native core mid-build
+    # races with the targets compiling against it, so the Release core goes in during pod install
+    if ENV['EAS_BUILD'] == 'true' && ENV['EAS_BUILD_PROFILE'] != 'development'
+      react_native_path = File.expand_path(config[:reactNativePath], __dir__)
+      react_native_version = JSON.parse(File.read(File.join(react_native_path, 'package.json')))['version']
+      Dir.chdir(installer.sandbox.root) do
+        system('node', File.join(react_native_path, 'scripts', 'replace-rncore-version.js'),
+               '-c', 'Release', '-r', react_native_version, '-p', installer.sandbox.root.to_s, exception: true)
+      end
+    end
+
     # Builds every pod for at least the app's iOS target, since Xcode 27 rejects the older targets some pods still set
     deployment_target = podfile_properties['ios.deploymentTarget'] || '15.1'
     installer.pods_project.targets.each do |target|
