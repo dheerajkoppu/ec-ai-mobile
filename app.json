@@ -2,7 +2,7 @@
   "expo": {
     "name": "EC-AI",
     "slug": "ec-ai",
-    "version": "1.4",
+    "version": "1.5",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
     "scheme": "ec-ai",
@@ -152,7 +152,7 @@
         "projectId": "a31952ea-e220-4629-8d9e-7efbbb3c8b30"
       }
     },
-    "runtimeVersion": "1.4",
+    "runtimeVersion": "1.5",
     "updates": {
       "url": "https://u.expo.dev/a31952ea-e220-4629-8d9e-7efbbb3c8b30"
     }
