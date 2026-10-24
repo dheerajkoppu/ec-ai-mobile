@@ -61,5 +61,15 @@ target 'ECAI' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # Builds every pod for at least the app's iOS target, since Xcode 27 rejects the older targets some pods still set
+    deployment_target = podfile_properties['ios.deploymentTarget'] || '15.1'
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |build_configuration|
+        if build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'].to_f < deployment_target.to_f
+          build_configuration.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = deployment_target
+        end
+      end
+    end
   end
 end
