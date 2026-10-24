@@ -10,7 +10,6 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  Dimensions,
   Platform,
   StyleSheet,
   ActionSheetIOS,
@@ -27,7 +26,7 @@ import * as Haptics from "expo-haptics";
 import ReactNativeModal from "react-native-modal";
 
 import Swiper from "react-native-deck-swiper";
-import { useUser, useAuth } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
 import CustomButton from "@/components/CustomButton";
@@ -38,6 +37,7 @@ import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 import NativeAdCard from "@/components/NativeAdCard";
 import { useResponsiveLayout } from "@/lib/responsive";
 import { buildDeck } from "@/lib/swipeDeck";
+import { useStableGetToken } from "@/lib/auth";
 
 interface Opportunity {
   id: string;
@@ -48,9 +48,6 @@ interface Opportunity {
   prestige?: number;
 }
 
-const { width } = Dimensions.get("window");
-const CARD_WIDTH = width - 40;
-const CARD_HEIGHT = 600;
 const REPORT_BUTTON_SIZE = 38;
 const REPORT_ICON_COLOR = "#5B55F6";
 const USER_READ_TTL_MS = 60 * 1000;
@@ -77,13 +74,12 @@ const Opportunities = () => {
     () => new Date().toISOString().split("T")[0],
   );
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const getToken = useStableGetToken();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const {
-    isMatchDeckTablet,
-    isLandscape,
-    matchCardHorizontalMargin,
+    isTablet,
+    matchCardLeft,
     modalMaxWidth,
     matchCardWidth,
     matchCardHeight,
@@ -485,24 +481,17 @@ const Opportunities = () => {
         disableBottomSwipe
         stackSize={3}
         verticalSwipe={false}
-        cardHorizontalMargin={
-          isMatchDeckTablet ? matchCardHorizontalMargin : 20
-        }
-        cardStyle={
-          isMatchDeckTablet
-            ? {
-                width: matchCardWidth,
-                height: matchCardHeight,
-              }
-            : undefined
-        }
-        cardVerticalMargin={
-          isMatchDeckTablet && isLandscape ? matchCardVerticalMargin : 20
-        }
+        // The swiper centers cards in the whole window, so this keeps them inside the safe area
+        cardStyle={{
+          left: matchCardLeft,
+          width: matchCardWidth,
+          ...(isTablet ? { height: matchCardHeight } : null),
+        }}
+        cardVerticalMargin={matchCardVerticalMargin}
         backgroundColor="transparent"
         containerStyle={{
           flex: 1,
-          marginTop: isMatchDeckTablet ? matchTopOffset : 130,
+          marginTop: matchTopOffset,
         }}
         renderCard={(card, index) => {
           if (card.kind === "ad") {
@@ -516,8 +505,8 @@ const Opportunities = () => {
             <View>
               <View
                 style={{
-                  width: isMatchDeckTablet ? matchCardWidth : CARD_WIDTH,
-                  height: isMatchDeckTablet ? matchCardHeight : CARD_HEIGHT,
+                  width: matchCardWidth,
+                  height: matchCardHeight,
                   backgroundColor: "#FFF",
                   borderRadius: 12,
                   shadowColor: "#000",

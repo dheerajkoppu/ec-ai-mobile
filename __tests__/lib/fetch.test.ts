@@ -11,6 +11,7 @@ import {
   deleteResponseCacheByPrefix,
   fetchAPI,
   fetchCachedAPI,
+  REQUEST_TIMEOUT_MS,
 } from "@/lib/fetch";
 
 const mockFetch = jest.fn<(...args: any[]) => Promise<any>>();
@@ -49,6 +50,49 @@ describe("fetch helpers", () => {
       await expect(fetchAPI("https://api.test/items")).rejects.toThrow(
         "HTTP error! status: 500",
       );
+    });
+
+    it("gives up on a request that never answers", async () => {
+      jest.useFakeTimers();
+      // Settles only when the timeout aborts it, like a stalled connection
+      mockFetch.mockImplementationOnce(
+        (_url: string, options: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            options.signal?.addEventListener("abort", () =>
+              reject(new Error("Aborted")),
+            );
+          }),
+      );
+
+      const request = fetchAPI("https://api.test/slow");
+      jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
+
+      await expect(request).rejects.toThrow(
+        "Request timed out: https://api.test/slow",
+      );
+      jest.useRealTimers();
+    });
+
+    it("lets a cached request be retried after it times out", async () => {
+      jest.useFakeTimers();
+      mockFetch.mockImplementationOnce(
+        (_url: string, options: RequestInit) =>
+          new Promise((_resolve, reject) => {
+            options.signal?.addEventListener("abort", () =>
+              reject(new Error("Aborted")),
+            );
+          }),
+      );
+
+      const stalled = fetchCachedAPI("slow", 60_000, "https://api.test/slow");
+      jest.advanceTimersByTime(REQUEST_TIMEOUT_MS);
+      await expect(stalled).rejects.toThrow("Request timed out");
+      jest.useRealTimers();
+
+      mockFetch.mockResolvedValueOnce(jsonReply({ data: "fresh" }));
+      await expect(
+        fetchCachedAPI("slow", 60_000, "https://api.test/slow"),
+      ).resolves.toEqual({ data: "fresh" });
     });
   });
 

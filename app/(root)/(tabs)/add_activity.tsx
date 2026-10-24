@@ -23,7 +23,7 @@ import {
   useFetch,
 } from "@/lib/fetch";
 import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
-import { useUser, useAuth } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import { router } from "expo-router";
 import Purchases from "react-native-purchases";
 import { PAYWALL_RESULT } from "react-native-purchases-ui";
@@ -33,6 +33,7 @@ import { formatDateToYMD } from "@/lib/formatters";
 import { GRADE_OPTIONS } from "@/constants";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
+import { useStableGetToken } from "@/lib/auth";
 
 type DropdownItem = {
   label: string;
@@ -56,7 +57,7 @@ const renderRequiredLabel = (label: string, isDark: boolean) => (
 
 const ActivityTabs = () => {
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const getToken = useStableGetToken();
   const [activeTab, setActiveTab] = useState<string>("add");
   const [activityName, setActivityName] = useState<string>("");
   const [selectedActivityId, setSelectedActivityId] = useState<string>("");

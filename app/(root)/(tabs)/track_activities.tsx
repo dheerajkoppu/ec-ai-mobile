@@ -27,7 +27,7 @@ import {
   fetchCachedAPI,
   useFetch,
 } from "@/lib/fetch";
-import { useUser, useAuth } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import Purchases from "react-native-purchases";
 import { useLocalSearchParams } from "expo-router";
 import { PAYWALL_RESULT } from "react-native-purchases-ui";
@@ -39,13 +39,14 @@ import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { GRADE_OPTIONS } from "@/constants";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
+import { useStableGetToken } from "@/lib/auth";
 
 const STATIC_LOOKUP_TTL_MS = 24 * 60 * 60 * 1000;
 const USER_READ_TTL_MS = 60 * 1000;
 
 const TrackActivities = () => {
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const getToken = useStableGetToken();
   const email = user?.primaryEmailAddress?.emailAddress;
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";

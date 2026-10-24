@@ -2,12 +2,14 @@ import { useAuth, useUser } from "@clerk/clerk-expo";
 import { Redirect } from "expo-router";
 import { useEffect, useState } from "react";
 import { fetchCachedAPI } from "@/lib/fetch";
+import { useStableGetToken } from "@/lib/auth";
 
 const USER_DATA_TTL_MS = 60 * 1000;
 
 /** Entry route. Sends each visitor to sign-in, onboarding, or the app. */
 const Page = () => {
-  const { isSignedIn, getToken } = useAuth();
+  const { isSignedIn } = useAuth();
+  const getToken = useStableGetToken();
   const { user } = useUser();
   const [onboardingComplete, setOnboardingComplete] = useState<boolean | null>(
     null,

@@ -4,6 +4,7 @@ import { AppState, Platform } from "react-native";
 import Purchases from "react-native-purchases";
 import { initializeNotifications } from "@/lib/notifications";
 import { PREMIUM_ENTITLEMENT_ID } from "@/lib/premium";
+import { useStableGetToken } from "@/lib/auth";
 
 const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
 
@@ -12,7 +13,8 @@ const SYNC_COOLDOWN_MS = 5 * 60 * 1000;
  * at most once every five minutes.
  */
 export default function NotificationBootstrap() {
-  const { getToken, isLoaded, isSignedIn } = useAuth();
+  const { isLoaded, isSignedIn } = useAuth();
+  const getToken = useStableGetToken();
   const lastSyncRef = useRef(0);
 
   useEffect(() => {

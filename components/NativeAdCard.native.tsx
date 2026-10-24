@@ -44,8 +44,8 @@ export default function NativeAdCardNative() {
     <NativeAdView nativeAd={nativeAd}>
       <View
         style={{
-          width: isTablet ? matchCardWidth : 340,
-          height: isTablet ? matchCardHeight : 520,
+          width: matchCardWidth,
+          height: matchCardHeight,
           backgroundColor: "#fff",
           borderRadius: 12,
           padding: 16,
@@ -75,8 +75,14 @@ export default function NativeAdCardNative() {
 
         <Text style={{ fontSize: 12, color: "#999" }}>Sponsored</Text>
 
+        {/* Shrinks to fit short cards, but AdMob requires media of at least 120 pt */}
         <NativeMediaView
-          style={{ height: isTablet ? 220 : 180, marginTop: 10 }}
+          style={{
+            height: isTablet ? 220 : 180,
+            minHeight: 120,
+            flexShrink: 1,
+            marginTop: 10,
+          }}
           resizeMode="cover"
         />
 

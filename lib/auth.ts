@@ -1,7 +1,26 @@
 import * as SecureStore from "expo-secure-store";
+import { useCallback, useEffect, useRef } from "react";
 import { Platform } from "react-native";
-import type { TokenCache } from "@clerk/clerk-expo";
+import { useAuth, type TokenCache } from "@clerk/clerk-expo";
 import { fetchAPI } from "@/lib/fetch";
+
+type GetToken = ReturnType<typeof useAuth>["getToken"];
+
+/**
+ * Returns Clerk's getToken as a function that keeps its identity across renders.
+ * Clerk hands out a new getToken on every render, so an effect that lists it re-runs on
+ * every render, and the Match screen's deck remounted itself in a loop because of it.
+ */
+export function useStableGetToken(): GetToken {
+  const { getToken } = useAuth();
+  const getTokenRef = useRef(getToken);
+
+  useEffect(() => {
+    getTokenRef.current = getToken;
+  });
+
+  return useCallback<GetToken>((options) => getTokenRef.current(options), []);
+}
 
 const createTokenCache = (): TokenCache => {
   return {

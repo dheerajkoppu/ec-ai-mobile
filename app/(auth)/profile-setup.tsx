@@ -11,7 +11,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Swiper from "react-native-swiper";
-import { useAuth, useUser } from "@clerk/clerk-expo";
+import { useUser } from "@clerk/clerk-expo";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import InputField from "@/components/InputField";
 import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
@@ -27,6 +27,7 @@ import * as Haptics from "expo-haptics";
 import Purchases from "react-native-purchases";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
+import { useStableGetToken } from "@/lib/auth";
 
 interface DropdownOption {
   label: string;
@@ -477,7 +478,7 @@ const StepLayout = ({
 
 /** Onboarding questionnaire. Opened with update=true, it loads the saved profile for editing. */
 const ProfileSetup: React.FC = () => {
-  const { getToken } = useAuth();
+  const getToken = useStableGetToken();
   const { user } = useUser();
   const isDark = useColorScheme() === "dark";
   const { contentMaxWidth } = useResponsiveLayout();

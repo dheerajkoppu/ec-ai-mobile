@@ -22,13 +22,31 @@ const responseCache = globalThis.__ecaiResponseCache ?? new Map();
 
 globalThis.__ecaiResponseCache = responseCache;
 
-/** Fetches JSON and throws on any non-2xx status. */
+// A stalled connection never settles on its own, which left screens loading until the app restarted
+export const REQUEST_TIMEOUT_MS = 60_000;
+
+/** Fetches JSON and throws on any non-2xx status or after REQUEST_TIMEOUT_MS. */
 export const fetchAPI = async (url: string, options?: RequestInit) => {
-  const response = await fetch(url, options);
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if (controller.signal.aborted) {
+      throw new Error(`Request timed out: ${url}`);
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
   }
-  return await response.json();
 };
 
 /**

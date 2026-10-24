@@ -11,7 +11,7 @@ import {
   ScrollView,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { SignedIn, useUser, useAuth } from "@clerk/clerk-expo";
+import { SignedIn, useUser } from "@clerk/clerk-expo";
 import { useFocusEffect } from "expo-router";
 import { FontAwesome, MaterialCommunityIcons } from "@expo/vector-icons";
 import ReactNativeModal from "react-native-modal";
@@ -25,6 +25,7 @@ import { presentPremiumPaywallIfNeeded } from "@/lib/premium";
 import { deleteResponseCache, fetchAPI, fetchCachedAPI } from "@/lib/fetch";
 import ResponsiveContainer from "@/components/ResponsiveContainer";
 import { useResponsiveLayout } from "@/lib/responsive";
+import { useStableGetToken } from "@/lib/auth";
 
 interface Opportunity {
   id: string;
@@ -61,7 +62,7 @@ const USER_READ_TTL_MS = 60 * 1000;
 
 export default function Saved_opportunities() {
   const { user } = useUser();
-  const { getToken } = useAuth();
+  const getToken = useStableGetToken();
   const isDark = useColorScheme() === "dark";
   const { contentMaxWidth, modalMaxWidth } = useResponsiveLayout();
   const surfaceColor = isDark ? "#1e1e1e" : "#ffffff";
